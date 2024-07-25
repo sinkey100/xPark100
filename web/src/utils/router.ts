@@ -26,10 +26,10 @@ export const routePush = async (to: RouteLocationRaw) => {
                 type: 'error',
             })
         } else if (isNavigationFailure(failure, NavigationFailureType.duplicated)) {
-            ElNotification({
-                message: i18n.global.t('utils.Navigation failed, it is at the navigation target position!'),
-                type: 'warning',
-            })
+            // ElNotification({
+            //     message: i18n.global.t('utils.Navigation failed, it is at the navigation target position!'),
+            //     type: 'warning',
+            // })
         }
     } catch (error) {
         ElNotification({

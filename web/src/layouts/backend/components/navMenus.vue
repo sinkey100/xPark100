@@ -1,40 +1,8 @@
 <template>
     <div class="nav-menus" :class="configStore.layout.layoutMode">
-        <router-link class="h100" target="_blank" :title="t('Home')" to="/">
-            <div class="nav-menu-item">
-                <Icon :color="configStore.getColorVal('headerBarTabColor')" class="nav-menu-icon" name="el-icon-Monitor" size="18" />
-            </div>
-        </router-link>
-        <el-dropdown
-            @visible-change="onCurrentNavMenu($event, 'lang')"
-            class="h100"
-            size="large"
-            :hide-timeout="50"
-            placement="bottom"
-            trigger="click"
-            :hide-on-click="true"
-        >
-            <div class="nav-menu-item pt2" :class="state.currentNavMenu == 'lang' ? 'hover' : ''">
-                <Icon :color="configStore.getColorVal('headerBarTabColor')" class="nav-menu-icon" name="local-lang" size="18" />
-            </div>
-            <template #dropdown>
-                <el-dropdown-menu class="dropdown-menu-box">
-                    <el-dropdown-item v-for="item in configStore.lang.langArray" :key="item.name" @click="editDefaultLang(item.name)">
-                        {{ item.value }}
-                    </el-dropdown-item>
-                </el-dropdown-menu>
-            </template>
-        </el-dropdown>
-        <div @click="onFullScreen" class="nav-menu-item" :class="state.isFullScreen ? 'hover' : ''">
-            <Icon
-                :color="configStore.getColorVal('headerBarTabColor')"
-                class="nav-menu-icon"
-                v-if="state.isFullScreen"
-                name="local-full-screen-cancel"
-                size="18"
-            />
-            <Icon :color="configStore.getColorVal('headerBarTabColor')" class="nav-menu-icon" v-else name="el-icon-FullScreen" size="18" />
-        </div>
+
+
+
         <div v-if="adminInfo.super" @click="terminal.toggle()" class="nav-menu-item pt2">
             <el-badge :is-dot="terminal.state.showDot">
                 <Icon :color="configStore.getColorVal('headerBarTabColor')" class="nav-menu-icon" name="local-terminal" size="26" />
@@ -96,10 +64,7 @@
                 </div>
             </div>
         </el-popover>
-        <div @click="configStore.setLayout('showDrawer', true)" class="nav-menu-item">
-            <Icon :color="configStore.getColorVal('headerBarTabColor')" class="nav-menu-icon" name="fa fa-cogs" size="18" />
-        </div>
-        <Config />
+        
         <TerminalVue />
     </div>
 </template>

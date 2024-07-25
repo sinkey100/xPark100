@@ -15,7 +15,11 @@ const staticRoutes: Array<RouteRecordRaw> = [
         // 首页
         path: '/',
         name: '/',
-        component: () => import('/@/views/frontend/index.vue'),
+        redirect: (to) => {
+            return {
+                name: 'adminLogin',
+            }
+        },
         meta: {
             title: pageTitle('home'),
         },
