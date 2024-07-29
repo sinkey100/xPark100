@@ -28,20 +28,6 @@
                     v-if="!baTable.form.loading"
                 >
                     <FormItem
-                        :label="t('auth.admin.username')"
-                        v-model="baTable.form.items!.username"
-                        type="string"
-                        prop="username"
-                        :placeholder="t('auth.admin.Administrator login')"
-                    />
-                    <FormItem
-                        :label="t('auth.admin.nickname')"
-                        v-model="baTable.form.items!.nickname"
-                        type="string"
-                        prop="nickname"
-                        :placeholder="t('Please input field', { field: t('auth.admin.nickname') })"
-                    />
-                    <FormItem
                         :label="t('auth.admin.grouping')"
                         v-model="baTable.form.items!.group_arr"
                         prop="group_arr"
@@ -55,21 +41,36 @@
                             placeholder: t('Click select'),
                         }"
                     />
-                    <FormItem :label="t('auth.admin.head portrait')" type="image" v-model="baTable.form.items!.avatar" />
                     <FormItem
-                        :label="t('auth.admin.mailbox')"
-                        prop="email"
-                        v-model="baTable.form.items!.email"
+                        :label="t('auth.admin.username')"
+                        v-model="baTable.form.items!.username"
                         type="string"
-                        :placeholder="t('Please input field', { field: t('auth.admin.mailbox') })"
+                        prop="username"
+                        :placeholder="t('auth.admin.Administrator login')"
                     />
                     <FormItem
-                        :label="t('auth.admin.mobile')"
-                        prop="mobile"
-                        v-model="baTable.form.items!.mobile"
+                        :label="t('auth.admin.nickname')"
+                        v-model="baTable.form.items!.nickname"
                         type="string"
-                        :placeholder="t('Please input field', { field: t('auth.admin.mobile') })"
+                        prop="nickname"
+                        :placeholder="t('Please input field', { field: t('auth.admin.nickname') })"
                     />
+
+<!--                    <FormItem :label="t('auth.admin.head portrait')" type="image" v-model="baTable.form.items!.avatar" />-->
+<!--                    <FormItem-->
+<!--                        :label="t('auth.admin.mailbox')"-->
+<!--                        prop="email"-->
+<!--                        v-model="baTable.form.items!.email"-->
+<!--                        type="string"-->
+<!--                        :placeholder="t('Please input field', { field: t('auth.admin.mailbox') })"-->
+<!--                    />-->
+<!--                    <FormItem-->
+<!--                        :label="t('auth.admin.mobile')"-->
+<!--                        prop="mobile"-->
+<!--                        v-model="baTable.form.items!.mobile"-->
+<!--                        type="string"-->
+<!--                        :placeholder="t('Please input field', { field: t('auth.admin.mobile') })"-->
+<!--                    />-->
                     <FormItem
                         :label="t('auth.admin.Password')"
                         prop="password"
@@ -81,15 +82,30 @@
                                 : t('auth.admin.Please leave blank if not modified')
                         "
                     />
-                    <el-form-item prop="motto" :label="t('auth.admin.Personal signature')">
-                        <el-input
-                            @keyup.enter.stop=""
-                            @keyup.ctrl.enter="baTable.onSubmit(formRef)"
-                            v-model="baTable.form.items!.motto"
-                            type="textarea"
-                            :placeholder="t('Please input field', { field: t('auth.admin.Personal signature') })"
-                        ></el-input>
-                    </el-form-item>
+
+                    <FormItem
+                        label="授权域名"
+                        v-model="baTable.form.items!.domain_arr"
+                        prop="domain_arr"
+                        type="remoteSelect"
+                        :input-attr="{
+                            multiple: true,
+                            field: 'domain',
+                            remoteUrl: '/admin/xpark.domain/index',
+                            placeholder: t('Click select'),
+                        }"
+                    />
+
+
+<!--                    <el-form-item prop="motto" :label="t('auth.admin.Personal signature')">-->
+<!--                        <el-input-->
+<!--                            @keyup.enter.stop=""-->
+<!--                            @keyup.ctrl.enter="baTable.onSubmit(formRef)"-->
+<!--                            v-model="baTable.form.items!.motto"-->
+<!--                            type="textarea"-->
+<!--                            :placeholder="t('Please input field', { field: t('auth.admin.Personal signature') })"-->
+<!--                        ></el-input>-->
+<!--                    </el-form-item>-->
                     <FormItem
                         :label="t('State')"
                         v-model="baTable.form.items!.status"

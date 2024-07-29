@@ -213,6 +213,11 @@ const onResetForm = () => {
     for (const key in baTable.comSearch.form) {
         baTable.comSearch.form[key] = ''
     }
+    if(baTable.table.filter!.dimensions){
+        for (const key in baTable.table.filter!.dimensions) {
+            baTable.table.filter!.dimensions[key] = true
+        }
+    }
     onComSearch()
 }
 </script>

@@ -64,7 +64,7 @@
                 </div>
             </div>
         </el-popover>
-        
+
         <TerminalVue />
     </div>
 </template>

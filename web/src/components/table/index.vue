@@ -15,7 +15,6 @@
             @select="onSelect"
             @selection-change="onSelectionChange"
             @sort-change="onSortChange"
-            @row-dblclick="baTable.onTableDblclick"
             v-bind="$attrs"
         >
             <slot name="columnPrepend"></slot>
