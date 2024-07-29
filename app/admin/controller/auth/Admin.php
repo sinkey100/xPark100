@@ -96,6 +96,7 @@ class Admin extends Backend
             try {
                 $data['salt']     = $salt;
                 $data['password'] = $passwd;
+                $data['xpark_domains'] = implode(',', $data['domain_arr']);
                 $result           = $this->model->save($data);
                 if ($data['group_arr']) {
                     $groupAccess = [];
@@ -165,6 +166,8 @@ class Admin extends Backend
             if (isset($data['password']) && $data['password']) {
                 $this->model->resetPassword($data['id'], $data['password']);
             }
+
+            $data['xpark_domains'] = implode(',', $data['domain_arr']);
 
             $groupAccess = [];
             if ($data['group_arr']) {
