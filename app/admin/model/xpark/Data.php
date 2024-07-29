@@ -25,7 +25,7 @@ class Data extends Model
         return $this->belongsTo(\app\admin\model\xpark\Domain::class, 'domain_id', 'id');
     }
 
-    protected function getCountryCodeAttr($value): string
+    protected function _getCountryCodeAttr($value): string
     {
         if(!isset($value)) return '';
         $arr = [

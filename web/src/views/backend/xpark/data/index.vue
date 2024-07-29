@@ -16,6 +16,10 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
                 <!--                <el-button class="dimensions-btn" @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>-->
             </el-form-item>
+            <el-button class="table-header-operate btn-export" type="success" @click="derive">
+                <Icon color="#ffffff" name="el-icon-Download" />
+                <span class="table-header-operate-text">导出</span>
+            </el-button>
         </TableHeader>
 
 
@@ -38,6 +42,9 @@ import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
 import {getArrayKey} from "/@/utils/common";
+import createAxios from "/@/utils/axios";
+import {AxiosPromise} from "axios";
+import fileDownload from "js-file-download";
 
 defineOptions({
     name: 'xpark/data',
@@ -182,10 +189,33 @@ onMounted(() => {
         baTable.table.showComSearch = true
     })
 })
+
+const derive = () => {
+    createAxios<any, AxiosPromise>(
+        {
+            url: '/admin/xpark.data/export',
+            method: 'get',
+            params: baTable.table.filter,
+
+            responseType: 'blob',
+        },
+        { reductDataFormat: false }
+    ).then((response) => {
+        const disposition = response.headers['content-disposition']
+        const arr = disposition.split('filename=')
+        const fileName = decodeURI(arr[1])
+        fileDownload(response.data, fileName)
+    })
+}
 </script>
 
 <style scoped lang="scss">
 .dimensions-btn {
     margin-left: 30px;
+}
+.btn-export{
+    position: absolute;
+    right:70px;
+    top:22px;
 }
 </style>

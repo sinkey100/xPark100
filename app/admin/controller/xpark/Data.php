@@ -2,6 +2,8 @@
 
 namespace app\admin\controller\xpark;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 use app\common\controller\Backend;
 
@@ -29,11 +31,7 @@ class Data extends Backend
         $this->model = new \app\admin\model\xpark\Data();
     }
 
-    /**
-     * 查看
-     * @throws Throwable
-     */
-    public function index(): void
+    protected function calcData()
     {
         $domain_filter = count($this->auth->domain_arr) > 0 ? $this->auth->domain_arr : false;
 
@@ -43,9 +41,9 @@ class Data extends Backend
         }
 
         $dimensions = $this->request->get('dimensions/a', []);
-        $dimension = [];
-        foreach ($dimensions as $k => $v){
-            if($k && $v == 'true'){
+        $dimension  = [];
+        foreach ($dimensions as $k => $v) {
+            if ($k && $v == 'true') {
                 $dimension[] = $k;
             }
         }
@@ -72,8 +70,7 @@ class Data extends Backend
             ->where($where);
 
 
-
-        if($domain_filter){
+        if ($domain_filter) {
             $res = $res->where('domain_id', 'in', $domain_filter);
         }
 
@@ -81,8 +78,19 @@ class Data extends Backend
 //        $this->error($res);
 
         $res = $res->order('id', 'desc')
-            ->group(implode(',', $dimension))
-            ->paginate($limit);
+            ->group(implode(',', $dimension));
+        return [$res, $limit, $dimension];
+    }
+
+    /**
+     * 查看
+     * @throws Throwable
+     */
+    public function index(): void
+    {
+
+        [$res, $limit, $dimension] = $this->calcData();
+        $res = $res->paginate($limit);
         $res->visible(['domain' => ['domain']]);
 
         $this->success('', [
@@ -92,7 +100,68 @@ class Data extends Backend
         ]);
     }
 
-    /**
-     * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写
-     */
+    public function export(): void
+    {
+        [$list, $limit, $dimension] = $this->calcData();
+        $list = $list->select();
+
+        print_r($dimension);
+
+
+
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+
+        $cell = [
+            '#'               => '#',
+            'a_date'          => '日期',
+            'sub_channel'     => '子渠道',
+            'country_code'    => '地区',
+            'ad_placement_id' => '广告单元',
+            'requests'        => '请求数',
+            'fills'           => '填充数',
+            'impressions'     => '展示',
+            'clicks'          => '点击数',
+            'ad_revenue'      => '收入'
+        ];
+
+        foreach (['a_date', 'sub_channel', 'country_code', 'ad_placement_id'] as $v){
+            if(!in_array($v, $dimension)) unset($cell[$v]);
+        }
+
+
+        $i = 0;
+        foreach ($cell as $k => $v) {
+            $i++;
+            $sheet->setCellValue([$i, 1], $v);
+        }
+
+        $h = 2;
+        foreach ($list as $v) {
+            $i = 0;
+            foreach ($cell as $key => $value) {
+                $i++;
+                $value = str_replace(' 00:00:00', '', $v[$key] ?? $h - 1);
+                $sheet->setCellValue([$i, $h], $value);
+            }
+            $h++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $file   = time() . '.xlsx';
+        ob_end_clean();
+        header('Content-Type: application/vnd.ms-excel');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: think-lang, server, ba_user_token, ba-user-token, ba_token, ba-token, batoken, Authorization, Content-Type, If-Match, If-Modified-Since, If-None-Match, If-Unmodified-Since, X-CSRF-TOKEN, X-Requested-With');
+        header('Access-Control-Max-Age: 1800');
+        header('Access-Control-Expose-Headers:Content-Disposition');
+        header('Content-Disposition: attachment;filename=' . $file);
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        $spreadsheet->disconnectWorksheets();
+    }
+
+
 }
