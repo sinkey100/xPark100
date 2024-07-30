@@ -65,8 +65,8 @@ class Xpark extends Base
     {
         // 系统记录的域名列表
         if (count($this->domains) == 0) {
-            $domains       = Domain::field(['id', 'domain'])->select()->toArray();
-            $this->domains = array_column($domains, null, 'domain');
+            $domains       = Domain::field(['id', 'domain', 'original_domain'])->select()->toArray();
+            $this->domains = array_column($domains, null, 'original_domain');
         }
         if (isset($this->domains[$domain])) {
             return $this->domains[$domain]['id'];

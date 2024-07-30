@@ -108,7 +108,6 @@ class Data extends Backend
         print_r($dimension);
 
 
-
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
 
@@ -118,15 +117,19 @@ class Data extends Backend
             'sub_channel'     => '子渠道',
             'country_code'    => '地区',
             'ad_placement_id' => '广告单元',
-            'requests'        => '请求数',
-            'fills'           => '填充数',
+            'ad_revenue'      => '收入',
             'impressions'     => '展示',
+            'requests'        => '请求数',
             'clicks'          => '点击数',
-            'ad_revenue'      => '收入'
+            'click_rate'      => '点击率',
+            'fills'           => '填充数',
+            'fill_rate'       => '填充率',
+            'unit_price'      => '单价',
+            'ecpm'            => 'eCPM',
         ];
 
-        foreach (['a_date', 'sub_channel', 'country_code', 'ad_placement_id'] as $v){
-            if(!in_array($v, $dimension)) unset($cell[$v]);
+        foreach (['a_date', 'sub_channel', 'country_code', 'ad_placement_id'] as $v) {
+            if (!in_array($v, $dimension)) unset($cell[$v]);
         }
 
 

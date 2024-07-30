@@ -120,16 +120,8 @@ const baTable = new baTableClass(
                 sortable: false
             },
             {
-                label: t('xpark.data.requests'),
-                prop: 'requests',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 120
-            },
-            {
-                label: t('xpark.data.fills'),
-                prop: 'fills',
+                label: t('xpark.data.ad_revenue'),
+                prop: 'ad_revenue',
                 align: 'center',
                 operator: false,
                 sortable: false,
@@ -144,6 +136,15 @@ const baTable = new baTableClass(
                 width: 120
             },
             {
+                label: t('xpark.data.requests'),
+                prop: 'requests',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+
+            {
                 label: t('xpark.data.clicks'),
                 prop: 'clicks',
                 align: 'center',
@@ -151,9 +152,42 @@ const baTable = new baTableClass(
                 sortable: false,
                 width: 120
             },
+
             {
-                label: t('xpark.data.ad_revenue'),
-                prop: 'ad_revenue',
+                label: t('xpark.data.click_rate'),
+                prop: 'click_rate',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
+                label: t('xpark.data.fills'),
+                prop: 'fills',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
+                label: t('xpark.data.fill_rate'),
+                prop: 'fill_rate',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
+                label: t('xpark.data.unit_price'),
+                prop: 'unit_price',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
+                label: t('xpark.data.ecpm'),
+                prop: 'ecpm',
                 align: 'center',
                 operator: false,
                 sortable: false,
@@ -215,7 +249,10 @@ const derive = () => {
 }
 .btn-export{
     position: absolute;
-    right:70px;
-    top:22px;
+    right:20px;
+    top:13px;
+}
+:deep(.table-search){
+    display: none;
 }
 </style>

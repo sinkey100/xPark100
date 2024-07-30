@@ -239,11 +239,11 @@ class Backend extends Api
                     if (!isset($datetimeArr[1])) {
                         continue;
                     }
-                    $datetimeArr = array_filter(array_map("strtotime", $datetimeArr));
+//                    $datetimeArr = array_filter(array_map("strtotime", $datetimeArr));
                     $where[]     = [$fieldName, str_replace('RANGE', 'BETWEEN', $field['operator']), $datetimeArr];
                     continue;
                 }
-                $where[] = [$fieldName, '=', strtotime($field['val'])];
+                $where[] = [$fieldName, '=', $field['val']];
                 continue;
             }
 

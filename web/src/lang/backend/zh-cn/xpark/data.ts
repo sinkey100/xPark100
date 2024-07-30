@@ -11,5 +11,11 @@ export default {
     impressions: '展示',
     clicks: '点击数',
     ad_revenue: '收入',
+
+    click_rate: '点击率',
+    fill_rate: '填充率',
+    unit_price: '单价',
+    ecpm: 'eCPM',
+
     'quick Search Fields': 'id',
 }
