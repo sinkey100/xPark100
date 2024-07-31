@@ -25,6 +25,7 @@ class Xpark extends Base
     {
         // 清除老数据
         for ($i = 0; $i < 3; $i++) {
+
             Data::where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             // 重置自增id
             $maxId = Data::max('id');
@@ -35,7 +36,7 @@ class Xpark extends Base
         $result = $this->http('POST', 'https://manage.xpark365.com/backend/gmf-manage/report/get_report', [
             'json'    => [
                 'user_id'   => Env::get('XPARK.USER_ID'),
-                'from_date' => date("Y-m-d", strtotime("-3 days")),
+                'from_date' => date("Y-m-d", strtotime("-2 days")),
                 'to_date'   => date("Y-m-d")
             ],
             'headers' => [

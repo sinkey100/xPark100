@@ -47,6 +47,7 @@
                                         "
                                         :type="item.comSearchRender == 'date' ? 'daterange' : 'datetimerange'"
                                         :range-separator="$t('To')"
+                                        :shortcuts="shortcuts"
                                         :start-placeholder="$t('el.datepicker.startDate')"
                                         :end-placeholder="$t('el.datepicker.endDate')"
                                         :value-format="item.comSearchRender == 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss'"
@@ -165,6 +166,36 @@ import { isEmpty } from 'lodash-es'
 import BaInput from '/@/components/baInput/index.vue'
 
 const baTable = inject('baTable') as baTableClass
+
+const shortcuts = [
+    {
+        text: '最近一周',
+        value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+            return [start, end]
+        },
+    },
+    {
+        text: '最近一个月',
+        value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+            return [start, end]
+        },
+    },
+    {
+        text: '最近三个月',
+        value: () => {
+            const end = new Date()
+            const start = new Date()
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+            return [start, end]
+        },
+    },
+];
 
 const onComSearch = () => {
     let comSearchData: comSearchData[] = []

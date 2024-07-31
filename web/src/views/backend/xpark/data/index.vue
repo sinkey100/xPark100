@@ -17,7 +17,7 @@
                 <!--                <el-button class="dimensions-btn" @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>-->
             </el-form-item>
             <el-button class="table-header-operate btn-export" type="success" @click="derive">
-                <Icon color="#ffffff" name="el-icon-Download" />
+                <Icon color="#ffffff" name="el-icon-Download"/>
                 <span class="table-header-operate-text">导出</span>
             </el-button>
         </TableHeader>
@@ -55,8 +55,8 @@ const tableRef = ref()
 const dimensions = reactive({
     a_date: true,
     sub_channel: true,
-    country_code: true,
-    ad_placement_id: true
+    country_code: false,
+    ad_placement_id: false
 })
 
 /**
@@ -199,7 +199,7 @@ const baTable = new baTableClass(
     {
         defaultItems: {a_date: null, requests: 0, fills: 0, impressions: 0, clicks: 0, ad_revenue: 0, user_id: 0},
     }, {}, {
-        getIndex: ({ res }) => {
+        getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
                 if (baTable.table.filter!.dimensions[item.prop] == undefined) {
                     return;
@@ -233,7 +233,7 @@ const derive = () => {
 
             responseType: 'blob',
         },
-        { reductDataFormat: false }
+        {reductDataFormat: false}
     ).then((response) => {
         const disposition = response.headers['content-disposition']
         const arr = disposition.split('filename=')
@@ -247,12 +247,14 @@ const derive = () => {
 .dimensions-btn {
     margin-left: 30px;
 }
-.btn-export{
+
+.btn-export {
     position: absolute;
-    right:20px;
-    top:13px;
+    right: 20px;
+    top: 13px;
 }
-:deep(.table-search){
+
+:deep(.table-search) {
     display: none;
 }
 </style>
