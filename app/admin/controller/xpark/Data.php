@@ -105,9 +105,6 @@ class Data extends Backend
         [$list, $limit, $dimension] = $this->calcData();
         $list = $list->select();
 
-        print_r($dimension);
-
-
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
 
