@@ -128,34 +128,8 @@ const baTable = new baTableClass(
                 width: 120
             },
             {
-                label: t('xpark.data.impressions'),
-                prop: 'impressions',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 120
-            },
-            {
                 label: t('xpark.data.requests'),
                 prop: 'requests',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 120
-            },
-
-            {
-                label: t('xpark.data.clicks'),
-                prop: 'clicks',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 120
-            },
-
-            {
-                label: t('xpark.data.click_rate'),
-                prop: 'click_rate',
                 align: 'center',
                 operator: false,
                 sortable: false,
@@ -177,6 +151,34 @@ const baTable = new baTableClass(
                 sortable: false,
                 width: 120
             },
+            {
+                label: t('xpark.data.impressions'),
+                prop: 'impressions',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+
+
+            {
+                label: t('xpark.data.clicks'),
+                prop: 'clicks',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+
+            {
+                label: t('xpark.data.click_rate'),
+                prop: 'click_rate',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+
             {
                 label: t('xpark.data.unit_price'),
                 prop: 'unit_price',
