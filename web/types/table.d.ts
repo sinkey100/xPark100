@@ -145,6 +145,7 @@ declare global {
             | 'tags'
             | 'url'
             | 'datetime'
+            | 'datetimeAndTotal'
             | 'color'
             | 'buttons'
             | 'customTemplate'

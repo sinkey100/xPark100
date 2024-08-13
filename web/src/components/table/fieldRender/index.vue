@@ -91,6 +91,10 @@
         {{ !fieldValue ? '-' : timeFormat(fieldValue, field.timeFormat ?? undefined) }}
     </div>
 
+    <div v-if="field.render == 'datetimeAndTotal'">
+        {{ !fieldValue ? '合计' : timeFormat(fieldValue, field.timeFormat ?? undefined) }}
+    </div>
+
     <!-- color -->
     <div v-if="field.render == 'color'">
         <div :style="{ background: fieldValue }" class="ba-render-color"></div>

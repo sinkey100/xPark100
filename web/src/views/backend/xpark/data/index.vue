@@ -16,10 +16,15 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
                 <!--                <el-button class="dimensions-btn" @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>-->
             </el-form-item>
-            <el-button class="table-header-operate btn-export" type="success" @click="derive">
-                <Icon color="#ffffff" name="el-icon-Download"/>
-                <span class="table-header-operate-text">导出</span>
-            </el-button>
+            <el-popconfirm title="是否确认导出？" @confirm="derive">
+                <template #reference>
+                    <el-button class="table-header-operate btn-export" type="success">
+                        <Icon color="#ffffff" name="el-icon-Download"/>
+                        <span class="table-header-operate-text">导出</span>
+                    </el-button>
+                </template>
+            </el-popconfirm>
+
         </TableHeader>
 
 
@@ -72,7 +77,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.a_date'),
                 prop: 'a_date',
                 align: 'center',
-                render: 'datetime',
+                render: 'datetimeAndTotal',
                 comSearchRender: 'date',
                 operator: 'RANGE',
                 sortable: 'custom',
@@ -258,5 +263,13 @@ const derive = () => {
 
 :deep(.table-search) {
     display: none;
+}
+:deep(.el-table){
+    tbody{
+        tr:last-child{
+            background: #eaeef0 !important;
+        }
+    }
+
 }
 </style>

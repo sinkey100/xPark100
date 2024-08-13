@@ -93,8 +93,39 @@ class Data extends Backend
         $res = $res->paginate($limit);
         $res->visible(['domain' => ['domain']]);
 
+        $total = [
+            'id'          => 10000,
+            'ad_revenue'  => 0,
+            'requests'    => 0,
+            'fills'       => 0,
+            'impressions' => 0,
+            'clicks'      => 0,
+            'a_date'      => '',
+        ];
+        foreach ($res->items() as $v) {
+            $total['ad_revenue']  += $v['ad_revenue'];
+            $total['requests']    += $v['requests'];
+            $total['fills']       += $v['fills'];
+            $total['impressions'] += $v['impressions'];
+            $total['clicks']      += $v['clicks'];
+        }
+
+        // 总收入
+        $total['ad_revenue'] = round($total['ad_revenue'], 2);
+        // 填充率
+        $total['fill_rate'] = round($total['fills'] / $total['requests'] * 100, 2) . '%';
+        // 点击率
+        $total['click_rate'] = round($total['clicks'] / $total['impressions'] * 100, 2) . '%';
+        // 单价
+        $total['unit_price'] = round($total['ad_revenue'] / $total['clicks'], 2);
+        // eCPM
+        $total['ecpm'] = round($total['ad_revenue'] / $total['impressions'] * 1000, 2);
+
+
+        $list = array_merge($res->items(), [$total]);
+
         $this->success('', [
-            'list'   => $res->items(),
+            'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
         ]);

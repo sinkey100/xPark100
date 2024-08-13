@@ -33,7 +33,7 @@
                         </el-col>
 
                         <!-- 时间范围 -->
-                        <el-col v-else-if="item.render == 'datetime' && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')" :xs="24" :sm="12">
+                        <el-col v-else-if="(item.render == 'datetime' || item.render == 'datetimeAndTotal') && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')" :xs="24" :sm="12">
                             <div class="com-search-col" :class="item.prop">
                                 <div class="com-search-col-label w16" v-if="item.comSearchShowLabel !== false">{{ item.label }}</div>
                                 <div class="com-search-col-input-range w83">
@@ -206,7 +206,7 @@ const onComSearch = () => {
 
         let val = ''
         let fieldDataTemp = baTable.comSearch.fieldData.get(key)
-        if (fieldDataTemp.render == 'datetime' && (fieldDataTemp.operator == 'RANGE' || fieldDataTemp.operator == 'NOT RANGE')) {
+        if ((fieldDataTemp.render == 'datetime'|| fieldDataTemp.render == 'datetimeAndTotal') && (fieldDataTemp.operator == 'RANGE' || fieldDataTemp.operator == 'NOT RANGE')) {
             // 时间范围组件返回的是时间数组
             if (baTable.comSearch.form[key] && baTable.comSearch.form[key].length >= 2) {
                 // 数组转字符串，以实现通过url参数传递预设搜索值
