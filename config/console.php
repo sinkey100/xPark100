@@ -5,6 +5,7 @@
 return [
     // 指令定义
     'commands' => [
-        'Xpark' => \app\command\Xpark::class
+        'Xpark'   => \app\command\Xpark::class,
+        'MiTools' => \app\command\MiTools::class
     ],
 ];

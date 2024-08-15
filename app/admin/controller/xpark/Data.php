@@ -113,13 +113,13 @@ class Data extends Backend
         // 总收入
         $total['ad_revenue'] = round($total['ad_revenue'], 2);
         // 填充率
-        $total['fill_rate'] = round($total['fills'] / $total['requests'] * 100, 2) . '%';
+        $total['fill_rate'] = round($total['fills'] / ($total['requests'] ? : 1) * 100, 2) . '%';
         // 点击率
-        $total['click_rate'] = round($total['clicks'] / $total['impressions'] * 100, 2) . '%';
+        $total['click_rate'] = round($total['clicks'] / ($total['impressions'] ? : 1) * 100, 2) . '%';
         // 单价
-        $total['unit_price'] = round($total['ad_revenue'] / $total['clicks'], 2);
+        $total['unit_price'] = round($total['ad_revenue'] / ($total['clicks'] ? : 1), 2);
         // eCPM
-        $total['ecpm'] = round($total['ad_revenue'] / $total['impressions'] * 1000, 2);
+        $total['ecpm'] = round($total['ad_revenue'] / ($total['impressions'] ? : 1) * 1000, 2);
 
 
         $list = array_merge($res->items(), [$total]);
