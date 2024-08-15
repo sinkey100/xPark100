@@ -7,10 +7,10 @@ use think\Model;
 /**
  * Report
  */
-class Report extends Model
+class ReportUrl extends Model
 {
     // 表名
-    protected $name = 'mi_instant_report';
+    protected $name = 'mi_instant_report_url';
 
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = true;

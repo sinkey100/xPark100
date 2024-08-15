@@ -20,6 +20,7 @@ use think\facade\Db;
 use think\facade\Env;
 use sdk\Google as GoogleSDK;
 use app\admin\model\mi\instant\Report as InstantReport;
+use app\admin\model\mi\instant\ReportUrl as InstantReportUrl;
 
 
 class MiTools extends Base
@@ -55,6 +56,12 @@ class MiTools extends Base
             $maxId = InstantReport::max('id');
             $maxId++;
             Db::execute("ALTER TABLE `ba_mi_instant_report` AUTO_INCREMENT={$maxId};");
+
+            InstantReportUrl::where('DATE', date("Y-m-d", strtotime("-$i days")))->delete();
+            // 重置自增id
+            $maxId = InstantReportUrl::max('id');
+            $maxId++;
+            Db::execute("ALTER TABLE `ba_mi_instant_report_url` AUTO_INCREMENT={$maxId};");
         }
 
         $accounts = Account::where('id', 'in', array_keys($domainList))->select();
@@ -76,14 +83,9 @@ class MiTools extends Base
             $afcId         = substr($adsenseClient['name'], strrpos($adsenseClient['name'], '/') + 1);
             if (empty($afcId)) throw new Exception('AFC Client 错误');
 
-            // 拉取数据
-            $filters   = array_map(function ($domain) {
-                return "PAGE_URL=@$domain";
-            }, $domainList[$account->id]);
-            $filters[] = 'AD_CLIENT_ID==' . $afcId;
-
+            // 拉取数据参数
             $startTime = strtotime("-2 days");
-            $result    = $adsense->accounts_reports->generate($account->adsense_name, [
+            $params    = [
                 'startDate.year'  => date("Y", $startTime),
                 'startDate.month' => date("m", $startTime),
                 'startDate.day'   => date("d", $startTime),
@@ -93,30 +95,56 @@ class MiTools extends Base
                 'metrics'         => [
                     'PAGE_VIEWS', 'AD_REQUESTS', 'AD_REQUESTS_COVERAGE', 'CLICKS', 'AD_REQUESTS_CTR', 'IMPRESSIONS',
                     'AD_REQUESTS_RPM', 'IMPRESSIONS_CTR', 'COST_PER_CLICK', 'IMPRESSIONS_RPM', 'ESTIMATED_EARNINGS',
-                    'PAGE_VIEWS_CTR', 'PAGE_VIEWS_RPM', 'ACTIVE_VIEW_VIEWABILITY'
+                    'PAGE_VIEWS_CTR', 'PAGE_VIEWS_RPM', 'ACTIVE_VIEW_VIEWABILITY', 'TOTAL_EARNINGS'
                 ],
                 'dimensions'      => [
-                    'DATE', 'PAGE_URL', 'COUNTRY_CODE'
+                    'DATE', 'COUNTRY_CODE', 'DOMAIN_NAME'
                 ],
                 'orderBy'         => '+DATE',
-                'filters'         => $filters
-            ]);
+            ];
 
+            // =================== 按域名维度拉取数据
+            $params['filters']   = array_map(function ($domain) {
+                return "DOMAIN_NAME=@$domain";
+            }, $domainList[$account->id]);
+            $params['filters'][] = 'AD_CLIENT_ID==' . $afcId;
+            $result              = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
+            $output->writeln(count($result['rows']));
 
             $headers = array_column($result['headers'], 'name');
             foreach ($result['rows'] as $row) {
-                $insert = [
-                    'report_google_id' => $account->id
-                ];
-
+                $insert = [];
                 foreach ($headers as $k => $header) {
                     $insert[$header] = $row['cells'][$k]['value'];
                 }
+                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
+                $insert['google_account_id'] = $account->id;
+                InstantReport::create($insert);
+            }
+
+            // =================== 按URL维度拉取数据
+            $params['filters']    = array_map(function ($domain) {
+                return "PAGE_URL=@$domain";
+            }, $domainList[$account->id]);
+            $params['filters'][]  = 'AD_CLIENT_ID==' . $afcId;
+            $params['dimensions'] = [
+                'DATE', 'COUNTRY_CODE', 'PAGE_URL'
+            ];
+            $result               = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            if (!$result['rows'] || count($result['rows']) == 0) continue;
+            $output->writeln(count($result['rows']));
+
+            $headers = array_column($result['headers'], 'name');
+            foreach ($result['rows'] as $row) {
+                $insert = [];
+                foreach ($headers as $k => $header) {
+                    $insert[$header] = $row['cells'][$k]['value'];
+                }
+                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
                 $insert['DOMAIN_NAME'] = parse_url($insert['PAGE_URL'])['host'] ?? '';
                 $insert['google_account_id'] = $account->id;
-
-                InstantReport::create($insert);
+                InstantReportUrl::create($insert);
             }
         }
     }
