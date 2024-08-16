@@ -16,6 +16,13 @@ class Report extends Model
     protected $autoWriteTimestamp = true;
     protected $updateTime = false;
     protected $append = ['ctr', 'coverage', 'ecpm', 'cpc', 'revenue'];
+    protected $type = [
+        'PAGE_VIEWS'         => 'integer',
+        'AD_REQUESTS'        => 'integer',
+        'IMPRESSIONS'        => 'integer',
+        'ESTIMATED_EARNINGS' => 'float',
+        'CLICKS'             => 'float',
+    ];
 
     protected function getCtrAttr($value, $data): string
     {
@@ -48,7 +55,7 @@ class Report extends Model
 
     protected function getRevenueAttr($value, $data): string
     {
-        return round($data['ESTIMATED_EARNINGS'] ?? '0' , 2);
+        return round($data['ESTIMATED_EARNINGS'] ?? '0', 2);
 //        return round($data['ESTIMATED_EARNINGS'] / (!empty($data['CLICKS']) ? $data['CLICKS'] : 1), 2);
     }
 

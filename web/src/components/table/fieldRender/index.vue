@@ -92,7 +92,7 @@
     </div>
 
     <div v-if="field.render == 'datetimeAndTotal'">
-        {{ !fieldValue ? '合计' : timeFormat(fieldValue, field.timeFormat ?? undefined) }}
+        {{ !fieldValue ? '本页合计' : timeFormat(fieldValue, field.timeFormat ?? undefined) }}
     </div>
 
     <!-- color -->

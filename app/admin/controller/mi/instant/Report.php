@@ -63,7 +63,7 @@ class Report extends Backend
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
-            ->order('id', 'desc')
+            ->order($order)
             ->group(implode(',', $dimension));
         return [$res, $limit, $dimension];
     }
@@ -77,41 +77,41 @@ class Report extends Backend
 
         [$res, $limit, $dimension] = $this->calcData();
         $res = $res->paginate($limit);
-        $res->visible(['domain' => ['domain']]);
-//
-//        $total = [
-//            'id'          => 10000,
-//            'ad_revenue'  => 0,
-//            'requests'    => 0,
-//            'fills'       => 0,
-//            'impressions' => 0,
-//            'clicks'      => 0,
-//            'a_date'      => '',
-//        ];
-//        foreach ($res->items() as $v) {
-//            $total['ad_revenue']  += $v['ad_revenue'];
-//            $total['requests']    += $v['requests'];
-//            $total['fills']       += $v['fills'];
-//            $total['impressions'] += $v['impressions'];
-//            $total['clicks']      += $v['clicks'];
-//        }
-//
-//        // 总收入
-//        $total['ad_revenue'] = round($total['ad_revenue'], 2);
-//        // 填充率
-//        $total['fill_rate'] = round($total['fills'] / ($total['requests'] ? : 1) * 100, 2) . '%';
-//        // 点击率
-//        $total['click_rate'] = round($total['clicks'] / ($total['impressions'] ? : 1) * 100, 2) . '%';
-//        // 单价
-//        $total['unit_price'] = round($total['ad_revenue'] / ($total['clicks'] ? : 1), 2);
-//        // eCPM
-//        $total['ecpm'] = round($total['ad_revenue'] / ($total['impressions'] ? : 1) * 1000, 2);
-//
-//
-//        $list = array_merge($res->items(), [$total]);
+
+        $total = [
+            'ESTIMATED_EARNINGS'  => 0,
+            'PAGE_VIEWS'    => 0,
+            'AD_REQUESTS'       => 0,
+            'IMPRESSIONS' => 0,
+            'CLICKS'      => 0,
+            'FILLS'      => 0,
+            'date'      => ''
+        ];
+        foreach ($res->items() as $v) {
+            $total['ESTIMATED_EARNINGS']  += $v['ESTIMATED_EARNINGS'];
+            $total['PAGE_VIEWS']    += $v['PAGE_VIEWS'];
+            $total['AD_REQUESTS']       += $v['AD_REQUESTS'];
+            $total['IMPRESSIONS'] += $v['IMPRESSIONS'];
+            $total['CLICKS']      += $v['CLICKS'];
+            $total['FILLS']      += $v['FILLS'];
+        }
+
+        // 总收入
+        $total['revenue'] = round($total['ESTIMATED_EARNINGS'], 2);
+        // 填充率
+        $total['coverage'] = round($total['FILLS'] / ($total['AD_REQUESTS'] ? : 1) * 100, 2) . '%';
+        // 点击率
+        $total['ctr'] = round($total['CLICKS'] / ($total['IMPRESSIONS'] ? : 1) * 100, 2) . '%';
+        // 单价
+        $total['cpc'] = round($total['ESTIMATED_EARNINGS'] / ($total['CLICKS'] ? : 1), 2);
+        // eCPM
+        $total['ecpm'] = round($total['ESTIMATED_EARNINGS'] / ($total['IMPRESSIONS'] ? : 1) * 1000, 3);
+
+
+        $list = array_merge($res->items(), [$total]);
 
         $this->success('', [
-            'list'   => $res->items(),
+            'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
         ]);
