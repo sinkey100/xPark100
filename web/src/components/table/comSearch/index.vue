@@ -33,7 +33,7 @@
                         </el-col>
 
                         <!-- 时间范围 -->
-                        <el-col v-else-if="(item.render == 'datetime' || item.render == 'datetimeAndTotal') && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')" :xs="24" :sm="12">
+                        <el-col v-else-if="(item.render == 'datetime' || item.render == 'datetimeAndTotal') && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')" :xs="24" :sm="6">
                             <div class="com-search-col" :class="item.prop">
                                 <div class="com-search-col-label w16" v-if="item.comSearchShowLabel !== false">{{ item.label }}</div>
                                 <div class="com-search-col-input-range w83">
@@ -148,13 +148,11 @@
                         </el-col>
                     </template>
                 </template>
-                <el-col :xs="24" :sm="6">
-                    <div class="com-search-col pl-20">
-                        <el-button v-blur @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>
-                        <el-button @click="onResetForm()">{{ $t('Reset') }}</el-button>
-                    </div>
-                </el-col>
             </el-row>
+            <div class="com-search-col com-search-btn pl-20">
+                <el-button v-blur @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>
+                <el-button @click="onResetForm()">{{ $t('Reset') }}</el-button>
+            </div>
         </el-form>
     </div>
 </template>
@@ -263,12 +261,17 @@ const onResetForm = () => {
     border-bottom: none;
     padding: 13px 15px;
     font-size: 14px;
+    position: relative;
     .com-search-col {
         display: flex;
         align-items: center;
         padding-top: 8px;
         color: var(--el-text-color-regular);
         font-size: 13px;
+    }
+    .com-search-btn{
+        display: block;
+        text-align: right;
     }
     .com-search-col-label {
         width: 33.33%;
