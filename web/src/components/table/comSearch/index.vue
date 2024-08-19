@@ -148,17 +148,23 @@
                         </el-col>
                     </template>
                 </template>
+
+                <el-col v-for="(gap, gap_idx) in gapFieldNum" v-bind:key="'gap_'+gap_idx" :xs="1" :sm="6">
+                </el-col>
+
+                <el-col :xs="24" :sm="6">
+                    <div class="com-search-btn com-search-col pl-20">
+                        <el-button v-blur @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>
+                        <el-button @click="onResetForm()">{{ $t('Reset') }}</el-button>
+                    </div>
+                </el-col>
             </el-row>
-            <div class="com-search-col com-search-btn pl-20">
-                <el-button v-blur @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>
-                <el-button @click="onResetForm()">{{ $t('Reset') }}</el-button>
-            </div>
         </el-form>
     </div>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import {inject, ref} from 'vue'
 import type baTableClass from '/@/utils/baTable'
 import { isEmpty } from 'lodash-es'
 import BaInput from '/@/components/baInput/index.vue'
@@ -249,6 +255,20 @@ const onResetForm = () => {
     }
     onComSearch()
 }
+
+// 获取搜索字段数
+const fieldNum = ref(0);
+baTable.table.column.forEach(item=>{
+    if(item.operator != false){
+        fieldNum.value++;
+    }
+})
+// 计算补充间隔
+const nextMultipleOfFour = Math.ceil(fieldNum.value / 4) * 4;
+const totalNum = ref(fieldNum.value % 4 === 0 ? nextMultipleOfFour + 4 : nextMultipleOfFour);
+const gapFieldNum = ref(totalNum.value - fieldNum.value - 1);
+
+
 </script>
 
 <style scoped lang="scss">
@@ -262,16 +282,16 @@ const onResetForm = () => {
     padding: 13px 15px;
     font-size: 14px;
     position: relative;
+    .com-search-btn{
+        display: block!important;
+        text-align: right!important;
+    }
     .com-search-col {
         display: flex;
         align-items: center;
         padding-top: 8px;
         color: var(--el-text-color-regular);
         font-size: 13px;
-    }
-    .com-search-btn{
-        display: block;
-        text-align: right;
     }
     .com-search-col-label {
         width: 33.33%;
