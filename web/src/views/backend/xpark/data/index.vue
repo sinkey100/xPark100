@@ -18,9 +18,8 @@
             </el-form-item>
             <el-popconfirm title="是否确认导出？" @confirm="derive">
                 <template #reference>
-                    <el-button class="table-header-operate btn-export" type="success">
-                        <Icon color="#ffffff" name="el-icon-Download"/>
-                        <span class="table-header-operate-text">导出</span>
+                    <el-button class="table-header-operate btn-export" type="default">
+                        <Icon style="color:#333!important;" name="el-icon-Download"/>
                     </el-button>
                 </template>
             </el-popconfirm>
