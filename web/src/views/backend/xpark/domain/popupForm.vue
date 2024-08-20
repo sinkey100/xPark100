@@ -30,7 +30,13 @@
                     :label-width="baTable.form.labelWidth + 'px'"
                     :rules="rules"
                 >
+                    <FormItem :label="t('xpark.domain.domain')" type="string" v-model="baTable.form.items!.domain" prop="domain" :placeholder="t('Please input field', { field: t('xpark.domain.domain') })" />
+                    <FormItem :label="t('xpark.domain.original_domain')" type="string" v-model="baTable.form.items!.original_domain" prop="original_domain" :placeholder="t('Please input field', { field: t('xpark.domain.original_domain') })" />
                     <FormItem :label="t('xpark.domain.rate')" type="number" v-model="baTable.form.items!.rate" prop="rate" :placeholder="t('Please input field', { field: t('xpark.domain.rate') })" />
+                    <FormItem :label="t('xpark.domain.channel')" type="radio" v-model="baTable.form.items!.channel" prop="channel" :input-attr="{
+                            border: true,
+                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds'},
+                        }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })" />
                 </el-form>
             </div>
         </el-scrollbar>
@@ -60,7 +66,12 @@ const baTable = inject('baTable') as baTableClass
 
 const { t } = useI18n()
 
-const rules: Partial<Record<string, FormItemRule[]>> = reactive({})
+const rules: Partial<Record<string, FormItemRule[]>> = reactive({
+    domain: [buildValidatorData({ name: 'required', title: t('xpark.domain.domain') })],
+    original_domain: [buildValidatorData({ name: 'required', title: t('xpark.domain.original_domain') })],
+    rate: [buildValidatorData({ name: 'required', title: t('xpark.domain.rate') })],
+    channel: [buildValidatorData({ name: 'required', title: t('xpark.domain.channel') })],
+})
 </script>
 
 <style scoped lang="scss"></style>

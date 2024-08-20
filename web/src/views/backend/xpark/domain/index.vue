@@ -5,7 +5,7 @@
         <!-- 表格顶部菜单 -->
         <!-- 自定义按钮请使用插槽，甚至公共搜索也可以使用具名插槽渲染，参见文档 -->
         <TableHeader
-            :buttons="['refresh',  'comSearch', 'quickSearch', 'columnDisplay']"
+            :buttons="['refresh', 'add', 'comSearch', 'quickSearch', 'columnDisplay']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('xpark.domain.quick Search Fields') })"
         ></TableHeader>
 
@@ -16,7 +16,7 @@
             <template #rate>
                 <el-table-column prop="rate" width="100" align="center" :label="t('xpark.domain.rate')">
                     <template #default="scope">
-                        <span :class="{red: scope.row.rate < 100}">{{ scope.row.rate }}</span>
+                        <span :class="{red: scope.row.rate < 1}">{{ scope.row.rate }}</span>
                     </template>
                 </el-table-column>
             </template>
