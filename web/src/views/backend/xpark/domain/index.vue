@@ -5,14 +5,22 @@
         <!-- 表格顶部菜单 -->
         <!-- 自定义按钮请使用插槽，甚至公共搜索也可以使用具名插槽渲染，参见文档 -->
         <TableHeader
-            :buttons="['refresh', 'add', 'edit', 'delete', 'comSearch', 'quickSearch', 'columnDisplay']"
+            :buttons="['refresh',  'comSearch', 'quickSearch', 'columnDisplay']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('xpark.domain.quick Search Fields') })"
         ></TableHeader>
 
         <!-- 表格 -->
         <!-- 表格列有多种自定义渲染方式，比如自定义组件、具名插槽等，参见文档 -->
         <!-- 要使用 el-table 组件原有的属性，直接加在 Table 标签上即可 -->
-        <Table ref="tableRef"></Table>
+        <Table ref="tableRef">
+            <template #rate>
+                <el-table-column prop="rate" width="100" align="center" :label="t('xpark.domain.rate')">
+                    <template #default="scope">
+                        <span :class="{red: scope.row.rate < 100}">{{ scope.row.rate }}</span>
+                    </template>
+                </el-table-column>
+            </template>
+        </Table>
 
         <!-- 表单 -->
         <PopupForm />
@@ -35,7 +43,7 @@ defineOptions({
 
 const { t } = useI18n()
 const tableRef = ref()
-const optButtons: OptButton[] = defaultOptButtons(['edit', 'delete'])
+const optButtons: OptButton[] = defaultOptButtons(['edit'])
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -48,6 +56,11 @@ const baTable = new baTableClass(
             { type: 'selection', align: 'center', operator: false },
             { label: t('xpark.domain.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
             { label: t('xpark.domain.domain'), prop: 'domain', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            { label: t('xpark.domain.channel'), prop: 'channel', align: 'center', operatorPlaceholder: t('Fuzzy query'),render: 'tag', operator: 'LIKE', sortable: false },
+            {
+                render: 'slot',
+                slotName: 'rate',
+            },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
@@ -69,4 +82,8 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.red{
+    color:red;
+}
+</style>

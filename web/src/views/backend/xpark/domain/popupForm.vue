@@ -30,7 +30,7 @@
                     :label-width="baTable.form.labelWidth + 'px'"
                     :rules="rules"
                 >
-                    <FormItem :label="t('xpark.domain.domain')" type="string" v-model="baTable.form.items!.domain" prop="domain" :placeholder="t('Please input field', { field: t('xpark.domain.domain') })" />
+                    <FormItem :label="t('xpark.domain.rate')" type="number" v-model="baTable.form.items!.rate" prop="rate" :placeholder="t('Please input field', { field: t('xpark.domain.rate') })" />
                 </el-form>
             </div>
         </el-scrollbar>
