@@ -54,7 +54,7 @@ class Xpark extends Base
                     'Date', 'Domain', 'Country', 'Zone'
                 ],
                 'sorts'      => [
-                    'Date' => -1
+                    'Date' => 1
                 ],
                 'page_index' => 1,
                 'page_size'  => $pageSize
@@ -155,6 +155,7 @@ class Xpark extends Base
                 $v['channel']     = 'xpark365';
                 $v['domain_id']   = $this->getDomainId($v['sub_channel'], $v['channel']);
                 $v['sub_channel'] = str_replace($this->prefix, '', $v['sub_channel']);
+                $v['gross_revenue'] = $v['ad_revenue'];
             }
 
             $data = array_merge($data, $csvData);

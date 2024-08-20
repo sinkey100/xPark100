@@ -79,7 +79,7 @@ const baTable = new baTableClass(
                 render: 'datetimeAndTotal',
                 comSearchRender: 'date',
                 operator: 'RANGE',
-                sortable: 'custom',
+                sortable: false,
                 width: 140,
                 timeFormat: 'yyyy-mm-dd'
             },

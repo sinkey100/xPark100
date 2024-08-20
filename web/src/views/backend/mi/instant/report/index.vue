@@ -11,7 +11,7 @@
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.DATE" label="日期" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.COUNTRY_CODE" label="地区" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.PAGE_URL" label="URL" border/>
+<!--                <el-checkbox v-model="baTable.table.filter!.dimensions!.PAGE_URL" label="URL" border/>-->
             </el-form-item>
 
         </TableHeader>
@@ -46,7 +46,7 @@ const { t } = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
     DATE: true,
-    PAGE_URL: false,
+    // PAGE_URL: false,
     COUNTRY_CODE: false,
 })
 
@@ -62,17 +62,17 @@ const baTable = new baTableClass(
         },
         column: [
             { label: t('mi.instant.report.DATE'), prop: 'DATE', align: 'center', render: 'datetimeAndTotal', operator: 'RANGE', width: 150, timeFormat: 'yyyy-mm-dd' },
-            {label: t('mi.instant.report.PAGE_URL'), prop: 'PAGE_URL', align: 'center', operator: 'LIKE', sortable: false,},
-            {label: t('mi.instant.report.COUNTRY_CODE'), prop: 'COUNTRY_CODE', align: 'center', operator: 'LIKE',  width: 70},
-            {label: t('mi.instant.report.ESTIMATED_EARNINGS'), prop: 'revenue', align: 'center', operator: false, sortable: true, width: 110},
-            {label: t('mi.instant.report.PAGE_VIEWS'), prop: 'PAGE_VIEWS', align: 'center', operator: false, sortable: true, width: 100,},
-            {label: t('mi.instant.report.AD_REQUESTS'), prop: 'AD_REQUESTS', align: 'center', operator: false, sortable: true, width: 100},
-            {label: t('mi.instant.report.IMPRESSIONS'), prop: 'IMPRESSIONS', align: 'center', operator: false, sortable: true, width: 100},
-            {label: t('mi.instant.report.AD_REQUESTS_COVERAGE'), prop: 'coverage', align: 'center', operator: false, sortable: false, width: 100},
-            {label: t('mi.instant.report.CLICKS'), prop: 'CLICKS', align: 'center', operator: false, sortable: true, width: 100},
-            {label: t('mi.instant.report.IMPRESSIONS_CTR'), prop: 'ctr', align: 'center', operator: false, sortable: false, width: 100},
-            {label: t('mi.instant.report.COST_PER_CLICK'), prop: 'cpc', align: 'center', operator: false, sortable: false, width: 100},
-            {label: t('mi.instant.report.IMPRESSIONS_RPM'), prop: 'ecpm', align: 'center', operator: false, sortable: false, width: 100},
+            // {label: t('mi.instant.report.PAGE_URL'), prop: 'PAGE_URL', align: 'center', operator: 'LIKE', sortable: false,},
+            {label: t('mi.instant.report.COUNTRY_CODE'), prop: 'COUNTRY_CODE', align: 'center', operator: 'LIKE'},
+            {label: t('mi.instant.report.ESTIMATED_EARNINGS'), prop: 'revenue', align: 'center', operator: false, sortable: true},
+            {label: t('mi.instant.report.PAGE_VIEWS'), prop: 'PAGE_VIEWS', align: 'center', operator: false, sortable: true,},
+            {label: t('mi.instant.report.AD_REQUESTS'), prop: 'AD_REQUESTS', align: 'center', operator: false, sortable: true},
+            {label: t('mi.instant.report.IMPRESSIONS'), prop: 'IMPRESSIONS', align: 'center', operator: false, sortable: true},
+            {label: t('mi.instant.report.AD_REQUESTS_COVERAGE'), prop: 'coverage', align: 'center', operator: false, sortable: false},
+            {label: t('mi.instant.report.CLICKS'), prop: 'CLICKS', align: 'center', operator: false, sortable: true},
+            {label: t('mi.instant.report.IMPRESSIONS_CTR'), prop: 'ctr', align: 'center', operator: false, sortable: false},
+            {label: t('mi.instant.report.COST_PER_CLICK'), prop: 'cpc', align: 'center', operator: false, sortable: false},
+            {label: t('mi.instant.report.IMPRESSIONS_RPM'), prop: 'ecpm', align: 'center', operator: false, sortable: false},
         ],
         dblClickNotEditColumn: [undefined],
     },

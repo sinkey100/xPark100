@@ -6,6 +6,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 use app\common\controller\Backend;
+use app\admin\model\xpark\Domain;
 
 /**
  * xPark数据
@@ -25,10 +26,13 @@ class Data extends Backend
 
     protected string|array $quickSearchField = ['id'];
 
+    protected array $domains = [];
+
     public function initialize(): void
     {
         parent::initialize();
-        $this->model = new \app\admin\model\xpark\Data();
+        $this->model   = new \app\admin\model\xpark\Data();
+        $this->domains = array_column(Domain::select()->toArray(), null, 'domain');
     }
 
     protected function calcData()
@@ -62,6 +66,7 @@ class Data extends Backend
             'SUM(impressions) AS impressions',
             'SUM(clicks) AS clicks',
             'SUM(ad_revenue) AS ad_revenue',
+            'SUM(gross_revenue) AS gross_revenue'
         ]);
 
         $res = $this->model->field($field)
@@ -94,35 +99,26 @@ class Data extends Backend
         $res->visible(['domain' => ['domain']]);
 
         $total = [
-            'id'          => 10000,
-            'ad_revenue'  => 0,
-            'requests'    => 0,
-            'fills'       => 0,
-            'impressions' => 0,
-            'clicks'      => 0,
-            'a_date'      => '',
+            'id'            => 10000,
+            'ad_revenue'    => 0,
+            'gross_revenue' => 0,
+            'requests'      => 0,
+            'fills'         => 0,
+            'impressions'   => 0,
+            'clicks'        => 0,
+            'a_date'        => '',
         ];
         foreach ($res->items() as $v) {
-            $total['ad_revenue']  += $v['ad_revenue'];
-            $total['requests']    += $v['requests'];
-            $total['fills']       += $v['fills'];
-            $total['impressions'] += $v['impressions'];
-            $total['clicks']      += $v['clicks'];
+            $total['ad_revenue']    += $v['ad_revenue'];
+            $total['requests']      += $v['requests'];
+            $total['fills']         += $v['fills'];
+            $total['impressions']   += $v['impressions'];
+            $total['clicks']        += $v['clicks'];
+            $total['gross_revenue'] += $v['gross_revenue'];
         }
 
-        // 总收入
-        $total['ad_revenue'] = round($total['ad_revenue'], 2);
-        // 填充率
-        $total['fill_rate'] = round($total['fills'] / ($total['requests'] ? : 1) * 100, 2) . '%';
-        // 点击率
-        $total['click_rate'] = round($total['clicks'] / ($total['impressions'] ? : 1) * 100, 2) . '%';
-        // 单价
-        $total['unit_price'] = round($total['ad_revenue'] / ($total['clicks'] ? : 1), 2);
-        // eCPM
-        $total['ecpm'] = round($total['ad_revenue'] / ($total['impressions'] ? : 1) * 1000, 2);
-
-
         $list = array_merge($res->items(), [$total]);
+        $list = $this->rate($list);
 
         $this->success('', [
             'list'   => $list,
@@ -135,6 +131,7 @@ class Data extends Backend
     {
         [$list, $limit, $dimension] = $this->calcData();
         $list = $list->select();
+        $list = $this->rate($list);
 
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
@@ -192,6 +189,45 @@ class Data extends Backend
         header('Cache-Control: max-age=0');
         $writer->save('php://output');
         $spreadsheet->disconnectWorksheets();
+    }
+
+    protected function rate($data)
+    {
+        foreach ($data as &$v) {
+            // 点击率：  点击/展示
+            $v['click_rate'] = $v['clicks'] / (!empty($v['impressions']) ? $v['impressions'] : 1);;
+            $v['click_rate'] = number_format($v['click_rate'] * 100, 2) . '%';
+
+            // 填充率：  展示/请求
+            $v['fill_rate'] = $v['fills'] / (!empty($v['requests']) ? $v['requests'] : 1);
+            $v['fill_rate'] = number_format($v['fill_rate'] * 100, 2) . '%';
+
+            // 单价：  总收入/点击次数
+            $v['unit_price'] = round($v['ad_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
+
+            // ECPM = 收入/网页展示次数×1000
+            $v['ecpm'] = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
+
+            if ($this->auth->id != 1) {
+                unset($v['gross_revenue']);
+            } else {
+                $v['ad_revenue'] = $this->numberDiffFormat($v['ad_revenue'], $v['gross_revenue']);
+                $v['unit_price'] = $this->numberDiffFormat($v['unit_price'],
+                    round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2)
+                );
+                $v['ecpm']       = $this->numberDiffFormat($v['ecpm'],
+                    round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3)
+                );
+            }
+        }
+        return $data;
+    }
+
+    protected function numberDiffFormat($a, $b)
+    {
+        $b = sprintf("%.2f", $b);
+        if ($b == $a) return $a;
+        return implode(' | ', [$a, $b]);
     }
 
 
