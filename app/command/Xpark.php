@@ -33,8 +33,8 @@ class Xpark extends Base
             $maxId++;
             Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
         }
-        $this->beesAds($output);
         $this->xpark365($output);
+        $this->beesAds($output);
     }
 
     protected function beesAds(Output $output)
@@ -77,7 +77,7 @@ class Xpark extends Base
             $output->writeln(json_encode($result));
             return;
         }
-        $output->writeln(date("Y-m-d H:i:s") . ' BeesAd准备拉取'. $result['data']['total'] .'条数据');
+        $output->writeln(date("Y-m-d H:i:s") . ' BeesAd准备拉取' . $result['data']['total'] . '条数据');
 
         $pages = ceil($result['data']['total'] / $pageSize);
         // 批量拉取数据
@@ -86,18 +86,18 @@ class Xpark extends Base
             sleep(5);
             $params['json']['page_index'] = $page;
             $params['json']['page_size']  = $pageSize;
-            $result               = $this->http('POST',
+            $result                       = $this->http('POST',
                 'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
                 $params
             );
-            $data = [];
-            if(empty($result['data']['rows'])){
+            $data                         = [];
+            if (empty($result['data']['rows'])) {
                 $output->writeln('BeesAds没有拉取到数据');
                 return;
             }
 
             foreach ($result['data']['rows'] as $v) {
-                $row = [
+                $row    = [
                     'channel'         => 'BeesAds',
                     'sub_channel'     => $v['Domain'],
                     'domain_id'       => $this->getDomainId($v['Domain'], 'BeesAds'),
@@ -110,6 +110,7 @@ class Xpark extends Base
                     'clicks'          => $v['Clicks'],
                     'ad_revenue'      => $v['GrossRevenue'],
 
+                    'gross_revenue' => $v['GrossRevenue'],
                     'net_revenue'   => $v['NetRevenue'],
                     'raw_cpc'       => $v['Cpc'],
                     'raw_ctr'       => $v['Ctr'],
@@ -118,7 +119,7 @@ class Xpark extends Base
                 $data[] = $row;
             }
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAds拉取数据完成，长度' . count($data));
-            Data::insertAll($data);
+            $this->saveData($data);
         }
     }
 
@@ -159,14 +160,14 @@ class Xpark extends Base
             $data = array_merge($data, $csvData);
         }
         $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，长度' . count($data));
-        Data::insertAll($data);
+        $this->saveData($data);
     }
 
     protected function getDomainId($domain, $channel = ''): int
     {
         // 系统记录的域名列表
         if (count($this->domains) == 0) {
-            $domains       = Domain::field(['id', 'domain', 'original_domain'])->select()->toArray();
+            $domains       = Domain::field(['id', 'domain', 'original_domain', 'rate'])->select()->toArray();
             $this->domains = array_column($domains, null, 'original_domain');
         }
         if (isset($this->domains[$domain])) {
@@ -183,6 +184,25 @@ class Xpark extends Base
             'id'              => $item->id
         ];
         return $item->id;
+    }
+
+    protected function saveData($data): void
+    {
+        foreach ($data as &$row) {
+            if (
+                !isset($this->domains[$row['sub_channel']])
+                || !isset($this->domains[$row['sub_channel']]['rate'])
+                || floatval($this->domains[$row['sub_channel']]['rate']) == 1
+            ) continue;
+
+            // 需要特殊处理
+            $rate = floatval($this->domains[$row['sub_channel']]['rate']);
+            // 备份数据
+            $row['gross_revenue'] = $row['ad_revenue'];
+            $row['ad_revenue'] = $row['ad_revenue'] * $rate;
+        }
+
+        Data::insertAll($data);
     }
 
 }
