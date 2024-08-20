@@ -33,8 +33,97 @@ class Xpark extends Base
             $maxId++;
             Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
         }
+        $this->beesAds($output);
+        $this->xpark365($output);
+    }
 
+    protected function beesAds(Output $output)
+    {
+        $pageSize = 100;
+        $params   = [
+            'headers' => [
+                'x-apihub-ak'  => Env::get('BEESADS.TOKEN'),
+                'x-apihub-env' => 'prod',
+            ],
+            'json'    => [
+                'date_range' => [
+                    'start' => date("Y-m-d", strtotime("-2 days")),
+                    'end'   => date("Y-m-d")
+                ],
+                'dimensions' => [
+                    'Date', 'Domain', 'Country', 'Zone'
+                ],
+                'sorts'      => [
+                    'Date' => -1
+                ],
+                'page_index' => 1,
+                'page_size'  => $pageSize
+            ],
+        ];
 
+        // 获取total
+        $params['json']['page_size'] = 1;
+        $result                      = $this->http('POST',
+            'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
+            $params
+        );
+        if (!empty($result['error'])) {
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAd拉取数据错误');
+            $output->writeln(json_encode($result));
+            return;
+        }
+        if (empty($result['data']['total'])) {
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAd拉取数据完成，没有返回数据');
+            $output->writeln(json_encode($result));
+            return;
+        }
+        $output->writeln(date("Y-m-d H:i:s") . ' BeesAd准备拉取'. $result['data']['total'] .'条数据');
+
+        $pages = ceil($result['data']['total'] / $pageSize);
+        // 批量拉取数据
+
+        for ($page = 1; $page <= $pages; $page++) {
+            sleep(5);
+            $params['json']['page_index'] = $page;
+            $params['json']['page_size']  = $pageSize;
+            $result               = $this->http('POST',
+                'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
+                $params
+            );
+            $data = [];
+            if(empty($result['data']['rows'])){
+                $output->writeln('BeesAds没有拉取到数据');
+                return;
+            }
+
+            foreach ($result['data']['rows'] as $v) {
+                $row = [
+                    'channel'         => 'BeesAds',
+                    'sub_channel'     => $v['Domain'],
+                    'domain_id'       => $this->getDomainId($v['Domain'], 'BeesAds'),
+                    'a_date'          => $v['Date'],
+                    'country_code'    => $v['Country'],
+                    'ad_placement_id' => $v['Zone'],
+                    'requests'        => $v['TotalAdRequests'],
+                    'fills'           => $v['ResponseRate'] * $v['TotalAdRequests'],
+                    'impressions'     => $v['Impressions'],
+                    'clicks'          => $v['Clicks'],
+                    'ad_revenue'      => $v['GrossRevenue'],
+
+                    'net_revenue'   => $v['NetRevenue'],
+                    'raw_cpc'       => $v['Cpc'],
+                    'raw_ctr'       => $v['Ctr'],
+                    'raw_ecpm'      => $v['ECpm']
+                ];
+                $data[] = $row;
+            }
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAds拉取数据完成，长度' . count($data));
+            Data::insertAll($data);
+        }
+    }
+
+    protected function xpark365(Output $output)
+    {
         $result = $this->http('POST', 'https://manage.xpark365.com/backend/gmf-manage/report/get_report', [
             'json'    => [
                 'user_id'   => Env::get('XPARK.USER_ID'),
@@ -46,13 +135,13 @@ class Xpark extends Base
             ]
         ]);
 
-        if(!isset($result['data']['list'])){
-            $output->writeln(date("Y-m-d H:i:s") . ' 拉取数据完成，没有返回数据');
+        if (!isset($result['data']['list'])) {
+            $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，没有返回数据');
             $output->writeln(json_encode($result));
             return;
         }
-        if(count($result['data']['list']) == 0){
-            $output->writeln(date("Y-m-d H:i:s") . ' 拉取数据完成，长度0');
+        if (count($result['data']['list']) == 0) {
+            $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，长度0');
             $output->writeln(json_encode($result));
             return;
         }
@@ -62,17 +151,18 @@ class Xpark extends Base
             $csvRaw = file_get_contents($item_day['url']);
             [$fields, $csvData] = $this->csv_to_json($csvRaw);
             foreach ($csvData as &$v) {
-                $v['domain_id']   = $this->getDomainId($v['sub_channel']);
+                $v['channel']     = 'xpark365';
+                $v['domain_id']   = $this->getDomainId($v['sub_channel'], $v['channel']);
                 $v['sub_channel'] = str_replace($this->prefix, '', $v['sub_channel']);
             }
 
             $data = array_merge($data, $csvData);
         }
-        $output->writeln(date("Y-m-d H:i:s") . ' 拉取数据完成，长度' . count($data));
+        $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，长度' . count($data));
         Data::insertAll($data);
     }
 
-    protected function getDomainId($domain): int
+    protected function getDomainId($domain, $channel = ''): int
     {
         // 系统记录的域名列表
         if (count($this->domains) == 0) {
@@ -85,6 +175,7 @@ class Xpark extends Base
         $item                   = Domain::create([
             'domain'          => str_replace($this->prefix, '', $domain),
             'original_domain' => $domain,
+            'channel'         => $channel
         ]);
         $this->domains[$domain] = [
             'domain'          => $item->domain,
