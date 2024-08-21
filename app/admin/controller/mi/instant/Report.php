@@ -44,10 +44,6 @@ class Report extends Backend
             }
         }
 
-        if(in_array('PAGE_URL', $dimension)){
-            $this->model = new ReportUrl();
-        }
-
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
         $field = array_merge($dimension, [

@@ -61,7 +61,7 @@ const baTable = new baTableClass(
             limit: 20
         },
         column: [
-            { label: t('mi.instant.report.DATE'), prop: 'DATE', align: 'center', render: 'datetimeAndTotal', operator: 'RANGE', width: 150, timeFormat: 'yyyy-mm-dd' },
+            { label: t('mi.instant.report.DATE'), prop: 'DATE', align: 'center', render: 'datetimeAndTotal',comSearchRender: 'date', operator: 'RANGE', width: 150, timeFormat: 'yyyy-mm-dd' },
             // {label: t('mi.instant.report.PAGE_URL'), prop: 'PAGE_URL', align: 'center', operator: 'LIKE', sortable: false,},
             {label: t('mi.instant.report.COUNTRY_CODE'), prop: 'COUNTRY_CODE', align: 'center', operator: 'LIKE'},
             {label: t('mi.instant.report.ESTIMATED_EARNINGS'), prop: 'revenue', align: 'center', operator: false, sortable: true},

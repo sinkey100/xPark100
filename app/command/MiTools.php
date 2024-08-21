@@ -56,12 +56,6 @@ class MiTools extends Base
             $maxId = InstantReport::max('id');
             $maxId++;
             Db::execute("ALTER TABLE `ba_mi_instant_report` AUTO_INCREMENT={$maxId};");
-
-            InstantReportUrl::where('DATE', date("Y-m-d", strtotime("-$i days")))->delete();
-            // 重置自增id
-            $maxId = InstantReportUrl::max('id');
-            $maxId++;
-            Db::execute("ALTER TABLE `ba_mi_instant_report_url` AUTO_INCREMENT={$maxId};");
         }
 
         $accounts = Account::where('id', 'in', array_keys($domainList))->select();
@@ -92,6 +86,12 @@ class MiTools extends Base
                 'endDate.year'    => date("Y"),
                 'endDate.month'   => date("m"),
                 'endDate.day'     => date("d"),
+//                'startDate.year'  => '2024',
+//                'startDate.month' => '07',
+//                'startDate.day'   => '01',
+//                'endDate.year'    => '2024',
+//                'endDate.month'   => '08',
+//                'endDate.day'     => '31',
                 'metrics'         => [
                     'PAGE_VIEWS', 'AD_REQUESTS', 'AD_REQUESTS_COVERAGE', 'CLICKS', 'AD_REQUESTS_CTR', 'IMPRESSIONS',
                     'AD_REQUESTS_RPM', 'IMPRESSIONS_CTR', 'COST_PER_CLICK', 'IMPRESSIONS_RPM', 'ESTIMATED_EARNINGS',
@@ -107,10 +107,9 @@ class MiTools extends Base
             $params['filters']   = array_map(function ($domain) {
                 return "DOMAIN_NAME=@$domain";
             }, $domainList[$account->id]);
-            $params['filters'][] = 'AD_CLIENT_ID==' . $afcId;
+//            $params['filters'][] = 'AD_CLIENT_ID==' . $afcId;
             $result              = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
-            $output->writeln(count($result['rows']));
 
             $headers = array_column($result['headers'], 'name');
             foreach ($result['rows'] as $row) {
@@ -118,33 +117,9 @@ class MiTools extends Base
                 foreach ($headers as $k => $header) {
                     $insert[$header] = $row['cells'][$k]['value'];
                 }
-                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
+                $insert['FILLS']             = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
                 $insert['google_account_id'] = $account->id;
                 InstantReport::create($insert);
-            }
-
-            // =================== 按URL维度拉取数据
-            $params['filters']    = array_map(function ($domain) {
-                return "PAGE_URL=@$domain";
-            }, $domainList[$account->id]);
-            $params['filters'][]  = 'AD_CLIENT_ID==' . $afcId;
-            $params['dimensions'] = [
-                'DATE', 'COUNTRY_CODE', 'PAGE_URL'
-            ];
-            $result               = $adsense->accounts_reports->generate($account->adsense_name, $params);
-            if (!$result['rows'] || count($result['rows']) == 0) continue;
-            $output->writeln(count($result['rows']));
-
-            $headers = array_column($result['headers'], 'name');
-            foreach ($result['rows'] as $row) {
-                $insert = [];
-                foreach ($headers as $k => $header) {
-                    $insert[$header] = $row['cells'][$k]['value'];
-                }
-                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
-                $insert['DOMAIN_NAME'] = parse_url($insert['PAGE_URL'])['host'] ?? '';
-                $insert['google_account_id'] = $account->id;
-                InstantReportUrl::create($insert);
             }
         }
     }
