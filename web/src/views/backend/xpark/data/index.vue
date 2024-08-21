@@ -6,7 +6,7 @@
         <!-- 表格顶部菜单 -->
         <!-- 自定义按钮请使用插槽，甚至公共搜索也可以使用具名插槽渲染，参见文档 -->
         <TableHeader
-            :buttons="['comSearch']"
+            :buttons="['comSearch', 'columnDisplay']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('xpark.data.quick Search Fields') })"
         >
             <el-form-item :label-width="100" label="维度">
@@ -14,6 +14,7 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.sub_channel" label="子渠道" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.country_code" label="地区" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
+                <el-checkbox v-if="adminInfo.id == 1" v-model="original" label="Original" border/>
                 <!--                <el-button class="dimensions-btn" @click="onComSearch" type="primary">{{ $t('Search') }}</el-button>-->
             </el-form-item>
             <el-popconfirm title="是否确认导出？" @confirm="derive">
@@ -65,6 +66,8 @@ const dimensions = reactive({
 })
 
 const adminInfo = useAdminInfo();
+const original = ref(false)
+const rawField = ['gross_revenue', 'raw_ecpm', 'raw_unit_price'];
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -138,7 +141,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.gross_revenue'),
                 prop: 'gross_revenue',
                 align: 'center',
-                show: adminInfo.id == 1,
+                show: original.value == true,
                 operator: false,
                 sortable: false,
                 width: 120
@@ -207,7 +210,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.raw_unit_price'),
                 prop: 'raw_unit_price',
                 align: 'center',
-                show: adminInfo.id == 1,
+                show: original.value == true,
                 operator: false,
                 sortable: false,
                 width: 120
@@ -224,7 +227,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.raw_ecpm'),
                 prop: 'raw_ecpm',
                 align: 'center',
-                show: adminInfo.id == 1,
+                show: original.value == true,
                 operator: false,
                 sortable: false,
                 width: 120
@@ -237,6 +240,10 @@ const baTable = new baTableClass(
     }, {}, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
+                if(adminInfo.id == 1 && rawField.includes(item.prop)){
+                    item.show = original.value;
+                    return;
+                }
                 if (baTable.table.filter!.dimensions[item.prop] == undefined) {
                     return;
                 }

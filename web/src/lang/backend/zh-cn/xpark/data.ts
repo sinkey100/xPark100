@@ -16,7 +16,7 @@ export default {
     click_rate: '点击率 (ctr)',
     fill_rate: '填充率',
     unit_price: '单价 (cpc)',
-    raw_unit_price: '原始(cpc)',
+    raw_unit_price: '原始cpc',
     ecpm: 'eCPM',
     raw_ecpm: '原始eCPM',
 

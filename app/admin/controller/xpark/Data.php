@@ -207,6 +207,7 @@ class Data extends Backend
 
             // ECPM = 收入/网页展示次数×1000
             $v['ecpm'] = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
+            $v['ad_revenue'] = sprintf("%.2f", $v['ad_revenue']);;
 
             if ($this->auth->id != 1) {
                 unset($v['gross_revenue']);
