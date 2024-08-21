@@ -211,23 +211,12 @@ class Data extends Backend
             if ($this->auth->id != 1) {
                 unset($v['gross_revenue']);
             } else {
-                $v['ad_revenue'] = $this->numberDiffFormat($v['ad_revenue'], $v['gross_revenue']);
-                $v['unit_price'] = $this->numberDiffFormat($v['unit_price'],
-                    round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2)
-                );
-                $v['ecpm']       = $this->numberDiffFormat($v['ecpm'],
-                    round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3)
-                );
+                $v['gross_revenue']  = sprintf("%.2f", $v['gross_revenue']);
+                $v['raw_unit_price'] = round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
+                $v['raw_ecpm']       = round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             }
         }
         return $data;
-    }
-
-    protected function numberDiffFormat($a, $b)
-    {
-        $b = sprintf("%.2f", $b);
-        if ($b == $a) return $a;
-        return implode(' | ', [$a, $b]);
     }
 
 

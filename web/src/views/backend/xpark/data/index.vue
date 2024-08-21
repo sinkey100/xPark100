@@ -49,6 +49,7 @@ import {getArrayKey} from "/@/utils/common";
 import createAxios from "/@/utils/axios";
 import {AxiosPromise} from "axios";
 import fileDownload from "js-file-download";
+import { useAdminInfo } from '/@/stores/adminInfo'
 
 defineOptions({
     name: 'xpark/data',
@@ -62,6 +63,8 @@ const dimensions = reactive({
     country_code: false,
     ad_placement_id: false
 })
+
+const adminInfo = useAdminInfo();
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -132,6 +135,15 @@ const baTable = new baTableClass(
                 width: 120
             },
             {
+                label: t('xpark.data.gross_revenue'),
+                prop: 'gross_revenue',
+                align: 'center',
+                show: adminInfo.id == 1,
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
                 label: t('xpark.data.requests'),
                 prop: 'requests',
                 align: 'center',
@@ -192,9 +204,27 @@ const baTable = new baTableClass(
                 width: 120
             },
             {
+                label: t('xpark.data.raw_unit_price'),
+                prop: 'raw_unit_price',
+                align: 'center',
+                show: adminInfo.id == 1,
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
                 label: t('xpark.data.ecpm'),
                 prop: 'ecpm',
                 align: 'center',
+                operator: false,
+                sortable: false,
+                width: 120
+            },
+            {
+                label: t('xpark.data.raw_ecpm'),
+                prop: 'raw_ecpm',
+                align: 'center',
+                show: adminInfo.id == 1,
                 operator: false,
                 sortable: false,
                 width: 120
