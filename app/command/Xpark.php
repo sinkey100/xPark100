@@ -2,6 +2,7 @@
 
 namespace app\command;
 
+use Exception;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Data;
 use think\console\Input;
@@ -14,6 +15,7 @@ class Xpark extends Base
 
     protected array $domains = [];
     protected array $prefix = ['cy-'];
+    protected array $insertData = [];
 
     protected function configure()
     {
@@ -24,22 +26,35 @@ class Xpark extends Base
     protected function execute(Input $input, Output $output)
     {
         $output->writeln(date("Y-m-d H:i:s") . ' 任务开始');
-        // 清除老数据
-        for ($i = 0; $i < 3; $i++) {
 
-            Data::where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-            // 重置自增id
-            $maxId = Data::max('id');
-            $maxId++;
-            Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
+        $xpark365 = $this->xpark365($output);
+        $BeesAds = $this->beesAds($output);
+        if(count($xpark365) > 0){
+            for ($i = 0; $i < 3; $i++) {
+                Data::where('channel', 'xpark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            }
         }
-        $this->xpark365($output);
-        $this->beesAds($output);
+        if(count($BeesAds) > 0){
+            for ($i = 0; $i < 3; $i++) {
+                Data::where('channel', 'BeesAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            }
+        }
+
+        $maxId = Data::max('id');
+        $maxId++;
+        Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
+
+        $data = array_merge($xpark365, $BeesAds);
+        $output->writeln(date("Y-m-d H:i:s") . ' 准备保存'. count($data) .'条数据');
+
+        $this->saveData($data);
+        $output->writeln(date("Y-m-d H:i:s") . " 保存成功\n\n");
     }
 
     protected function beesAds(Output $output)
     {
-        $pageSize = 100;
+        $returnRows = [];
+        $pageSize = 1000;
         $params   = [
             'headers' => [
                 'x-apihub-ak'  => Env::get('BEESADS.TOKEN'),
@@ -63,10 +78,15 @@ class Xpark extends Base
 
         // 获取total
         $params['json']['page_size'] = 1;
-        $result                      = $this->http('POST',
-            'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
-            $params
-        );
+        try {
+            $result                      = $this->http('POST',
+                'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
+                $params
+            );
+        }catch (Exception $e){
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAd请求出错: '. $e->getMessage());
+            return;
+        }
         if (!empty($result['error'])) {
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAd拉取数据错误');
             $output->writeln(json_encode($result));
@@ -105,7 +125,7 @@ class Xpark extends Base
                     'country_code'    => $v['Country'],
                     'ad_placement_id' => $v['Zone'],
                     'requests'        => $v['TotalAdRequests'],
-                    'fills'           => $v['ResponseRate'] * $v['TotalAdRequests'],
+                    'fills'           => (float)$v['ResponseRate'] * (float)$v['TotalAdRequests'],
                     'impressions'     => $v['Impressions'],
                     'clicks'          => $v['Clicks'],
                     'ad_revenue'      => $v['GrossRevenue'],
@@ -119,8 +139,9 @@ class Xpark extends Base
                 $data[] = $row;
             }
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAds拉取数据完成，长度' . count($data));
-            $this->saveData($data);
+            $returnRows = array_merge($returnRows, $data);
         }
+        return $returnRows;
     }
 
     protected function xpark365(Output $output)
@@ -161,7 +182,7 @@ class Xpark extends Base
             $data = array_merge($data, $csvData);
         }
         $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，长度' . count($data));
-        $this->saveData($data);
+        return $data;
     }
 
     protected function getDomainId($domain, $channel = ''): int
@@ -189,21 +210,25 @@ class Xpark extends Base
 
     protected function saveData($data): void
     {
-        foreach ($data as &$row) {
-            if (
-                !isset($this->domains[$row['sub_channel']])
-                || !isset($this->domains[$row['sub_channel']]['rate'])
-                || floatval($this->domains[$row['sub_channel']]['rate']) == 1
-            ) continue;
-
-            // 需要特殊处理
-            $rate = floatval($this->domains[$row['sub_channel']]['rate']);
-            // 备份数据
-            $row['gross_revenue'] = $row['ad_revenue'];
-            $row['ad_revenue'] = $row['ad_revenue'] * $rate;
+        $fields = [
+            'domain_id', 'channel', 'a_date', 'country_code', 'sub_channel', 'ad_placement_id', 'requests', 'fills',
+            'impressions', 'clicks', 'ad_revenue', 'user_id', 'raw_cpc', 'raw_ctr', 'raw_ecpm', 'net_revenue', 'gross_revenue'
+        ];
+        $insertData = [];
+        foreach ($data as $row) {
+            $v = [];
+            foreach ($fields as $field){
+                $v[$field] = $row[$field] ?? null;
+                // 需要特殊处理
+                $rate = floatval($this->domains[$row['sub_channel']]['rate'] ?? 1);
+                // 备份数据
+                $v['gross_revenue'] = $row['ad_revenue'];
+                $v['ad_revenue'] = $row['ad_revenue'] * $rate;
+            }
+            ksort($v);
+            $insertData[] = $v;
         }
-
-        Data::insertAll($data);
+        Data::insertAll($insertData);
     }
 
 }

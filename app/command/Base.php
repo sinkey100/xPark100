@@ -25,9 +25,13 @@ class Base extends Command
         $client = new Client([
             'verify'    => false
         ]);
-        $result = $client->request($method, $url, $options);
+        try {
+            $result = $client->request($method, $url, $options);
+        }catch (Exception $e){
+            throw new Exception($e->getMessage());
+        }
         if ($result->getStatusCode() != 200){
-            throw new Exception('请求失败');
+            throw new Exception('请求失败: ' . $result->getBody()->getContents());
         }
         return json_decode($result->getBody()->getContents(), true);
     }

@@ -82,7 +82,7 @@ class Data extends Backend
 //        $res = $res->fetchSql(true)->select();
 //        $this->error($res);
 
-        $res = $res->order('id', 'desc')
+        $res = $res->order('a_date', 'desc')
             ->group(implode(',', $dimension));
         return [$res, $limit, $dimension];
     }
