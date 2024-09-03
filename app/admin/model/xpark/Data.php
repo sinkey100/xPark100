@@ -2,7 +2,9 @@
 
 namespace app\admin\model\xpark;
 
+use app\admin\model\Admin;
 use think\Model;
+use think\model\relation\BelongsTo;
 
 /**
  * Data

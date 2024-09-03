@@ -28,7 +28,6 @@ class Admin extends Model
      * 追加属性
      */
     protected $append = [
-        'domain_arr',
         'group_arr',
         'group_name_arr',
     ];
@@ -76,8 +75,5 @@ class Admin extends Model
         return $this->where(['id' => $uid])->update(['password' => $passwd, 'salt' => $salt]);
     }
 
-    protected function getDomainArrAttr($value, $data): array
-    {
-        return array_filter(explode(',', $data['xpark_domains'] ?? ''));
-    }
+
 }

@@ -29,25 +29,36 @@ class Xpark extends Base
 
         $xpark365 = $this->xpark365($output);
         $BeesAds = $this->beesAds($output);
+
+        $output->writeln(date("Y-m-d H:i:s") . ' 准备删除历史数据');
         if(count($xpark365) > 0){
             for ($i = 0; $i < 3; $i++) {
-                Data::where('channel', 'xpark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+                Data::where('channel', 'xPark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             }
+            $output->writeln(date("Y-m-d H:i:s") . ' xPark历史数据已删除');
+
         }
         if(count($BeesAds) > 0){
             for ($i = 0; $i < 3; $i++) {
                 Data::where('channel', 'BeesAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             }
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAds历史数据已删除');
         }
 
         $maxId = Data::max('id');
         $maxId++;
         Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
+        $output->writeln(date("Y-m-d H:i:s") . ' 索引ID已重建');
 
-        $data = array_merge($xpark365, $BeesAds);
-        $output->writeln(date("Y-m-d H:i:s") . ' 准备保存'. count($data) .'条数据');
+        if(count($xpark365) > 0){
+            $output->writeln(date("Y-m-d H:i:s") . ' 准备保存xPark数据');
+            $this->saveData($xpark365);
 
-        $this->saveData($data);
+        }
+        if(count($BeesAds) > 0){
+            $output->writeln(date("Y-m-d H:i:s") . ' 准备保存BeesAds数据');
+            $this->saveData($BeesAds);
+        }
         $output->writeln(date("Y-m-d H:i:s") . " 保存成功\n\n");
     }
 
@@ -85,17 +96,17 @@ class Xpark extends Base
             );
         }catch (Exception $e){
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAd请求出错: '. $e->getMessage());
-            return;
+            return [];
         }
         if (!empty($result['error'])) {
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAd拉取数据错误');
             $output->writeln(json_encode($result));
-            return;
+            return [];
         }
         if (empty($result['data']['total'])) {
             $output->writeln(date("Y-m-d H:i:s") . ' BeesAd拉取数据完成，没有返回数据');
             $output->writeln(json_encode($result));
-            return;
+            return [];
         }
         $output->writeln(date("Y-m-d H:i:s") . ' BeesAd准备拉取' . $result['data']['total'] . '条数据');
 
@@ -113,7 +124,7 @@ class Xpark extends Base
             $data                         = [];
             if (empty($result['data']['rows'])) {
                 $output->writeln('BeesAds没有拉取到数据');
-                return;
+                return [];
             }
 
             foreach ($result['data']['rows'] as $v) {
@@ -160,12 +171,12 @@ class Xpark extends Base
         if (!isset($result['data']['list'])) {
             $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，没有返回数据');
             $output->writeln(json_encode($result));
-            return;
+            return [];
         }
         if (count($result['data']['list']) == 0) {
             $output->writeln(date("Y-m-d H:i:s") . ' xPark拉取数据完成，长度0');
             $output->writeln(json_encode($result));
-            return;
+            return [];
         }
 
         $data = [];
@@ -173,7 +184,7 @@ class Xpark extends Base
             $csvRaw = file_get_contents($item_day['url']);
             [$fields, $csvData] = $this->csv_to_json($csvRaw);
             foreach ($csvData as &$v) {
-                $v['channel']     = 'xpark365';
+                $v['channel']     = 'xPark365';
                 $v['domain_id']   = $this->getDomainId($v['sub_channel'], $v['channel']);
                 $v['sub_channel'] = str_replace($this->prefix, '', $v['sub_channel']);
                 $v['gross_revenue'] = $v['ad_revenue'];

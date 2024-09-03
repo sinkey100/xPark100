@@ -45,7 +45,10 @@ class MiTools extends Base
     {
         $domainList = [
             4 => [
-                'cooltool.vip'
+                'cooltool.vip',
+            ],
+            8   => [
+                'minitool.app'
             ]
         ];
 

@@ -86,7 +86,6 @@ const baTable = new baTableClass(
                 comSearchRender: 'date',
                 operator: 'RANGE',
                 sortable: false,
-                width: 140,
                 timeFormat: 'yyyy-mm-dd'
             },
             {
@@ -102,8 +101,20 @@ const baTable = new baTableClass(
                     pk: 'id',
                     remoteUrl: 'admin/xpark.Domain/index',
                     multiple: true,
-                    field: 'domain',
+                    field: 'full_name',
                 }
+            },
+            {
+                label: t('xpark.data.channel'),
+                prop: 'channel',
+                align: 'center',
+                operatorPlaceholder: t('Click select'),
+                sortable: false,
+                show: false,
+                render: 'tag',
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                custom: { 'xPark365': 'primary', 'BeesAds': 'warning' },
+                replaceValue: {'xPark365': t('xPark365') ,'BeesAds': t('BeesAds')},
             },
             {
                 label: t('xpark.data.sub_channel'),
@@ -113,13 +124,20 @@ const baTable = new baTableClass(
                 operator: false
             },
             {
+                label: t('xpark.data.admin'),
+                prop: 'admin',
+                align: 'center',
+                sortable: false,
+                show: adminInfo.id == 1,
+                operator: false,
+            },
+            {
                 label: t('xpark.data.country_code'),
                 prop: 'country_code',
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: 'LIKE',
                 sortable: false,
-                width: 80,
             },
             {
                 label: t('xpark.data.ad_placement_id'),
@@ -135,7 +153,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.gross_revenue'),
@@ -144,7 +161,6 @@ const baTable = new baTableClass(
                 show: original.value == true,
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.requests'),
@@ -152,7 +168,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.fills'),
@@ -160,7 +175,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.fill_rate'),
@@ -168,7 +182,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.impressions'),
@@ -176,7 +189,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
 
 
@@ -186,7 +198,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
 
             {
@@ -195,7 +206,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
 
             {
@@ -204,7 +214,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.raw_unit_price'),
@@ -213,7 +222,6 @@ const baTable = new baTableClass(
                 show: original.value == true,
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.ecpm'),
@@ -221,7 +229,6 @@ const baTable = new baTableClass(
                 align: 'center',
                 operator: false,
                 sortable: false,
-                width: 120
             },
             {
                 label: t('xpark.data.raw_ecpm'),
@@ -230,7 +237,6 @@ const baTable = new baTableClass(
                 show: original.value == true,
                 operator: false,
                 sortable: false,
-                width: 120
             },
         ],
         dblClickNotEditColumn: [undefined],
@@ -242,6 +248,14 @@ const baTable = new baTableClass(
             baTable.table.column.forEach((item: any) => {
                 if(adminInfo.id == 1 && rawField.includes(item.prop)){
                     item.show = original.value;
+                    return;
+                }
+                // if(adminInfo.id == 1 && item.prop == 'channel'){
+                //     item.show = dimensions.sub_channel;
+                //     return;
+                // }
+                if(adminInfo.id == 1 && item.prop == 'admin'){
+                    item.show = dimensions.sub_channel;
                     return;
                 }
                 if (baTable.table.filter!.dimensions[item.prop] == undefined) {
@@ -306,6 +320,12 @@ const derive = () => {
             background: #eaeef0 !important;
         }
     }
-
+    .el-table__cell div{
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
+
 </style>

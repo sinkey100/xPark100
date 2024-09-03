@@ -52,6 +52,9 @@ const baTable = new baTableClass(
     new baTableApi('/admin/xpark.Domain/'),
     {
         pk: 'id',
+        filter: {
+            limit: 1000
+        },
         column: [
             { type: 'selection', align: 'center', operator: false },
             { label: t('xpark.domain.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
@@ -61,6 +64,7 @@ const baTable = new baTableClass(
                 render: 'slot',
                 slotName: 'rate',
             },
+            { label: t('xpark.domain.admin_id'), prop: 'admin.nickname', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: false, sortable: false },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],

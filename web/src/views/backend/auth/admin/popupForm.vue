@@ -91,6 +91,7 @@
                         :input-attr="{
                             multiple: true,
                             field: 'domain',
+                            pk: 'domain.id',
                             remoteUrl: '/admin/xpark.domain/index',
                             placeholder: t('Click select'),
                         }"

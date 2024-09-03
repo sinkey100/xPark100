@@ -32,12 +32,16 @@ class Data extends Backend
     {
         parent::initialize();
         $this->model   = new \app\admin\model\xpark\Data();
-        $this->domains = array_column(Domain::select()->toArray(), null, 'domain');
+        $domains       = Domain::alias('domain')
+            ->field(['domain.*', 'admin.nickname'])
+            ->join('admin admin', 'admin.id = domain.admin_id', 'left')
+            ->select()->toArray();
+        $this->domains = array_column($domains, null, 'domain');
     }
 
     protected function calcData()
     {
-        $domain_filter = count($this->auth->domain_arr) > 0 ? $this->auth->domain_arr : false;
+        $domain_filter = array_column(Domain::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
 
         // 如果是 select 则转发到 select 方法，若未重写该方法，其实还是继续执行 index
         if ($this->request->param('select')) {
@@ -61,6 +65,7 @@ class Data extends Backend
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
         $field = array_merge($dimension, [
+            'channel',
             'SUM(requests) AS requests',
             'SUM(fills) AS fills',
             'SUM(impressions) AS impressions',
@@ -206,12 +211,15 @@ class Data extends Backend
             $v['unit_price'] = round($v['ad_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
 
             // ECPM = 收入/网页展示次数×1000
-            $v['ecpm'] = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
+            $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             $v['ad_revenue'] = sprintf("%.2f", $v['ad_revenue']);;
 
             if ($this->auth->id != 1) {
+                unset($v['channel']);
                 unset($v['gross_revenue']);
             } else {
+
+                $v['admin']          = isset($v['sub_channel']) && isset($this->domains[$v['sub_channel']]) ? $this->domains[$v['sub_channel']]['nickname'] : '-';
                 $v['gross_revenue']  = sprintf("%.2f", $v['gross_revenue']);
                 $v['raw_unit_price'] = round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
                 $v['raw_ecpm']       = round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);

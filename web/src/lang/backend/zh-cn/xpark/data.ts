@@ -5,6 +5,8 @@ export default {
     a_date: '日期',
     country_code: '地区',
     sub_channel: '子渠道',
+    admin: '渠道',
+    channel: '广告通道',
     ad_placement_id: '广告单元',
     requests: '请求次数',
     fills: '填充次数',
