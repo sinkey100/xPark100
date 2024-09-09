@@ -11,15 +11,15 @@
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.DATE" label="日期" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.COUNTRY_CODE" label="地区" border/>
-<!--                <el-checkbox v-model="baTable.table.filter!.dimensions!.PAGE_URL" label="URL" border/>-->
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.AD_UNIT_URL" label="URL" border/>
             </el-form-item>
 
         </TableHeader>
 
-        <div v-if="baTable.table.filter!.dimensions!.PAGE_URL" class="dimensions-alert">
-            <el-alert class="alert" title="由于 Google Adsense 数据限制，页面URL在部分国家/地区如果没有达到最低的展示次数要求，则不会统计细分数据，因此报表中收入看起来可能会减少。" :closable="false" type="warning" show-icon >
-            </el-alert>
-        </div>
+<!--        <div v-if="baTable.table.filter!.dimensions!.PAGE_URL" class="dimensions-alert">-->
+<!--            <el-alert class="alert" title="由于 Google Adsense 数据限制，页面URL在部分国家/地区如果没有达到最低的展示次数要求，则不会统计细分数据，因此报表中收入看起来可能会减少。" :closable="false" type="warning" show-icon >-->
+<!--            </el-alert>-->
+<!--        </div>-->
 
         <!-- 表格 -->
         <!-- 表格列有多种自定义渲染方式，比如自定义组件、具名插槽等，参见文档 -->
@@ -46,7 +46,7 @@ const { t } = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
     DATE: true,
-    // PAGE_URL: false,
+    AD_UNIT_URL: false,
     COUNTRY_CODE: false,
 })
 
@@ -62,7 +62,7 @@ const baTable = new baTableClass(
         },
         column: [
             { label: t('mi.instant.report.DATE'), prop: 'DATE', align: 'center', render: 'datetimeAndTotal',comSearchRender: 'date', operator: 'RANGE', width: 150, timeFormat: 'yyyy-mm-dd' },
-            // {label: t('mi.instant.report.PAGE_URL'), prop: 'PAGE_URL', align: 'center', operator: 'LIKE', sortable: false,},
+            {label: t('mi.instant.report.PAGE_URL'), prop: 'AD_UNIT_URL', align: 'center', operator: 'LIKE', sortable: false,},
             {label: t('mi.instant.report.COUNTRY_CODE'), prop: 'COUNTRY_CODE', align: 'center', operator: 'LIKE'},
             {label: t('mi.instant.report.ESTIMATED_EARNINGS'), prop: 'revenue', align: 'center', operator: false, sortable: true},
             {label: t('mi.instant.report.PAGE_VIEWS'), prop: 'PAGE_VIEWS', align: 'center', operator: false, sortable: true,},

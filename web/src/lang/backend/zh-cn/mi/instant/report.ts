@@ -2,6 +2,7 @@ export default {
     id: 'ID',
     DATE: '日期',
     PAGE_URL: 'URL',
+    AD_UNIT_NAME: '广告单元',
     DOMAIN_NAME: '域名',
     PAGE_VIEWS: 'PV',
     AD_REQUESTS: '请求数',

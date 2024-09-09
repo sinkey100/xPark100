@@ -2,7 +2,7 @@
 
 namespace app\admin\controller\mi\instant;
 
-use app\admin\model\mi\instant\ReportUrl;
+use app\admin\model\mi\instant\ReportUnit;
 use Throwable;
 use app\common\controller\Backend;
 
@@ -14,7 +14,7 @@ class Report extends Backend
     /**
      * Report模型对象
      * @var object
-     * @phpstan-var \app\admin\model\mi\instant\Report
+     * @phpstan-var ReportUnit
      */
     protected object $model;
 
@@ -25,7 +25,7 @@ class Report extends Backend
     public function initialize(): void
     {
         parent::initialize();
-        $this->model = new \app\admin\model\mi\instant\Report();
+        $this->model = new ReportUnit();
     }
 
 
@@ -59,7 +59,7 @@ class Report extends Backend
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
-            ->order($order)
+            ->order('DATE', 'desc')
             ->group(implode(',', $dimension));
         return [$res, $limit, $dimension];
     }
