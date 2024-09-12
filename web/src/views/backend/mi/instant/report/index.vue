@@ -65,7 +65,7 @@ const baTable = new baTableClass(
             {label: t('mi.instant.report.PAGE_URL'), prop: 'AD_UNIT_URL', align: 'center', operator: 'LIKE', sortable: false,},
             {label: t('mi.instant.report.COUNTRY_CODE'), prop: 'COUNTRY_CODE', align: 'center', operator: 'LIKE'},
             {label: t('mi.instant.report.ESTIMATED_EARNINGS'), prop: 'revenue', align: 'center', operator: false, sortable: true},
-            {label: t('mi.instant.report.PAGE_VIEWS'), prop: 'PAGE_VIEWS', align: 'center', operator: false, sortable: true,},
+            // {label: t('mi.instant.report.PAGE_VIEWS'), prop: 'PAGE_VIEWS', align: 'center', operator: false, sortable: true,},
             {label: t('mi.instant.report.AD_REQUESTS'), prop: 'AD_REQUESTS', align: 'center', operator: false, sortable: true},
             {label: t('mi.instant.report.IMPRESSIONS'), prop: 'IMPRESSIONS', align: 'center', operator: false, sortable: true},
             {label: t('mi.instant.report.AD_REQUESTS_COVERAGE'), prop: 'coverage', align: 'center', operator: false, sortable: false},

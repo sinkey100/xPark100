@@ -51,7 +51,7 @@ class MiTools extends Base
      */
     protected function execute(Input $input, Output $output): void
     {
-        $days       = 60;
+        $days       = 3;
         $domainList = [
             4 => [
                 'cooltool.vip',
@@ -96,18 +96,18 @@ class MiTools extends Base
             // 拉取数据参数
             $startTime = strtotime("-" . ($days - 1) . " days");
             $params    = [
-//                'startDate.year'  => date("Y", $startTime),
-//                'startDate.month' => date("m", $startTime),
-//                'startDate.day'   => date("d", $startTime),
-//                'endDate.year'    => date("Y"),
-//                'endDate.month'   => date("m"),
-//                'endDate.day'     => date("d"),
-                'startDate.year'  => '2024',
-                'startDate.month' => '07',
-                'startDate.day'   => '01',
-                'endDate.year'    => '2024',
-                'endDate.month'   => '09',
-                'endDate.day'     => '10',
+                'startDate.year'  => date("Y", $startTime),
+                'startDate.month' => date("m", $startTime),
+                'startDate.day'   => date("d", $startTime),
+                'endDate.year'    => date("Y"),
+                'endDate.month'   => date("m"),
+                'endDate.day'     => date("d"),
+//                'startDate.year'  => '2024',
+//                'startDate.month' => '07',
+//                'startDate.day'   => '01',
+//                'endDate.year'    => '2024',
+//                'endDate.month'   => '09',
+//                'endDate.day'     => '13',
                 'metrics'         => [
                     'PAGE_VIEWS', 'AD_REQUESTS', 'AD_REQUESTS_COVERAGE', 'CLICKS', 'AD_REQUESTS_CTR', 'IMPRESSIONS',
                     'AD_REQUESTS_RPM', 'IMPRESSIONS_CTR', 'COST_PER_CLICK', 'IMPRESSIONS_RPM', 'ESTIMATED_EARNINGS',
@@ -156,19 +156,29 @@ class MiTools extends Base
             // 均分自动广告收入
             for ($i = 0; $i < $days; $i++) {
                 // 总收入
-                $adTotal   = InstantReport::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('ESTIMATED_EARNINGS');
-                $unitTotal = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('ESTIMATED_EARNINGS');
-                if (!($adTotal > $unitTotal)) continue;
+                $total_revenue = InstantReport::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('ESTIMATED_EARNINGS');
+                $unit_revenue  = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('ESTIMATED_EARNINGS');
+                if (!($total_revenue > $unit_revenue)) continue;
                 // 总请求数
-                $requestsTotal = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('AD_REQUESTS');
-                $cursor        = InstantReportUnit::field(['*', 'sum(AD_REQUESTS) as TOTAL_AD_REQUESTS'])
+                $total_requests = InstantReport::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('AD_REQUESTS');
+                $unit_requests  = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('AD_REQUESTS');
+                // 总展示
+                $total_impressions = InstantReport::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('IMPRESSIONS');
+                $unit_impressions  = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('IMPRESSIONS');
+                // 总点击
+                $total_clicks = InstantReport::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('CLICKS');
+                $unit_clicks  = InstantReportUnit::where('DATE', date("Y-m-d", strtotime("-$i days")))->sum('CLICKS');
+
+                $cursor = InstantReportUnit::field(['*', 'sum(AD_REQUESTS) as TOTAL_AD_REQUESTS'])
                     ->where('DATE', date("Y-m-d", strtotime("-$i days")))
                     ->group('AD_UNIT_URL')
                     ->cursor();
                 foreach ($cursor as $item) {
                     // 计算自动广告
-
-                    $EARNINGS = ($adTotal - $unitTotal) * 100 / $requestsTotal * $item['TOTAL_AD_REQUESTS'] / 100;
+                    $EARNINGS    = ($total_revenue - $unit_revenue) * 100 / $unit_requests * $item['TOTAL_AD_REQUESTS'] / 100;
+                    $AD_REQUESTS = ($total_requests - $unit_requests) * 100 / $unit_requests * $item['TOTAL_AD_REQUESTS'] / 100;
+                    $IMPRESSIONS = ($total_impressions - $unit_impressions) * 100 / $unit_requests * $item['TOTAL_AD_REQUESTS'] / 100;
+                    $CLICKS      = ($total_clicks - $unit_clicks) * 100 / $unit_requests * $item['TOTAL_AD_REQUESTS'] / 100;
 
                     $insert = [
                         'google_account_id'    => $item['google_account_id'],
@@ -178,13 +188,14 @@ class MiTools extends Base
                         'DOMAIN_NAME'          => $item['DOMAIN_NAME'],
                         'COUNTRY_CODE'         => $item['COUNTRY_CODE'],
                         'PAGE_VIEWS'           => 0,
-                        'AD_REQUESTS'          => $item['AD_REQUESTS'],
+                        // 请求数
+                        'AD_REQUESTS'          => ceil($AD_REQUESTS),
                         // 展示数
-                        'IMPRESSIONS'          => $item['IMPRESSIONS'],
+                        'IMPRESSIONS'          => ceil($IMPRESSIONS),
                         // 填充率
                         'AD_REQUESTS_COVERAGE' => 1,
                         // 点击数
-                        'CLICKS'               => 0,
+                        'CLICKS'               => $CLICKS,
                         // 点击率
                         'IMPRESSIONS_CTR'      => 0,
                         // 单价
@@ -203,7 +214,7 @@ class MiTools extends Base
     protected function ad2url(string $name): string
     {
         if ($name == 'minitool.app_0828_Online-Alarm-Clock_01') $name = 'minitool.app_0828_01';
-        if(in_array($name, $this->oldAdName)) $name = 'cooltool.vip_0909_01';
+        if (in_array($name, $this->oldAdName)) $name = 'cooltool.vip_0909_01';
         $name = explode("_", $name);
         array_splice($name, -2);
         return implode('/', $name) . '/';
@@ -211,7 +222,7 @@ class MiTools extends Base
 
     protected function url2autoAdName(string $url): string
     {
-        $name   = explode("/", $url);
+        $name = explode("/", $url);
         array_pop($name);
         $name[] = 'autoad';
         return implode('_', $name);
