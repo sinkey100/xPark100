@@ -64,6 +64,15 @@ class Data extends Backend
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
+        foreach ($where as $k=>$v){
+            if($v[0] == 'data.admin'){
+                $domain_filter = Domain::field(['id'])->where('admin_id', $v[2])->select();
+                $domain_filter = array_column($domain_filter->toArray(), 'id');
+                unset($where[$k]);
+            }
+        }
+
+
         $field = array_merge($dimension, [
             'channel',
             'SUM(requests) AS requests',
