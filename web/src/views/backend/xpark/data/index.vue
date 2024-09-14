@@ -129,7 +129,13 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 show: adminInfo.id == 1,
-                operator: false,
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/auth.Admin/index',
+                    field: 'nickname',
+                }
             },
             {
                 label: t('xpark.data.country_code'),
