@@ -2,6 +2,7 @@
 
 namespace app\command;
 
+use app\admin\model\xpark\DomainRate;
 use Exception;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Data;
@@ -16,6 +17,7 @@ class Xpark extends Base
     protected array $domains = [];
     protected array $prefix = ['cy-'];
     protected array $insertData = [];
+    protected array $dateRate = [];
 
     protected function configure()
     {
@@ -26,6 +28,12 @@ class Xpark extends Base
     protected function execute(Input $input, Output $output)
     {
         $output->writeln(date("Y-m-d H:i:s") . ' 任务开始');
+
+        for ($i = 0; $i < 3; $i++) {
+            $date = date("Y-m-d", strtotime("-$i days"));
+            $tmp = DomainRate::where('date', $date)->select()->toArray();
+            $this->dateRate[$date] = array_column($tmp, null, 'domain');
+        }
 
         $xpark365 = $this->xpark365($output);
         $BeesAds = $this->beesAds($output);
@@ -231,7 +239,21 @@ class Xpark extends Base
             foreach ($fields as $field){
                 $v[$field] = $row[$field] ?? null;
                 // 需要特殊处理
-                $rate = floatval($this->domains[$row['sub_channel']]['rate'] ?? 1);
+                $date = date("Y-m-d", strtotime($row['a_date']));
+
+                if(!isset($this->dateRate[$date][$row['sub_channel']])){
+                    // 插入表
+                    $rate = Domain::where('domain', $row['sub_channel'])->value('rate', 1);
+                    $this->dateRate[$date][$row['sub_channel']] = DomainRate::create([
+                        'domain'    => $row['sub_channel'],
+                        'date'      => $date,
+                        'rate'      => $rate
+                    ]);
+
+                }else{
+                    $rate = floatval($this->dateRate[$date][$row['sub_channel']]['rate']);
+                }
+
                 // 备份数据
                 $v['gross_revenue'] = $row['ad_revenue'];
                 $v['ad_revenue'] = $row['ad_revenue'] * $rate;
