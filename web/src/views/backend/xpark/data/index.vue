@@ -149,7 +149,7 @@ const baTable = new baTableClass(
                 comSearchRender: 'remoteSelect',
                 remote: {
                     pk: 'id',
-                    remoteUrl: 'admin/xpark.Apps/index',
+                    remoteUrl: 'admin/xpark.Apps/select',
                     field: 'app_name',
                 }
             },

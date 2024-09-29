@@ -131,4 +131,28 @@ class Apps extends Backend
             'row' => $row
         ]);
     }
+
+    public function select(): void
+    {
+        $map = [];
+        if($this->auth->id > 1){
+            $map['admin_id'] = $this->auth->id;
+        }
+
+        list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $res = $this->model
+            ->withJoin($this->withJoinTable, $this->withJoinType)
+            ->alias($alias)
+            ->where($where)
+            ->where($map)
+            ->order($order)
+            ->paginate($limit);
+        $res->visible(['admin' => ['nickname']]);
+
+        $this->success('', [
+            'list'   => $res->items(),
+            'total'  => $res->total(),
+            'remark' => get_route_remark(),
+        ]);
+    }
 }

@@ -30,23 +30,23 @@ class Xpark extends Base
         $output->writeln(date("Y-m-d H:i:s") . ' 任务开始');
 
         for ($i = 0; $i < 3; $i++) {
-            $date = date("Y-m-d", strtotime("-$i days"));
-            $tmp = DomainRate::where('date', $date)->select()->toArray();
+            $date                  = date("Y-m-d", strtotime("-$i days"));
+            $tmp                   = DomainRate::where('date', $date)->select()->toArray();
             $this->dateRate[$date] = array_column($tmp, null, 'domain');
         }
 
         $xpark365 = $this->xpark365($output);
-        $BeesAds = $this->beesAds($output);
+        $BeesAds  = $this->beesAds($output);
 
         $output->writeln(date("Y-m-d H:i:s") . ' 准备删除历史数据');
-        if(count($xpark365) > 0){
+        if (count($xpark365) > 0) {
             for ($i = 0; $i < 3; $i++) {
                 Data::where('channel', 'xPark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             }
             $output->writeln(date("Y-m-d H:i:s") . ' xPark历史数据已删除');
 
         }
-        if(count($BeesAds) > 0){
+        if (count($BeesAds) > 0) {
             for ($i = 0; $i < 3; $i++) {
                 Data::where('channel', 'BeesAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             }
@@ -58,12 +58,12 @@ class Xpark extends Base
         Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
         $output->writeln(date("Y-m-d H:i:s") . ' 索引ID已重建');
 
-        if(count($xpark365) > 0){
+        if (count($xpark365) > 0) {
             $output->writeln(date("Y-m-d H:i:s") . ' 准备保存xPark数据');
             $this->saveData($xpark365);
 
         }
-        if(count($BeesAds) > 0){
+        if (count($BeesAds) > 0) {
             $output->writeln(date("Y-m-d H:i:s") . ' 准备保存BeesAds数据');
             $this->saveData($BeesAds);
         }
@@ -73,8 +73,8 @@ class Xpark extends Base
     protected function beesAds(Output $output)
     {
         $returnRows = [];
-        $pageSize = 1000;
-        $params   = [
+        $pageSize   = 1000;
+        $params     = [
             'headers' => [
                 'x-apihub-ak'  => Env::get('BEESADS.TOKEN'),
                 'x-apihub-env' => 'prod',
@@ -98,12 +98,12 @@ class Xpark extends Base
         // 获取total
         $params['json']['page_size'] = 1;
         try {
-            $result                      = $this->http('POST',
+            $result = $this->http('POST',
                 'https://api-us-east.eclicktech.com.cn/wgt/report/gamebridge/v1/ssp/report',
                 $params
             );
-        }catch (Exception $e){
-            $output->writeln(date("Y-m-d H:i:s") . ' BeesAd请求出错: '. $e->getMessage());
+        } catch (Exception $e) {
+            $output->writeln(date("Y-m-d H:i:s") . ' BeesAd请求出错: ' . $e->getMessage());
             return [];
         }
         if (!empty($result['error'])) {
@@ -136,10 +136,12 @@ class Xpark extends Base
             }
 
             foreach ($result['data']['rows'] as $v) {
+                [$domain_id, $app_id] = $this->getDomainId($v['Domain'], 'BeesAds');
                 $row    = [
                     'channel'         => 'BeesAds',
                     'sub_channel'     => $v['Domain'],
-                    'domain_id'       => $this->getDomainId($v['Domain'], 'BeesAds'),
+                    'domain_id'       => $domain_id,
+                    'app_id'          => $app_id,
                     'a_date'          => $v['Date'],
                     'country_code'    => $v['Country'],
                     'ad_placement_id' => $v['Zone'],
@@ -192,9 +194,11 @@ class Xpark extends Base
             $csvRaw = file_get_contents($item_day['url']);
             [$fields, $csvData] = $this->csv_to_json($csvRaw);
             foreach ($csvData as &$v) {
-                $v['channel']     = 'xPark365';
-                $v['domain_id']   = $this->getDomainId($v['sub_channel'], $v['channel']);
-                $v['sub_channel'] = str_replace($this->prefix, '', $v['sub_channel']);
+                [$domain_id, $app_id] = $this->getDomainId($v['Domain'], 'xPark365');
+                $v['channel']       = 'xPark365';
+                $v['domain_id']     = $domain_id;
+                $v['app_id']        = $app_id;
+                $v['sub_channel']   = str_replace($this->prefix, '', $v['sub_channel']);
                 $v['gross_revenue'] = $v['ad_revenue'];
             }
 
@@ -208,7 +212,7 @@ class Xpark extends Base
     {
         // 系统记录的域名列表
         if (count($this->domains) == 0) {
-            $domains       = Domain::field(['id', 'domain', 'original_domain', 'rate'])->select()->toArray();
+            $domains       = Domain::field(['id', 'domain', 'original_domain', 'rate', 'app_id'])->select()->toArray();
             $this->domains = array_column($domains, null, 'original_domain');
         }
         if (isset($this->domains[$domain])) {
@@ -224,39 +228,39 @@ class Xpark extends Base
             'original_domain' => $item->original_domain,
             'id'              => $item->id
         ];
-        return $item->id;
+        return [$item->id, $item->app_id];
     }
 
     protected function saveData($data): void
     {
-        $fields = [
+        $fields     = [
             'domain_id', 'channel', 'a_date', 'country_code', 'sub_channel', 'ad_placement_id', 'requests', 'fills',
             'impressions', 'clicks', 'ad_revenue', 'user_id', 'raw_cpc', 'raw_ctr', 'raw_ecpm', 'net_revenue', 'gross_revenue'
         ];
         $insertData = [];
         foreach ($data as $row) {
             $v = [];
-            foreach ($fields as $field){
+            foreach ($fields as $field) {
                 $v[$field] = $row[$field] ?? null;
                 // 需要特殊处理
                 $date = date("Y-m-d", strtotime($row['a_date']));
 
-                if(!isset($this->dateRate[$date][$row['sub_channel']])){
+                if (!isset($this->dateRate[$date][$row['sub_channel']])) {
                     // 插入表
-                    $rate = Domain::where('domain', $row['sub_channel'])->value('rate', 1);
+                    $rate                                       = Domain::where('domain', $row['sub_channel'])->value('rate', 1);
                     $this->dateRate[$date][$row['sub_channel']] = DomainRate::create([
-                        'domain'    => $row['sub_channel'],
-                        'date'      => $date,
-                        'rate'      => $rate
+                        'domain' => $row['sub_channel'],
+                        'date'   => $date,
+                        'rate'   => $rate
                     ]);
 
-                }else{
+                } else {
                     $rate = floatval($this->dateRate[$date][$row['sub_channel']]['rate']);
                 }
 
                 // 备份数据
                 $v['gross_revenue'] = $row['ad_revenue'];
-                $v['ad_revenue'] = $row['ad_revenue'] * $rate;
+                $v['ad_revenue']    = $row['ad_revenue'] * $rate;
             }
             ksort($v);
             $insertData[] = $v;
