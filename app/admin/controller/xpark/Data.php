@@ -7,6 +7,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
+use app\admin\model\xpark\Apps;
 
 /**
  * xPark数据
@@ -27,6 +28,7 @@ class Data extends Backend
     protected string|array $quickSearchField = ['id'];
 
     protected array $domains = [];
+    protected array $apps = [];
 
     public function initialize(): void
     {
@@ -37,6 +39,8 @@ class Data extends Backend
             ->join('admin admin', 'admin.id = domain.admin_id', 'left')
             ->select()->toArray();
         $this->domains = array_column($domains, null, 'domain');
+        $apps          = Apps::alias('apps')->field(['apps.*'])->select()->toArray();
+        $this->apps    = array_column($apps, null, 'id');
     }
 
     protected function calcData()
@@ -64,8 +68,8 @@ class Data extends Backend
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
-        foreach ($where as $k=>$v){
-            if($v[0] == 'data.admin'){
+        foreach ($where as $k => $v) {
+            if ($v[0] == 'data.admin') {
                 $domain_filter = Domain::field(['id'])->where('admin_id', $v[2])->select();
                 $domain_filter = array_column($domain_filter->toArray(), 'id');
                 unset($where[$k]);
@@ -222,6 +226,9 @@ class Data extends Backend
             // ECPM = 收入/网页展示次数×1000
             $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             $v['ad_revenue'] = sprintf("%.2f", $v['ad_revenue']);;
+
+            $v['app_name']          = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
+
 
             if ($this->auth->id != 1) {
                 unset($v['channel']);

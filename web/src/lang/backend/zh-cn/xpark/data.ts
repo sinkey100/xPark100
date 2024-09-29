@@ -1,10 +1,11 @@
 export default {
     id: 'ID',
     domain_id: '域名',
-    domain__domain: '子渠道',
+    domain__domain: '域名',
     a_date: '日期',
+    app: '应用',
     country_code: '地区',
-    sub_channel: '子渠道',
+    sub_channel: '域名',
     admin: '渠道',
     channel: '广告通道',
     ad_placement_id: '广告单元',

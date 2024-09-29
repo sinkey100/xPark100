@@ -11,7 +11,8 @@
         >
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.sub_channel" label="子渠道" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.sub_channel" label="域名" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.country_code" label="地区" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
                 <el-checkbox v-if="adminInfo.id == 1" v-model="original" label="Original" border/>
@@ -50,7 +51,7 @@ import {getArrayKey} from "/@/utils/common";
 import createAxios from "/@/utils/axios";
 import {AxiosPromise} from "axios";
 import fileDownload from "js-file-download";
-import { useAdminInfo } from '/@/stores/adminInfo'
+import {useAdminInfo} from '/@/stores/adminInfo'
 
 defineOptions({
     name: 'xpark/data',
@@ -61,6 +62,7 @@ const tableRef = ref()
 const dimensions = reactive({
     a_date: true,
     sub_channel: true,
+    app_id: false,
     country_code: false,
     ad_placement_id: false
 })
@@ -113,8 +115,8 @@ const baTable = new baTableClass(
                 show: false,
                 render: 'tag',
                 operator: adminInfo.id == 1 ? 'eq' : false,
-                custom: { 'xPark365': 'primary', 'BeesAds': 'warning' },
-                replaceValue: {'xPark365': t('xPark365') ,'BeesAds': t('BeesAds')},
+                custom: {'xPark365': 'primary', 'BeesAds': 'warning'},
+                replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds')},
             },
             {
                 label: t('xpark.data.sub_channel'),
@@ -136,6 +138,28 @@ const baTable = new baTableClass(
                     remoteUrl: 'admin/auth.Admin/index',
                     field: 'nickname',
                 }
+            },
+            {
+                label: t('xpark.data.app'),
+                prop: 'app_id',
+                align: 'center',
+                sortable: false,
+                show: false,
+                operator: 'eq',
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Apps/index',
+                    field: 'app_name',
+                }
+            },
+            {
+                label: t('xpark.data.app'),
+                prop: 'app_name',
+                align: 'center',
+                show: false,
+                sortable: false,
+                operator: false,
             },
             {
                 label: t('xpark.data.country_code'),
@@ -252,7 +276,7 @@ const baTable = new baTableClass(
     }, {}, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
-                if(adminInfo.id == 1 && rawField.includes(item.prop)){
+                if (adminInfo.id == 1 && rawField.includes(item.prop)) {
                     item.show = original.value;
                     return;
                 }
@@ -260,10 +284,16 @@ const baTable = new baTableClass(
                 //     item.show = dimensions.sub_channel;
                 //     return;
                 // }
-                if(adminInfo.id == 1 && item.prop == 'admin'){
+                if (adminInfo.id == 1 && item.prop == 'admin') {
                     item.show = dimensions.sub_channel;
                     return;
                 }
+                if (item.prop == 'app_id') return;
+                if (item.prop == 'app_name') {
+                    item.show = baTable.table.filter!.dimensions['app_id'] == true;
+                    return;
+                }
+
                 if (baTable.table.filter!.dimensions[item.prop] == undefined) {
                     return;
                 }
@@ -320,13 +350,15 @@ const derive = () => {
 :deep(.table-search) {
     display: none;
 }
-:deep(.el-table){
-    tbody{
-        tr:last-child{
+
+:deep(.el-table) {
+    tbody {
+        tr:last-child {
             background: #eaeef0 !important;
         }
     }
-    .el-table__cell div{
+
+    .el-table__cell div {
         box-sizing: border-box;
         white-space: nowrap;
         overflow: hidden;
