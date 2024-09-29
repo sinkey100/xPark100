@@ -83,21 +83,6 @@
                         "
                     />
 
-                    <FormItem
-                        label="授权域名"
-                        v-model="baTable.form.items!.domain_arr"
-                        prop="domain_arr"
-                        type="remoteSelect"
-                        :input-attr="{
-                            multiple: true,
-                            field: 'domain',
-                            pk: 'domain.id',
-                            remoteUrl: '/admin/xpark.domain/index',
-                            placeholder: t('Click select'),
-                        }"
-                    />
-
-
 <!--                    <el-form-item prop="motto" :label="t('auth.admin.Personal signature')">-->
 <!--                        <el-input-->
 <!--                            @keyup.enter.stop=""-->

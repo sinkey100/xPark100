@@ -2,8 +2,6 @@
 
 namespace app\admin\controller\auth;
 
-use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\Domain as DomainModel;
 use ba\Random;
 use Throwable;
 use think\facade\Db;
@@ -100,12 +98,6 @@ class Admin extends Backend
                 $data['password'] = $passwd;
                 $result           = $this->model->save($data);
 
-                if(count($data['domain_arr']) > 0){
-                    Domain::where('id', 'in', $data['domain_arr'])->update([
-                        'admin_id'  => $this->model->id
-                    ]);
-                }
-
 
                 if ($data['group_arr']) {
                     $groupAccess = [];
@@ -176,11 +168,6 @@ class Admin extends Backend
                 $this->model->resetPassword($data['id'], $data['password']);
             }
 
-            Domain::where('admin_id', $id)->update(['admin_id' => null]);
-            Domain::where('id', 'in', $data['domain_arr'])->update([
-                'admin_id'  => $id
-            ]);
-
             $groupAccess = [];
             if ($data['group_arr']) {
                 $checkGroups = [];
@@ -220,7 +207,6 @@ class Admin extends Backend
 
         unset($row['salt'], $row['login_failure']);
         $row['password'] = '';
-        $row['domain_arr'] = array_column(DomainModel::field('id')->where('admin_id', $id)->select()->toArray(), 'id');
 
         $this->success('', [
             'row' => $row

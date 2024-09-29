@@ -25,7 +25,7 @@ class Domain extends Backend
 
     protected string|array $quickSearchField = ['id', 'domain'];
 
-    protected array $withJoinTable = ['admin'];
+    protected array $withJoinTable = ['admin', 'app'];
 
 
     public function initialize(): void

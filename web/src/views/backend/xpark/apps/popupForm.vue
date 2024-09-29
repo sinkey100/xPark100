@@ -30,13 +30,27 @@
                     :label-width="baTable.form.labelWidth + 'px'"
                     :rules="rules"
                 >
-                    <FormItem :label="t('xpark.domain.domain')" type="string" v-model="baTable.form.items!.domain" prop="domain" :placeholder="t('Please input field', { field: t('xpark.domain.domain') })" />
-                    <FormItem :label="t('xpark.domain.original_domain')" type="string" v-model="baTable.form.items!.original_domain" prop="original_domain" :placeholder="t('Please input field', { field: t('xpark.domain.original_domain') })" />
-                    <FormItem :label="t('xpark.domain.rate')" type="number" v-model="baTable.form.items!.rate" prop="rate" :placeholder="t('Please input field', { field: t('xpark.domain.rate') })" />
-                    <FormItem :label="t('xpark.domain.channel')" type="radio" v-model="baTable.form.items!.channel" prop="channel" :input-attr="{
-                            border: true,
-                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense'},
-                        }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })" />
+                    <FormItem :label="t('xpark.apps.app_name')" type="string" v-model="baTable.form.items!.app_name" prop="app_name" :placeholder="t('Please input field', { field: t('xpark.apps.app_name') })" />
+                    <FormItem :label="t('xpark.apps.remarks')" type="string" v-model="baTable.form.items!.remarks" prop="remarks" :placeholder="t('Please input field', { field: t('xpark.apps.remarks') })" />
+                    <FormItem :label="t('xpark.apps.admin_id')" type="remoteSelect" v-model="baTable.form.items!.admin_id" prop="admin_id" :input-attr="{ pk: 'ba_admin.id', field: 'nickname', remoteUrl: '/admin/auth.Admin/index' }" :placeholder="t('Please select field', { field: t('xpark.apps.admin_id') })" />
+
+
+                    <FormItem
+                        v-if="baTable.form.items!.id > 0"
+                        label="授权域名"
+                        v-model="baTable.form.items!.domain_arr"
+                        prop="domain_arr"
+                        type="remoteSelect"
+                        :input-attr="{
+                            multiple: true,
+                            field: 'domain',
+                            pk: 'domain.id',
+                            remoteUrl: '/admin/xpark.domain/index',
+                            placeholder: t('Click select'),
+                        }"
+                    />
+
+
                 </el-form>
             </div>
         </el-scrollbar>
@@ -67,10 +81,8 @@ const baTable = inject('baTable') as baTableClass
 const { t } = useI18n()
 
 const rules: Partial<Record<string, FormItemRule[]>> = reactive({
-    domain: [buildValidatorData({ name: 'required', title: t('xpark.domain.domain') })],
-    original_domain: [buildValidatorData({ name: 'required', title: t('xpark.domain.original_domain') })],
-    rate: [buildValidatorData({ name: 'required', title: t('xpark.domain.rate') })],
-    channel: [buildValidatorData({ name: 'required', title: t('xpark.domain.channel') })],
+    createtime: [buildValidatorData({ name: 'date', title: t('xpark.apps.createtime') })],
+    updatetime: [buildValidatorData({ name: 'date', title: t('xpark.apps.updatetime') })],
 })
 </script>
 

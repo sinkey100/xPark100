@@ -22,4 +22,9 @@ class Domain extends Model
         return $this->belongsTo(Admin::class, 'admin_id');
     }
 
+    public function app(): BelongsTo
+    {
+        return $this->belongsTo(Apps::class, 'app_id');
+    }
+
 }

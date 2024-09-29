@@ -76,6 +76,27 @@ const baTable = new baTableClass(
                 operator: false,
             },
             {
+                label: t('xpark.domain.app_id'),
+                prop: 'app.id',
+                align: 'center',
+                sortable: false,
+                show:false,
+                operator: 'eq',
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Apps/index',
+                    field: 'app_name',
+                }
+            },
+            {
+                label: t('xpark.domain.app_id'),
+                prop: 'app.app_name',
+                align: 'center',
+                sortable: false,
+                operator: false,
+            },
+            {
                 label: t('xpark.domain.admin_id'),
                 prop: 'admin.id',
                 align: 'center',
