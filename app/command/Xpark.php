@@ -29,12 +29,6 @@ class Xpark extends Base
     {
         $output->writeln(date("Y-m-d H:i:s") . ' 任务开始');
 
-        for ($i = 0; $i < 3; $i++) {
-            $date                  = date("Y-m-d", strtotime("-$i days"));
-            $tmp                   = DomainRate::where('date', $date)->select()->toArray();
-            $this->dateRate[$date] = array_column($tmp, null, 'domain');
-        }
-
         $xpark365 = $this->xpark365($output);
         $BeesAds  = $this->beesAds($output);
 
@@ -194,7 +188,7 @@ class Xpark extends Base
             $csvRaw = file_get_contents($item_day['url']);
             [$fields, $csvData] = $this->csv_to_json($csvRaw);
             foreach ($csvData as &$v) {
-                [$domain_id, $app_id] = $this->getDomainId($v['Domain'], 'xPark365');
+                [$domain_id, $app_id] = $this->getDomainId($v['sub_channel'], 'xPark365');
                 $v['channel']       = 'xPark365';
                 $v['domain_id']     = $domain_id;
                 $v['app_id']        = $app_id;
@@ -208,7 +202,7 @@ class Xpark extends Base
         return $data;
     }
 
-    protected function getDomainId($domain, $channel = ''): int
+    protected function getDomainId($domain, $channel = ''): array
     {
         // 系统记录的域名列表
         if (count($this->domains) == 0) {
@@ -216,12 +210,13 @@ class Xpark extends Base
             $this->domains = array_column($domains, null, 'original_domain');
         }
         if (isset($this->domains[$domain])) {
-            return $this->domains[$domain]['id'];
+            return [$this->domains[$domain]['id'], $this->domains[$domain]['app_id']];
         }
         $item                   = Domain::create([
             'domain'          => str_replace($this->prefix, '', $domain),
             'original_domain' => $domain,
-            'channel'         => $channel
+            'channel'         => $channel,
+            'app_id'          => null,
         ]);
         $this->domains[$domain] = [
             'domain'          => $item->domain,
@@ -231,11 +226,19 @@ class Xpark extends Base
         return [$item->id, $item->app_id];
     }
 
-    protected function saveData($data): void
+    public function saveData($data): void
     {
+        if (count($this->dateRate) == 0) {
+            for ($i = 0; $i < 3; $i++) {
+                $date                  = date("Y-m-d", strtotime("-$i days"));
+                $tmp                   = DomainRate::where('date', $date)->select()->toArray();
+                $this->dateRate[$date] = array_column($tmp, null, 'domain');
+            }
+        }
+
         $fields     = [
             'domain_id', 'channel', 'a_date', 'country_code', 'sub_channel', 'ad_placement_id', 'requests', 'fills',
-            'impressions', 'clicks', 'ad_revenue', 'user_id', 'raw_cpc', 'raw_ctr', 'raw_ecpm', 'net_revenue', 'gross_revenue'
+            'impressions', 'clicks', 'ad_revenue', 'user_id', 'raw_cpc', 'raw_ctr', 'raw_ecpm', 'net_revenue', 'gross_revenue' , 'app_id'
         ];
         $insertData = [];
         foreach ($data as $row) {

@@ -5,8 +5,9 @@
 return [
     // 指令定义
     'commands' => [
-        'Demo'   => \app\command\Demo::class,
+        'Demo'    => \app\command\Demo::class,
         'Xpark'   => \app\command\Xpark::class,
-        'MiTools' => \app\command\MiTools::class
+        'MiTools' => \app\command\MiTools::class,
+        'AdSense' => \app\command\AdSense::class
     ],
 ];

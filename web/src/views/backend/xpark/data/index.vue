@@ -115,8 +115,8 @@ const baTable = new baTableClass(
                 show: false,
                 render: 'tag',
                 operator: adminInfo.id == 1 ? 'eq' : false,
-                custom: {'xPark365': 'primary', 'BeesAds': 'warning'},
-                replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds')},
+                custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
+                replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds'), 'AdSense': t('AdSense')},
             },
             {
                 label: t('xpark.data.sub_channel'),

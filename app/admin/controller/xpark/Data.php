@@ -17,7 +17,7 @@ class Data extends Backend
     /**
      * Data模型对象
      * @var object
-     * @phpstan-var \app\admin\model\xpark\Data
+     * @phpstan-var \app\admin\model\xpark\DataSoft
      */
     protected object $model;
 
@@ -33,7 +33,7 @@ class Data extends Backend
     public function initialize(): void
     {
         parent::initialize();
-        $this->model   = new \app\admin\model\xpark\Data();
+        $this->model   = new \app\admin\model\xpark\DataSoft();
         $domains       = Domain::alias('domain')
             ->field(['domain.*', 'admin.nickname'])
             ->join('admin admin', 'admin.id = domain.admin_id', 'left')

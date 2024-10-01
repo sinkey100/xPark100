@@ -4,19 +4,25 @@ namespace app\admin\model\xpark;
 
 use app\admin\model\Admin;
 use think\Model;
+use think\model\concern\SoftDelete;
 use think\model\relation\BelongsTo;
 
 /**
  * Data
  */
-class Data extends Model
+class DataSoft extends Model
 {
+
+    use SoftDelete;
 
     // 表名
     protected $name = 'xpark_data';
 
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;
+
+    protected $deleteTime = 'deletetime';
+    protected $defaultSoftDelete = null;
 
 
     protected $append = [
