@@ -8,6 +8,7 @@ use app\admin\model\xpark\Domain as DomainModel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Apps;
 
 /**
  * 域名
@@ -82,20 +83,21 @@ class Domain extends Backend
         $exchange = $this->request->post('exchange/a', []);
         $rate     = $this->request->post('rate/a', []);
         $month    = $this->request->post('month/s', '');
+        $app_ids  = $this->request->post('app_ids/a', []);
         if (!$month) $this->error('请选择数据月份');
         $month = date("Y-m", strtotime($month));
         if (
             count($cut) != count($domains) ||
             count($exchange) != count($rate) ||
             count($cut) != count($exchange) ||
-            count($cut) == 0
+            count($cut) == 0 || count($app_ids) == 0
         ) {
             $this->error('数据不完整');
         }
         // 查找合作方
-        $user = $this->model::where('domain', $domains[0])->find();
-        if (!$user) $this->error('数据不存在');
-        $user = Admin::where('id', $user->admin_id)->find();
+        $app = Apps::where('id', $app_ids[0])->find();
+        if (!$app) $this->error('应用不存在');
+        $user = Admin::where('id', $app->admin_id)->find();
         if (!$user) $this->error('合作方不存在');
 
         $spreadsheet = IOFactory::load(root_path() . 'extend/tpl/bill.xlsx');
@@ -116,7 +118,10 @@ class Domain extends Backend
         $first_row_index = 9;
         foreach ($domains as $index => $domain) {
             // 收入
-            $revenue          = Data::where('sub_channel', $domain)->whereMonth('a_date', $month)->sum('ad_revenue', 0);
+            $revenue          = Data::where('sub_channel', $domain)
+                ->whereMonth('a_date', $month)
+                ->where('app_id', 'in', $app_ids)
+                ->sum('ad_revenue', 0);
             $cut_revenue      = $revenue * (100 - $cut[$index]) / 100;
             $rate_revenue     = $cut_revenue * $rate[$index] / 100;
             $exchange_revenue = $exchange[$index] > 1 ? $rate_revenue * $exchange[$index] : $rate_revenue;

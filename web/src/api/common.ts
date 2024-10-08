@@ -1,15 +1,15 @@
 import createAxios from '/@/utils/axios'
-import { isAdminApp, checkFileMimetype } from '/@/utils/common'
-import { getUrl } from '/@/utils/axios'
-import { useAdminInfo } from '/@/stores/adminInfo'
-import { useUserInfo } from '/@/stores/userInfo'
-import { ElNotification, type UploadRawFile } from 'element-plus'
-import { useSiteConfig } from '/@/stores/siteConfig'
-import { state as uploadExpandState, fileUpload as uploadExpand } from '/@/components/mixins/baUpload'
-import type { AxiosRequestConfig } from 'axios'
-import { uuid } from '/@/utils/random'
-import { i18n } from '../lang'
-import { adminBaseRoutePath } from '/@/router/static/adminBase'
+import {isAdminApp, checkFileMimetype} from '/@/utils/common'
+import {getUrl} from '/@/utils/axios'
+import {useAdminInfo} from '/@/stores/adminInfo'
+import {useUserInfo} from '/@/stores/userInfo'
+import {ElNotification, type UploadRawFile} from 'element-plus'
+import {useSiteConfig} from '/@/stores/siteConfig'
+import {state as uploadExpandState, fileUpload as uploadExpand} from '/@/components/mixins/baUpload'
+import type {AxiosRequestConfig} from 'axios'
+import {uuid} from '/@/utils/random'
+import {i18n} from '../lang'
+import {adminBaseRoutePath} from '/@/router/static/adminBase'
 
 /*
  * 公共请求函数和Url定义
@@ -336,7 +336,7 @@ export class baTableApi {
         )
     }
 
-    postData(action: string, data: anyObj) {
+    postData(action: string, data: anyObj, showSuccessMessage: boolean = true) {
         return createAxios(
             {
                 url: this.actionUrl.has(action) ? this.actionUrl.get(action) : this.controllerUrl + action,
@@ -344,7 +344,7 @@ export class baTableApi {
                 data: data,
             },
             {
-                showSuccessMessage: true,
+                showSuccessMessage,
             }
         )
     }

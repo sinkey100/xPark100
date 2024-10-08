@@ -5,6 +5,7 @@ namespace app\admin\controller\xpark;
 use Throwable;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
+use app\admin\model\xpark\Data;
 
 /**
  * 应用管理
@@ -135,7 +136,7 @@ class Apps extends Backend
     public function select(): void
     {
         $map = [];
-        if($this->auth->id > 1){
+        if ($this->auth->id > 1) {
             $map['admin_id'] = $this->auth->id;
         }
 
@@ -154,5 +155,26 @@ class Apps extends Backend
             'total'  => $res->total(),
             'remark' => get_route_remark(),
         ]);
+    }
+
+    public function monthDomains(): void
+    {
+        $month   = $this->request->post('month/s', '');
+        $app_ids = $this->request->post('app_ids/a', []);
+        if (!$month || empty($app_ids)) $this->error('参数错误');
+
+        $domains = Data::whereMonth('a_date', $month)
+            ->where('app_id', 'in', $app_ids)
+            ->group('sub_channel')
+            ->select()->toArray();
+
+        if(count($domains) == 0) $this->error('当月没有数据');
+
+        $domains = array_column($domains, 'sub_channel');
+
+        $this->success('', [
+            'domains' => $domains
+        ]);
+
     }
 }

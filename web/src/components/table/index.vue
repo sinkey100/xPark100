@@ -97,7 +97,10 @@ const onSortChange = ({ order, prop }: { order: string; prop: string }) => {
 }
 
 const pageSizes = computed(() => {
-    let defaultSizes = [10, 20, 50, 100]
+    let defaultSizes = [ 50, 100]
+    if(!baTable.table.filter!.limit){
+        baTable.table.filter!.limit = 50
+    }
     if (baTable.table.filter!.limit) {
         if (!defaultSizes.includes(baTable.table.filter!.limit)) {
             defaultSizes.push(baTable.table.filter!.limit)
