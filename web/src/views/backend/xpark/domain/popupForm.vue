@@ -37,7 +37,10 @@
                             border: true,
                             content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense'},
                         }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })" />
+                    <FormItem v-if="baTable.form.items!.channel == 'AdSense'" :label="t('xpark.domain.flag')" type="string" v-model="baTable.form.items!.flag" prop="flag" :placeholder="t('Please input field', { field: t('xpark.domain.flag') })" />
+
                 </el-form>
+
             </div>
         </el-scrollbar>
         <template #footer>
@@ -71,6 +74,7 @@ const rules: Partial<Record<string, FormItemRule[]>> = reactive({
     original_domain: [buildValidatorData({ name: 'required', title: t('xpark.domain.original_domain') })],
     rate: [buildValidatorData({ name: 'required', title: t('xpark.domain.rate') })],
     channel: [buildValidatorData({ name: 'required', title: t('xpark.domain.channel') })],
+    flag: [buildValidatorData({ name: 'required', title: t('xpark.domain.flag') })],
 })
 </script>
 

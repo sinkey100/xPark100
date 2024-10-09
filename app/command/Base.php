@@ -2,14 +2,22 @@
 
 namespace app\command;
 
+use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Domain;
+use app\admin\model\xpark\DomainRate;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use think\console\Command;
-use think\facade\Env;
+use think\console\Output;
 
 class Base extends Command
 {
+
+    protected array $domains = [];
+    protected array $dateRate = [];
+    protected int $days = 3;
+    protected array $prefix = ['cy-'];
 
     public function __construct()
     {
@@ -23,19 +31,46 @@ class Base extends Command
     protected function http(string $method, string $url, array $options = []): array
     {
         $client = new Client([
-            'verify'    => false
+            'verify' => false
         ]);
         try {
             $result = $client->request($method, $url, $options);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
-        if ($result->getStatusCode() != 200){
+        if ($result->getStatusCode() != 200) {
             throw new Exception('请求失败: ' . $result->getBody()->getContents());
         }
         return json_decode($result->getBody()->getContents(), true);
     }
 
+    protected function log(Output $output, string $text, $time = true): void
+    {
+        if ($time) $text = date("Y-m-d H:i:s") . '  ' . $text;
+        $output->writeln($text);
+    }
+
+    protected function getPeriods($totalDays, $daysPerPeriod): array
+    {
+        $periods      = [];
+        $currentStart = 0;
+
+        while ($currentStart <= $totalDays) {
+            // 计算当前周期的结束日期
+            $currentEnd = min($currentStart + $daysPerPeriod - 1, $totalDays);
+
+            // 保存当前周期的开始日期和结束日期
+            $periods[] = [
+                date("Y-m-d", strtotime("-{$currentEnd} days")),
+                date("Y-m-d", strtotime("-{$currentStart} days"))
+            ];
+
+            // 更新下一个周期的开始日期
+            $currentStart = $currentEnd + 1;
+        }
+
+        return array_reverse($periods);
+    }
 
     protected function csv_to_json($csv_string): array
     {
@@ -59,6 +94,62 @@ class Base extends Command
         // $json_data = json_encode($data, JSON_PRETTY_PRINT);
 
         return [$header, $data];
+    }
+
+    protected function getDomainRow($original_domain, $date, $channel = ''): array
+    {
+        //domain_id
+        $domain     = str_replace($this->prefix, '', $original_domain);
+        $domain_row = Domain::where('original_domain', $original_domain)->find();
+        if (!$domain_row) {
+            $domain_row = Domain::create([
+                'domain'          => $domain,
+                'original_domain' => $original_domain,
+                'channel'         => $channel,
+                'app_id'          => null,
+            ]);
+        }
+        //app_id
+        $app_id = DomainRate::where('domain', $domain)->where('date', $date)->value('app_id', $domain_row->app_id);
+        return [$domain_row->id, $app_id];
+    }
+
+    protected function saveData($data): void
+    {
+        if (count($this->dateRate) == 0) {
+            for ($i = 0; $i < $this->days; $i++) {
+                $date                  = date("Y-m-d", strtotime("-$i days"));
+                $tmp                   = DomainRate::where('date', $date)->select()->toArray();
+                $this->dateRate[$date] = array_column($tmp, null, 'domain');
+            }
+        }
+
+        $insertData = [];
+        foreach ($data as $v) {
+            // 需要特殊处理
+            $v['a_date'] = $_date = date("Y-m-d", strtotime($v['a_date']));
+            $_domain     = $v['sub_channel'];
+
+            if (!isset($this->dateRate[$_date][$_domain])) {
+                // 插入表
+                $domain_info                      = Domain::where('domain', $_domain)->find();
+                $rate                             = $domain_info['rate'] ?: 1;
+                $this->dateRate[$_date][$_domain] = DomainRate::create([
+                    'domain' => $_domain,
+                    'date'   => $_date,
+                    'rate'   => $rate,
+                    'app_id' => $domain_info['app_id']
+                ]);
+            } else {
+                $rate = floatval($this->dateRate[$_date][$_domain]['rate']);
+            }
+
+            // 备份数据
+            $v['gross_revenue'] = $v['ad_revenue'];
+            $v['ad_revenue']    = $v['ad_revenue'] * $rate;
+            $insertData[]       = $v;
+        }
+        Data::insertAll($insertData);
     }
 
 }

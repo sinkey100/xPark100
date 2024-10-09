@@ -136,7 +136,7 @@ class Domain extends Backend
             $rate_revenue     = sprintf("%.2f", $rate_revenue);
             $exchange_revenue = sprintf("%.2f", $exchange_revenue);
 
-            $sheet->setCellValue('A' . ($first_row_index + $index), $index);
+            $sheet->setCellValue('A' . ($first_row_index + $index), $index + 1);
             $sheet->setCellValue('B' . ($first_row_index + $index), $domain);
             $sheet->setCellValue('C' . ($first_row_index + $index), $month);
             $sheet->setCellValue('D' . ($first_row_index + $index), $revenue);

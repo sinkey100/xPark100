@@ -5,9 +5,15 @@
 return [
     // 指令定义
     'commands' => [
-        'Demo'    => \app\command\Demo::class,
-        'Xpark'   => \app\command\Xpark::class,
+        // 广告通道数据
+        'Xpark'   => \app\command\Ad\Xpark::class,
+        'BeesAds' => \app\command\Ad\BeesAds::class,
+        'AdSense' => \app\command\Ad\AdSense::class,
+
+        // 小米工具
         'MiTools' => \app\command\MiTools::class,
-        'AdSense' => \app\command\AdSense::class
+
+        'Demo' => \app\command\Demo::class,
+
     ],
 ];

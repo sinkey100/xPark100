@@ -1,67 +1,88 @@
 <?php
 
-namespace app\command;
+namespace app\command\Ad;
 
 use app\admin\model\google\Account;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\XparkAdSense;
+use app\command\Base;
+use Google\Service\Adsense as GoogleAdSense;
+use sdk\Google as GoogleSDK;
 use think\console\Input;
 use think\console\Output;
-use Exception;
-use Google\Service\AdSense as GoogleAdSense;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
 use think\facade\Db;
-use sdk\Google as GoogleSDK;
-
+use Exception;
 
 class AdSense extends Base
 {
 
-    protected array $domains = [];
-
     protected function configure()
     {
-        // 指令配置
         $this->setName('AdSense');
+    }
+
+    protected function execute(Input $input, Output $output): void
+    {
+        $this->log($output, "\n\n======== AdSense 开始拉取数据 ========", false);
+        $this->log($output, "任务开始，拉取 {$this->days} 天");
+
+        for ($i = 0; $i < $this->days; $i++) {
+            Data::where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+        }
+        $this->log($output, '历史数据已删除');
+        $this->log($output, '开始拉取 AdSense 数据');
+        try {
+            $this->pull($output);
+        } catch (Exception $e) {
+            $this->log($output, "[{$e->getLine()}|{$e->getFile()}]{$e->getMessage()}");
+            print_r($e->getTraceAsString());
+            $this->log($output, '======== AdSense 拉取数据失败 ========', false);
+            return;
+        }
+
+        $this->log($output, '======== AdSense 拉取数据完成 ========', false);
     }
 
     /**
      * @throws DataNotFoundException
-     * @throws \Google\Service\Exception
      * @throws \Google\Exception
+     * @throws \Google\Service\Exception
      * @throws ModelNotFoundException
      * @throws DbException
      * @throws Exception
      */
-    protected function execute(Input $input, Output $output): void
+    protected function pull(Output $output): void
     {
-        $this->domains = Domain::where('channel', 'AdSense')->select()->toArray();
-        $this->domains = array_column($this->domains, null, 'domain');
-
-        $days = 3;
-
-        // 清除老数据
-        for ($i = 0; $i < $days; $i++) {
-            Data::where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-            $maxId = Data::max('id');
-            $maxId++;
-            Db::execute("ALTER TABLE `ba_xpark_data` AUTO_INCREMENT={$maxId};");
+        // 获取账号和域名
+        $adsense_domains = Domain::where('channel', 'AdSense')->where('flag', '<>', '')->select()->toArray();
+        $domains_group   = [];
+        foreach ($adsense_domains as $domain) {
+            $flag = $domain['flag'];
+            if (!isset($domains_group[$flag])) $domains_group[$flag] = [];
+            $domains_group[$flag][] = $domain['domain'];
         }
+
+        // 删除比对数据
         Db::execute("truncate table ba_xpark_adsense;");
 
-
-        $accounts = Account::where('adsense_state', 'READY')->select();
-        foreach ($accounts as $account) {
-            // 初始化
+        // 获取数据
+        foreach ($domains_group as $flag => $domains) {
+            $account = Account::where('flag', $flag)->find();
+            if (!$account) throw new Exception('AdSense 账号标记不存在');
             $client = (new GoogleSDK())->init($account);
             $client->setAccessToken($account->auth);
             $adsense = new GoogleAdSense($client);
 
             // 拉取数据参数
-            $startTime = strtotime("-" . ($days - 1) . " days");
+            $filter = [];
+            foreach ($domains as $domain) {
+                $filter[] = 'DOMAIN_NAME==' . $domain;
+            }
+            $startTime = strtotime("-" . ($this->days - 1) . " days");
             $params    = [
                 'startDate.year'  => date("Y", $startTime),
                 'startDate.month' => date("m", $startTime),
@@ -69,12 +90,6 @@ class AdSense extends Base
                 'endDate.year'    => date("Y"),
                 'endDate.month'   => date("m"),
                 'endDate.day'     => date("d"),
-//                'startDate.year'  => '2024',
-//                'startDate.month' => '07',
-//                'startDate.day'   => '01',
-//                'endDate.year'    => '2024',
-//                'endDate.month'   => '09',
-//                'endDate.day'     => '13',
                 'metrics'         => [
                     'AD_REQUESTS', 'AD_REQUESTS_COVERAGE', 'CLICKS', 'IMPRESSIONS', 'ESTIMATED_EARNINGS',
                     'COST_PER_CLICK', 'IMPRESSIONS_RPM', 'IMPRESSIONS_CTR'
@@ -83,16 +98,18 @@ class AdSense extends Base
                     'DATE', 'COUNTRY_CODE', 'DOMAIN_NAME'
                 ],
                 'orderBy'         => '+DATE',
+                'filters'         => implode(',', $filter)
             ];
+
             // 按域名拉取
-            $filter = [];
-            foreach ($this->domains as $filter_domain_name=>$v) {
-                $filter[] = 'DOMAIN_NAME==' . $filter_domain_name;
+            try {
+                $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            } catch (Exception $e) {
+                throw new Exception($e->getMessage());
             }
-            $params['filters'] = implode(',', $filter);
-            $result            = $adsense->accounts_reports->generate($account->adsense_name, $params);
 
             if (!$result['rows'] || count($result['rows']) == 0) continue;
+            $this->log($output, "{$flag} 地区数据拉取完成");
 
             $headers = array_column($result['headers'], 'name');
             $data    = [];
@@ -117,12 +134,15 @@ class AdSense extends Base
                 ];
             }
             XparkAdSense::insertAll($data);
-            unset($data, $insert);
+            unset($data, $insert, $result);
 
             // 按广告单元拉取
             $params['dimensions'][] = 'AD_UNIT_NAME';
             $result                 = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
+
+            $this->log($output, "{$flag} 广告位数据拉取完成");
+
             $headers = array_column($result['headers'], 'name');
             if (count($result['rows']) == 0) continue;
             $data = [];
@@ -132,11 +152,13 @@ class AdSense extends Base
                     $insert[$header] = $row['cells'][$k]['value'];
                 }
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
-                $data[]          = [
+
+                [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'],$insert['DATE'], 'AdSense');
+                $data[] = [
                     'channel'         => 'AdSense',
                     'sub_channel'     => $insert['DOMAIN_NAME'],
-                    'domain_id'       => $this->domains[$insert['DOMAIN_NAME']]['id'],
-                    'app_id'          => $this->domains[$insert['DOMAIN_NAME']]['app_id'],
+                    'domain_id'       => $domain_id,
+                    'app_id'          => $app_id,
                     'a_date'          => $insert['DATE'],
                     'country_code'    => $insert['COUNTRY_CODE'],
                     'ad_placement_id' => $insert['AD_UNIT_NAME'],
@@ -153,17 +175,16 @@ class AdSense extends Base
                 ];
             }
             unset($insert, $result, $adsense);
-            $class = new Xpark();
-            $class->saveData($data);
-            unset($class, $data);
+            $this->saveData($data);
+            unset($data);
         }
+        $this->log($output, "开始计算自动广告");
+
         // 自动广告计算
-        for ($i = 0; $i < $days; $i++) {
-            foreach ($this->domains as $domain_name => $v){
-
-                $output->writeln("\n $domain_name " . date("Y-m-d", strtotime("-$i days")));
-
+        for ($i = 0; $i < $this->days; $i++) {
+            foreach ($adsense_domains as $domain) {
                 // 总收入
+                $domain_name = $domain['domain'];
                 $total_revenue = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('ad_revenue');
                 $unit_revenue  = Data::where('sub_channel', $domain_name)->where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('gross_revenue');
 
@@ -171,13 +192,9 @@ class AdSense extends Base
                 $total_requests = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('requests');
                 $unit_requests  = Data::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('requests');
 
-                $output->writeln($total_requests);
-                $output->writeln($unit_requests);
-
-
                 if (
                     !($total_revenue > $unit_revenue)
-                    ||  !($total_requests > $unit_requests)
+                    || !($total_requests > $unit_requests)
                 ) continue;
 
                 // 总展示
@@ -186,20 +203,20 @@ class AdSense extends Base
                 // 总点击
                 $total_clicks = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('clicks');
                 $unit_clicks  = Data::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('clicks');
-                $cursor = Data::field(['*', 'sum(requests) as total_requests'])
+                $cursor       = Data::field(['*', 'sum(requests) as total_requests'])
                     ->where('sub_channel', $domain_name)
                     ->where('channel', 'AdSense')
                     ->where('a_date', date("Y-m-d", strtotime("-$i days")))
                     ->group('country_code')
                     ->cursor();
-                $data = [];
+                $data         = [];
                 foreach ($cursor as $item) {
                     // 计算自动广告
                     $EARNINGS    = ($total_revenue - $unit_revenue) * 100 / $unit_requests * $item['total_requests'] / 100;
                     $AD_REQUESTS = ($total_requests - $unit_requests) * 100 / $unit_requests * $item['total_requests'] / 100;
                     $IMPRESSIONS = ($total_impressions - $unit_impressions) * 100 / $unit_requests * $item['total_requests'] / 100;
                     $CLICKS      = ($total_clicks - $unit_clicks) * 100 / $unit_requests * $item['total_requests'] / 100;
-                    $data[]          = [
+                    $data[]      = [
                         'channel'         => 'AdSense',
                         'sub_channel'     => $item['sub_channel'],
                         'domain_id'       => $item['domain_id'],
@@ -217,12 +234,11 @@ class AdSense extends Base
                         'raw_cpc'         => round($EARNINGS / (!empty($CLICKS) ? $CLICKS : 1), 2),
                         'raw_ecpm'        => round($EARNINGS / (!empty($IMPRESSIONS) ? $IMPRESSIONS : 1) * 1000, 3)
                     ];
-
                 }
-                $class = new Xpark();
-                $class->saveData($data);
-                unset($class, $data);
+                $this->saveData($data);
+                unset($data);
             }
         }
     }
+
 }
