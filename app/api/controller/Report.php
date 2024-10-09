@@ -3,6 +3,7 @@
 namespace app\api\controller;
 
 use app\admin\model\Admin;
+use app\admin\model\AdminLog;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Data;
 use Throwable;
@@ -26,7 +27,7 @@ class Report extends Frontend
 
         $from_date = strtotime($from_date);
         $to_date   = strtotime($to_date);
-        if($to_date - $from_date > 31 * 86400) $this->error('Wrong date range');
+        if ($to_date - $from_date > 31 * 86400) $this->error('Wrong date range');
 
         $admin = Admin::where('username', $username)->find();
         // 用户不存在
@@ -35,6 +36,16 @@ class Report extends Frontend
         if ($admin->password != encrypt_password($password, $admin->salt)) $this->error('Unauthorized');
         // 用户状态异常
         if ($admin->status != 1) $this->error('Abnormal status');
+
+        AdminLog::create([
+            'admin_id'  => $admin->id,
+            'username'  => $admin->username,
+            'url'       => '/api/report',
+            'title'     => 'API拉取数据',
+            'data'      => json_encode($this->request->param('', null, 'trim,strip_tags,htmlspecialchars')),
+            'ip'        => $this->request->ip(),
+            'useragent' => substr(request()->server('HTTP_USER_AGENT'), 0, 255)
+        ]);
 
         // 获取账号的应用
         $apps = Apps::where('admin_id', $admin->id)->select()->toArray();
