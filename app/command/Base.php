@@ -44,10 +44,10 @@ class Base extends Command
         return json_decode($result->getBody()->getContents(), true);
     }
 
-    protected function log(Output $output, string $text, $time = true): void
+    protected function log(string $text, $time = true): void
     {
         if ($time) $text = date("Y-m-d H:i:s") . '  ' . $text;
-        $output->writeln($text);
+        $this->output->writeln($text);
     }
 
     protected function getPeriods($totalDays, $daysPerPeriod): array
@@ -144,6 +144,7 @@ class Base extends Command
                 $rate = floatval($this->dateRate[$_date][$_domain]['rate']);
             }
 
+//            $this->output->writeln($rate);
             // 备份数据
             $v['gross_revenue'] = $v['ad_revenue'];
             $v['ad_revenue']    = $v['ad_revenue'] * $rate;

@@ -27,24 +27,24 @@ class AdSense extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        $this->log($output, "\n\n======== AdSense 开始拉取数据 ========", false);
-        $this->log($output, "任务开始，拉取 {$this->days} 天");
+        $this->log("\n\n======== AdSense 开始拉取数据 ========", false);
+        $this->log("任务开始，拉取 {$this->days} 天");
 
         for ($i = 0; $i < $this->days; $i++) {
             Data::where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
         }
-        $this->log($output, '历史数据已删除');
-        $this->log($output, '开始拉取 AdSense 数据');
+        $this->log('历史数据已删除');
+        $this->log('开始拉取 AdSense 数据');
         try {
             $this->pull($output);
         } catch (Exception $e) {
-            $this->log($output, "[{$e->getLine()}|{$e->getFile()}]{$e->getMessage()}");
+            $this->log("[{$e->getLine()}|{$e->getFile()}]{$e->getMessage()}");
             print_r($e->getTraceAsString());
-            $this->log($output, '======== AdSense 拉取数据失败 ========', false);
+            $this->log('======== AdSense 拉取数据失败 ========', false);
             return;
         }
 
-        $this->log($output, '======== AdSense 拉取数据完成 ========', false);
+        $this->log('======== AdSense 拉取数据完成 ========', false);
     }
 
     /**
@@ -109,7 +109,7 @@ class AdSense extends Base
             }
 
             if (!$result['rows'] || count($result['rows']) == 0) continue;
-            $this->log($output, "{$flag} 地区数据拉取完成");
+            $this->log("{$flag} 地区数据拉取完成");
 
             $headers = array_column($result['headers'], 'name');
             $data    = [];
@@ -141,7 +141,7 @@ class AdSense extends Base
             $result                 = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
 
-            $this->log($output, "{$flag} 广告位数据拉取完成");
+            $this->log("{$flag} 广告位数据拉取完成");
 
             $headers = array_column($result['headers'], 'name');
             if (count($result['rows']) == 0) continue;
@@ -178,7 +178,7 @@ class AdSense extends Base
             $this->saveData($data);
             unset($data);
         }
-        $this->log($output, "开始计算自动广告");
+        $this->log("开始计算自动广告");
 
         // 自动广告计算
         for ($i = 0; $i < $this->days; $i++) {

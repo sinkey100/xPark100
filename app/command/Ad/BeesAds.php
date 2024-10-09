@@ -19,28 +19,28 @@ class BeesAds extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        $this->log($output, "\n\n======== BeesAds 开始拉取数据 ========", false);
-        $this->log($output, "任务开始，拉取 {$this->days} 天");
+        $this->log("\n\n======== BeesAds 开始拉取数据 ========", false);
+        $this->log("任务开始，拉取 {$this->days} 天");
 
         $rawData = $this->pull($output);
 
         if (empty($rawData) || count($rawData) == 0) {
-            $this->log($output, '======== BeesAds 拉取数据完成 ========', false);
+            $this->log('======== BeesAds 拉取数据完成 ========', false);
             return;
         }
 
-        $this->log($output, '准备删除历史数据');
+        $this->log('准备删除历史数据');
         for ($i = 0; $i < $this->days; $i++) {
             Data::where('channel', 'BeesAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
         }
-        $this->log($output, '历史数据已删除');
+        $this->log('历史数据已删除');
 
         if (count($rawData) > 0) {
-            $this->log($output, '准备保存新的数据');
+            $this->log('准备保存新的数据');
             $this->saveData($rawData);
         }
 
-        $this->log($output, '======== BeesAds 拉取数据完成 ========', false);
+        $this->log('======== BeesAds 拉取数据完成 ========', false);
     }
 
     protected function pull(Output $output): array
@@ -77,20 +77,20 @@ class BeesAds extends Base
                 $params
             );
         } catch (Exception $e) {
-            $this->log($output, 'POST请求出错: ' . $e->getMessage());
+            $this->log('POST请求出错: ' . $e->getMessage());
             return [];
         }
         if (!empty($result['error'])) {
-            $this->log($output, '接口返回报错');
-            $this->log($output, json_encode($result));
+            $this->log('接口返回报错');
+            $this->log(json_encode($result));
             return [];
         }
         if (empty($result['data']['total'])) {
-            $this->log($output, '拉取数据完成，没有返回数据');
-            $this->log($output, json_encode($result));
+            $this->log('拉取数据完成，没有返回数据');
+            $this->log(json_encode($result));
             return [];
         }
-        $this->log($output, '准备拉取' . $result['data']['total'] . '条数据');
+        $this->log('准备拉取' . $result['data']['total'] . '条数据');
 
         $pages = ceil($result['data']['total'] / $pageSize);
         // 批量拉取数据
@@ -105,7 +105,7 @@ class BeesAds extends Base
             );
             $data                         = [];
             if (empty($result['data']['rows'])) {
-                $this->log($output, '没有拉取到数据');
+                $this->log('没有拉取到数据');
                 return [];
             }
 
@@ -135,7 +135,7 @@ class BeesAds extends Base
             }
             $returnRows = array_merge($returnRows, $data);
         }
-        $this->log($output, '拉取数据完成，长度' . count($returnRows));
+        $this->log('拉取数据完成，长度' . count($returnRows));
         return $returnRows;
     }
 

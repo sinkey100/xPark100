@@ -21,29 +21,29 @@ class Xpark extends Base
         // 上个月1号到今天的间隔日期
         $h          = ceil((time() - strtotime(date("Y-m-01", strtotime('last month'))) + 3600) / 86400);
         $this->days = date("H") == 0 ? $h : 3;
-        $this->log($output, "\n\n======== xPark 开始拉取数据 ========", false);
-        $this->log($output, "任务开始，拉取 {$this->days} 天");
+        $this->log("\n\n======== xPark 开始拉取数据 ========", false);
+        $this->log("任务开始，拉取 {$this->days} 天");
 
         $rawData = $this->pull($output);
 
         if (empty($rawData) || count($rawData) == 0) {
-            $this->log($output, '======== xPark 拉取数据完成 ========', false);
+            $this->log('======== xPark 拉取数据完成 ========', false);
             return;
         }
 
-        $this->log($output, '准备删除历史数据');
+        $this->log('准备删除历史数据');
 
         for ($i = 0; $i < $this->days; $i++) {
             Data::where('channel', 'xPark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
         }
-        $this->log($output, '历史数据已删除');
+        $this->log('历史数据已删除');
 
         if (count($rawData) > 0) {
-            $this->log($output, '准备保存新的数据');
+            $this->log('准备保存新的数据');
             $this->saveData($rawData);
         }
 
-        $this->log($output, '======== xPark 拉取数据完成 ========', false);
+        $this->log('======== xPark 拉取数据完成 ========', false);
     }
 
     protected function pull(Output $output): array
@@ -64,13 +64,13 @@ class Xpark extends Base
             ]);
 
             if (!isset($result['data']['list'])) {
-                $this->log($output, '拉取数据完成，没有返回数据');
-                $this->log($output, json_encode($result));
+                $this->log('拉取数据完成，没有返回数据');
+                $this->log(json_encode($result));
                 continue;
             }
             if (count($result['data']['list']) == 0) {
-                $this->log($output, '拉取数据完成，长度0');
-                $this->log($output, json_encode($result));
+                $this->log('拉取数据完成，长度0');
+                $this->log(json_encode($result));
                 continue;
             }
 
@@ -89,7 +89,7 @@ class Xpark extends Base
             }
         }
 
-        $this->log($output, '拉取数据完成' . count($data));
+        $this->log('拉取数据完成' . count($data));
         return $data;
     }
 
