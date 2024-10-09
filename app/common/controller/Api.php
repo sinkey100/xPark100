@@ -110,7 +110,6 @@ class Api extends BaseController
         $result = [
             'code' => $code,
             'msg'  => $msg,
-            'time' => $this->request->server('REQUEST_TIME'),
             'data' => $data,
         ];
 

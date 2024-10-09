@@ -45,7 +45,9 @@ class Data extends Backend
 
     protected function calcData()
     {
-        $domain_filter = array_column(Domain::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
+        $app_filter = array_column(Apps::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
+        if($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
+
 
         // 如果是 select 则转发到 select 方法，若未重写该方法，其实还是继续执行 index
         if ($this->request->param('select')) {
@@ -93,9 +95,8 @@ class Data extends Backend
             ->where($where);
 
 
-        if ($domain_filter) {
-            $res = $res->where('domain_id', 'in', $domain_filter);
-        }
+        if ($app_filter) {$res = $res->where('app_id', 'in', $app_filter);}
+        if (isset($domain_filter) && $domain_filter) {$res = $res->where('domain_id', 'in', $domain_filter);}
 
 //        $res = $res->fetchSql(true)->select();
 //        $this->error($res);

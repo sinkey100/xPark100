@@ -12,7 +12,11 @@
 // [ 应用入口文件 ]
 namespace think;
 
-$server = isset($_REQUEST['server']) || isset($_SERVER['HTTP_SERVER']) || substr($_SERVER['REQUEST_URI'], 1, 9) == 'index.php' || $_SERVER['REQUEST_METHOD'] == 'OPTIONS';
+$server = isset($_REQUEST['server'])
+    || isset($_SERVER['HTTP_SERVER'])
+    || substr($_SERVER['REQUEST_URI'], 1, 9) == 'index.php'
+    || str_starts_with($_SERVER['REQUEST_URI'], '/api/')
+    || $_SERVER['REQUEST_METHOD'] == 'OPTIONS';
 if (!$server) {
     /*
      * 用户访问前端
