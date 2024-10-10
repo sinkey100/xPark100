@@ -3,6 +3,7 @@
 namespace app\command\Ad;
 
 use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Domain;
 use app\command\Base;
 use think\console\Input;
 use think\console\Output;
@@ -19,10 +20,17 @@ class BeesAds extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        // 获取小蜜蜂账号数量
+        $accounts = Domain::field('flag')->where('channel', 'BeesAds')->group('flag')->select();
+        $accounts = array_column($accounts->toArray(), 'flag');
+
         $this->log("\n\n======== BeesAds 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
-        $rawData = $this->pull($output);
+        $rawData = [];
+        foreach ($accounts as $account) {
+            $rawData = array_merge($rawData, $this->pull($account));
+        }
 
         if (empty($rawData) || count($rawData) == 0) {
             $this->log('======== BeesAds 拉取数据完成 ========', false);
@@ -43,14 +51,16 @@ class BeesAds extends Base
         $this->log('======== BeesAds 拉取数据完成 ========', false);
     }
 
-    protected function pull(Output $output): array
+    protected function pull(string $account): array
     {
+        $this->log('准备开始拉取:' . $account);
+
         $returnRows = [];
         $pageSize   = 1000;
         $days       = $this->days - 1;
         $params     = [
             'headers' => [
-                'x-apihub-ak'  => Env::get('BEESADS.TOKEN'),
+                'x-apihub-ak'  => Env::get('BEESADS.' . $account),
                 'x-apihub-env' => 'prod',
             ],
             'json'    => [
@@ -90,7 +100,7 @@ class BeesAds extends Base
             $this->log(json_encode($result));
             return [];
         }
-        $this->log('准备拉取' . $result['data']['total'] . '条数据');
+        $this->log('共找到' . $result['data']['total'] . '条数据');
 
         $pages = ceil($result['data']['total'] / $pageSize);
         // 批量拉取数据

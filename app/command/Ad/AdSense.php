@@ -36,7 +36,7 @@ class AdSense extends Base
         $this->log('历史数据已删除');
         $this->log('开始拉取 AdSense 数据');
         try {
-            $this->pull($output);
+            $this->pull();
         } catch (Exception $e) {
             $this->log("[{$e->getLine()}|{$e->getFile()}]{$e->getMessage()}");
             print_r($e->getTraceAsString());
@@ -55,7 +55,7 @@ class AdSense extends Base
      * @throws DbException
      * @throws Exception
      */
-    protected function pull(Output $output): void
+    protected function pull(): void
     {
         // 获取账号和域名
         $adsense_domains = Domain::where('channel', 'AdSense')->where('flag', '<>', '')->select()->toArray();

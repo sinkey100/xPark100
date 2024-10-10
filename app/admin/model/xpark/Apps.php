@@ -13,7 +13,9 @@ class Apps extends Model
     protected $name = 'xpark_apps';
 
     // 自动写入时间戳字段
-    protected $autoWriteTimestamp = false;
+    protected $autoWriteTimestamp = true;
+    protected $createTime = 'createtime';
+    protected $updateTime = 'updatetime';
 
 
     public function admin(): \think\model\relation\BelongsTo

@@ -24,7 +24,7 @@ class Xpark extends Base
         $this->log("\n\n======== xPark 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
-        $rawData = $this->pull($output);
+        $rawData = $this->pull();
 
         if (empty($rawData) || count($rawData) == 0) {
             $this->log('======== xPark 拉取数据完成 ========', false);
@@ -46,7 +46,7 @@ class Xpark extends Base
         $this->log('======== xPark 拉取数据完成 ========', false);
     }
 
-    protected function pull(Output $output): array
+    protected function pull(): array
     {
         $days        = $this->days - 1;
         $date_ranges = $this->getPeriods($days, 30);
