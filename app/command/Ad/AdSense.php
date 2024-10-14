@@ -153,7 +153,7 @@ class AdSense extends Base
                 }
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
-                [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'],$insert['DATE'], 'AdSense');
+                [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
                 $data[] = [
                     'channel'         => 'AdSense',
                     'sub_channel'     => $insert['DOMAIN_NAME'],
@@ -184,7 +184,7 @@ class AdSense extends Base
         for ($i = 0; $i < $this->days; $i++) {
             foreach ($adsense_domains as $domain) {
                 // 总收入
-                $domain_name = $domain['domain'];
+                $domain_name   = $domain['domain'];
                 $total_revenue = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('ad_revenue');
                 $unit_revenue  = Data::where('sub_channel', $domain_name)->where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('gross_revenue');
 
@@ -222,7 +222,7 @@ class AdSense extends Base
                         'domain_id'       => $item['domain_id'],
                         'app_id'          => $item['app_id'],
                         'a_date'          => $item['a_date'],
-                        'country_code'    => $item['country_code'],
+                        'country_code'    => $item->getData('country_code'),
                         'ad_placement_id' => 'auto_ad',
                         'requests'        => ceil($AD_REQUESTS),
                         'fills'           => ceil($AD_REQUESTS),

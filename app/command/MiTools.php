@@ -58,6 +58,9 @@ class MiTools extends Base
             ],
             8 => [
                 'minitool.app'
+            ],
+            9 => [
+                'tool.boatcloud.cn'
             ]
         ];
 

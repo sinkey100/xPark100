@@ -61,7 +61,7 @@ const {t} = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
     a_date: true,
-    sub_channel: true,
+    sub_channel: false,
     app_id: false,
     country_code: false,
     ad_placement_id: false
@@ -88,7 +88,9 @@ const baTable = new baTableClass(
                 comSearchRender: 'date',
                 operator: 'RANGE',
                 sortable: false,
-                timeFormat: 'yyyy-mm-dd'
+                width:110,
+                timeFormat: 'yyyy-mm-dd',
+                fixed: true
             },
             {
                 label: t('xpark.data.domain__domain'),
@@ -113,17 +115,19 @@ const baTable = new baTableClass(
                 operatorPlaceholder: t('Click select'),
                 sortable: false,
                 show: false,
-                render: 'tag',
+                // render: 'tag',
                 operator: adminInfo.id == 1 ? 'eq' : false,
-                custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
-                replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds'), 'AdSense': t('AdSense')},
+                // custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
+                // replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds'), 'AdSense': t('AdSense')},
             },
             {
                 label: t('xpark.data.sub_channel'),
                 prop: 'sub_channel',
                 align: 'center',
                 sortable: false,
-                operator: false
+                operator: false,
+                width:180,
+                fixed: true
             },
             {
                 label: t('xpark.data.admin'),
@@ -166,7 +170,23 @@ const baTable = new baTableClass(
                 prop: 'country_code',
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
-                operator: 'LIKE',
+                operator: 'IN',
+                width: 150,
+                sortable: false,
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Data/country',
+                    multiple: true,
+                    field: 'name'
+                }
+            },
+            {
+                label: t('xpark.data.country_level'),
+                prop: 'country_level',
+                align: 'center',
+                operatorPlaceholder: t('Fuzzy query'),
+                operator: false,
                 sortable: false,
             },
             {
@@ -220,7 +240,13 @@ const baTable = new baTableClass(
                 operator: false,
                 sortable: false,
             },
-
+            {
+                label: t('xpark.data.impressions_rate'),
+                prop: 'impressions_rate',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
 
             {
                 label: t('xpark.data.clicks'),
@@ -280,10 +306,10 @@ const baTable = new baTableClass(
                     item.show = original.value;
                     return;
                 }
-                // if(adminInfo.id == 1 && item.prop == 'channel'){
-                //     item.show = dimensions.sub_channel;
-                //     return;
-                // }
+                if(adminInfo.id == 1 && item.prop == 'channel'){
+                    item.show = dimensions.sub_channel;
+                    return;
+                }
                 if (adminInfo.id == 1 && item.prop == 'admin') {
                     item.show = dimensions.sub_channel;
                     return;
@@ -291,6 +317,10 @@ const baTable = new baTableClass(
                 if (item.prop == 'app_id') return;
                 if (item.prop == 'app_name') {
                     item.show = baTable.table.filter!.dimensions['app_id'] == true;
+                    return;
+                }
+                if (item.prop == 'country_level') {
+                    item.show = baTable.table.filter!.dimensions['country_code'] == true;
                     return;
                 }
 

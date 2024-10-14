@@ -124,8 +124,15 @@ class Base extends Command
             }
         }
 
+        $country_data = array_column(get_country_data(), null, 'code');
+
         $insertData = [];
         foreach ($data as $v) {
+            // 地区
+            if ($v['country_code'] == 'N/A') $v['country_code'] = '';
+            $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
+            $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
+
             // 需要特殊处理
             $v['a_date'] = $_date = date("Y-m-d", strtotime($v['a_date']));
             $_domain     = $v['sub_channel'];

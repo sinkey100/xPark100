@@ -17,7 +17,7 @@ class Data extends Backend
     /**
      * Data模型对象
      * @var object
-     * @phpstan-var \app\admin\model\xpark\DataSoft
+     * @phpstan-var \app\admin\model\xpark\Data
      */
     protected object $model;
 
@@ -33,7 +33,7 @@ class Data extends Backend
     public function initialize(): void
     {
         parent::initialize();
-        $this->model   = new \app\admin\model\xpark\DataSoft();
+        $this->model   = new \app\admin\model\xpark\Data();
         $domains       = Domain::alias('domain')
             ->field(['domain.*', 'admin.nickname'])
             ->join('admin admin', 'admin.id = domain.admin_id', 'left')
@@ -46,7 +46,7 @@ class Data extends Backend
     protected function calcData()
     {
         $app_filter = array_column(Apps::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
-        if($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
+        if ($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
 
 
         // 如果是 select 则转发到 select 方法，若未重写该方法，其实还是继续执行 index
@@ -81,6 +81,8 @@ class Data extends Backend
 
         $field = array_merge($dimension, [
             'channel',
+            'country_level',
+            'country_name',
             'SUM(requests) AS requests',
             'SUM(fills) AS fills',
             'SUM(impressions) AS impressions',
@@ -95,8 +97,12 @@ class Data extends Backend
             ->where($where);
 
 
-        if ($app_filter) {$res = $res->where('app_id', 'in', $app_filter);}
-        if (isset($domain_filter) && $domain_filter) {$res = $res->where('domain_id', 'in', $domain_filter);}
+        if ($app_filter) {
+            $res = $res->where('app_id', 'in', $app_filter);
+        }
+        if (isset($domain_filter) && $domain_filter) {
+            $res = $res->where('domain_id', 'in', $domain_filter);
+        }
 
 //        $res = $res->fetchSql(true)->select();
 //        $this->error($res);
@@ -224,11 +230,15 @@ class Data extends Backend
             // 单价：  总收入/点击次数
             $v['unit_price'] = round($v['ad_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
 
+            // 展示率：展示次数/填充次数
+            $v['impressions_rate'] = $v['impressions'] / (!empty($v['fills']) ? $v['fills'] : 1);
+            $v['impressions_rate'] = number_format($v['impressions_rate'] * 100, 2) . '%';
+
             // ECPM = 收入/网页展示次数×1000
             $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             $v['ad_revenue'] = sprintf("%.2f", $v['ad_revenue']);;
 
-            $v['app_name']          = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
+            $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
 
 
             if ($this->auth->id != 1) {
@@ -243,6 +253,37 @@ class Data extends Backend
             }
         }
         return $data;
+    }
+
+    public function country(): void
+    {
+        $page        = $this->request->get('page/d', 1);
+        $quickSearch = $this->request->get('quickSearch/s', '');
+        $all_country = get_country_data();
+
+        if ($quickSearch) {
+            foreach ($all_country as $k => $v) {
+                if (!str_contains(implode('-', [$v['code'], $v['name'], $v['level']]), $quickSearch)) {
+                    unset($all_country[$k]);
+                }
+            }
+            array_values($all_country);
+        }
+
+
+        $country = array_slice($all_country, ($page - 1) * 10, 10);
+        $data    = [];
+        foreach ($country as $v) {
+            $data[] = [
+                'id'   => $v['code'],
+                'name' => implode('-', [$v['code'], $v['name'], $v['level']])
+            ];
+        }
+
+        $this->success('', [
+            'list'  => $data,
+            'total' => count($all_country)
+        ]);
     }
 
 
