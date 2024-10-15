@@ -107,7 +107,7 @@ class Data extends Backend
 //        $res = $res->fetchSql(true)->select();
 //        $this->error($res);
 
-        $res = $res->order('a_date', 'desc')
+        $res = $res->order($order)->order('a_date', 'desc')
             ->group(implode(',', $dimension));
         return [$res, $limit, $dimension];
     }
@@ -235,8 +235,12 @@ class Data extends Backend
             $v['impressions_rate'] = number_format($v['impressions_rate'] * 100, 2) . '%';
 
             // ECPM = 收入/网页展示次数×1000
-            $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
-            $v['ad_revenue'] = sprintf("%.2f", $v['ad_revenue']);;
+            $v['ecpm']        = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
+            $v['ad_revenue']  = round($v['ad_revenue'], 2);
+            $v['requests']    = (int)$v['requests'];
+            $v['fills']       = (int)$v['fills'];
+            $v['clicks']      = (int)$v['clicks'];
+            $v['impressions'] = (int)$v['impressions'];
 
             $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
 
@@ -247,7 +251,7 @@ class Data extends Backend
             } else {
 
                 $v['admin']          = isset($v['sub_channel']) && isset($this->domains[$v['sub_channel']]) ? $this->domains[$v['sub_channel']]['nickname'] : '-';
-                $v['gross_revenue']  = sprintf("%.2f", $v['gross_revenue']);
+                $v['gross_revenue']  = round($v['gross_revenue'], 2);
                 $v['raw_unit_price'] = round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
                 $v['raw_ecpm']       = round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             }

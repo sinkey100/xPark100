@@ -202,7 +202,7 @@ const baTable = new baTableClass(
                 prop: 'ad_revenue',
                 align: 'center',
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
             {
                 label: t('xpark.data.gross_revenue'),
@@ -210,21 +210,21 @@ const baTable = new baTableClass(
                 align: 'center',
                 show: original.value == true,
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
             {
                 label: t('xpark.data.requests'),
                 prop: 'requests',
                 align: 'center',
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
             {
                 label: t('xpark.data.fills'),
                 prop: 'fills',
                 align: 'center',
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
             {
                 label: t('xpark.data.fill_rate'),
@@ -238,7 +238,7 @@ const baTable = new baTableClass(
                 prop: 'impressions',
                 align: 'center',
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
             {
                 label: t('xpark.data.impressions_rate'),
@@ -253,7 +253,7 @@ const baTable = new baTableClass(
                 prop: 'clicks',
                 align: 'center',
                 operator: false,
-                sortable: false,
+                sortable: true,
             },
 
             {
