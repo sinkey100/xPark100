@@ -2,63 +2,50 @@
 
 namespace app\command;
 
-use app\admin\model\Admin;
 use app\admin\model\google\Account;
-use app\admin\model\mi\instant\Report;
-use Google\Service\Gmail;
-use Google\Service\Oauth2;
+use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Domain;
+use app\admin\model\xpark\DomainRate;
+use app\admin\model\xpark\XparkAdSense;
 use think\console\Input;
 use think\console\Output;
 use Exception;
-
-use GuzzleHttp\Client as HttpClient;
-use Google\Client as GoogleClient;
-use Google\Service\AdSense;
-use Google_Service_Adsense;
+use Google\Service\AdSense as GoogleAdSense;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
 use think\facade\Db;
-use think\facade\Env;
 use sdk\Google as GoogleSDK;
-use app\admin\model\mi\instant\Report as InstantReport;
-use app\admin\model\mi\instant\ReportUrl as InstantReportUrl;
 
 
 class Demo extends Base
 {
 
+    protected array $domains = [];
 
     protected function configure()
     {
         // 指令配置
-        $this->setName('Demo');
+        $this->setName('AdSense');
     }
+
 
     protected function execute(Input $input, Output $output): void
     {
-        $res = file_get_contents('https://www.globalpetrolprices.com/Singapore/');
-        echo $res;
-        exit;
+//        $country_data = get_country_data();
+//        foreach ($country_data as $v) {
+//
+//            Data::where('country_code', $v['code'])->update([
+//                'country_name'  => $v['name'],
+//                'country_level' => $v['level'],
+//            ]);
+//
+//        }
+//        exit;
 
-
-       $json = file_get_contents('https://raw.onmicrosoft.cn/Bing-Wallpaper-Action/main/data/zh-CN_all.json');
-       $json = json_decode($json, true);
-       $json = $json['data'];
-       $json = array_slice($json, 0 , 10);
-
-       foreach ($json as $v){
-
-           $date = date("Y-m-d", strtotime($v['startdate']));
-           $url = 'https://cn.bing.com'. $v['url'];
-
-
-
-
-           $output->writeln("INSERT INTO wallpaper (date, lang, title, image_url) VALUES ('$date', 'zh-CN', '{$v['title']}', '$url');");
-
-
-       }
+        $data = Data::where('country_name', '')->group('country_code')->select();
+        $data = $data->toArray();
+        echo json_encode(array_column($data, 'country_code'));
 
     }
 }
