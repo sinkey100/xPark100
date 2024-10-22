@@ -6,6 +6,8 @@ use app\admin\model\google\Account;
 use Google\Client as GoogleClient;
 use Google\Exception;
 use Google\Service\Adsense;
+use Google\Service\AnalyticsData;
+use Google\Service\GoogleAnalyticsAdmin;
 use Google\Service\Oauth2;
 use Google\Service\PeopleService;
 use GuzzleHttp\Client as HttpClient;
@@ -33,6 +35,8 @@ class Google
         $client->setAuthConfig(json_decode($account->json_text, true));
         $client->setRedirectUri(Env::get('APP.APP_URL') . 'callback.php?s=google');
         $client->addScope(AdSense::ADSENSE_READONLY); // AdSense 数据权限
+        $client->addScope(AnalyticsData::ANALYTICS_READONLY);
+        $client->addScope(GoogleAnalyticsAdmin::ANALYTICS_EDIT);
         $client->addScope(Oauth2::USERINFO_EMAIL); // 获取 Gmail
         $client->addScope(Oauth2::USERINFO_PROFILE);
         $client->addScope(PeopleService::CONTACTS_READONLY);

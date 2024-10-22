@@ -32,6 +32,14 @@ class Data extends Model
         return $this->belongsTo(\app\admin\model\xpark\Domain::class, 'domain_id', 'id');
     }
 
+//    public function activity()
+//    {
+//        return $this->hasMany(Activity::class, 'app_id', 'app_id')
+//            ->where('data.domain_id = activity.domain_id')
+//            ->where('data.a_date = activity.date')
+//            ->where('data.country = activity.country');
+//    }
+
 //    protected function getClickRateAttr($value, $data): string
 //    {
 //        // 点击率：  点击/展示

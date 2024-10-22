@@ -2,6 +2,7 @@
 
 namespace app\admin\controller\xpark;
 
+use app\admin\model\xpark\Activity;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
@@ -23,6 +24,7 @@ class Data extends Backend
 
     protected array|string $preExcludeFields = ['id'];
 
+    protected array $withJoinTable = ['activity'];
 //    protected array $withJoinTable = ['domain'];
 
     protected string|array $quickSearchField = ['id'];
@@ -54,11 +56,19 @@ class Data extends Backend
             $this->select();
         }
 
-        $dimensions = $this->request->get('dimensions/a', []);
-        $dimension  = [];
+        $dimensions         = $this->request->get('dimensions/a', []);
+        $dimension          = [];
+        $activity_dimension = [];
+        $activity_join_on   = [];
         foreach ($dimensions as $k => $v) {
             if ($k && $v == 'true') {
-                $dimension[] = $k;
+                $dimension[] = 'data.' . $k;
+
+                if ($k != 'ad_placement_id') {
+                    $key                  = $k == 'a_date' ? 'date' : $k;
+                    $activity_dimension[] = 'activity.' . $key;
+                    $activity_join_on[]   = "data.$k = activity.$key";
+                }
             }
         }
 
@@ -69,6 +79,7 @@ class Data extends Backend
          * 3. paginate 数据集可使用链式操作 each(function($item, $key) {}) 遍历处理
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $activity_where = [];
 
         foreach ($where as $k => $v) {
             if ($v[0] == 'data.admin') {
@@ -76,26 +87,48 @@ class Data extends Backend
                 $domain_filter = array_column($domain_filter->toArray(), 'id');
                 unset($where[$k]);
             }
+            if (in_array($v[0], ['data.a_date', 'data.domain_id', 'data.app_id', 'data.country_code'])) {
+                $filter           = [...$v];
+                $filter[0]        = str_replace(['a_date', 'data.'], ['date', 'activity.'], $filter[0]);
+                $activity_where[] = $filter;
+            }
         }
 
-
         $field = array_merge($dimension, [
-            'channel',
-            'country_level',
-            'country_name',
-            'SUM(requests) AS requests',
-            'SUM(fills) AS fills',
-            'SUM(impressions) AS impressions',
-            'SUM(clicks) AS clicks',
-            'SUM(ad_revenue) AS ad_revenue',
-            'SUM(gross_revenue) AS gross_revenue'
+            'data.channel',
+            'data.sub_channel',
+            'data.country_level',
+            'data.country_name',
+            'SUM(data.requests) AS requests',
+            'SUM(data.fills) AS fills',
+            'SUM(data.impressions) AS impressions',
+            'SUM(data.clicks) AS clicks',
+            'SUM(data.ad_revenue) AS ad_revenue',
+            'SUM(data.gross_revenue) AS gross_revenue'
         ]);
+        if (!in_array('ad_placement_id', $dimension)) {
+            $field = array_merge($field, [
+                'activity.new_users as activity_new_users',
+                'activity.active_users as activity_active_users',
+                'activity.page_views as activity_page_views'
+            ]);
+        }
+
+        $activity_field = array_merge($activity_dimension, [
+            'SUM(activity.new_users) as new_users',
+            'SUM(activity.active_users) as active_users',
+            'SUM(activity.page_views) as page_views'
+        ]);
+        $activity_summary = Activity::alias('activity')
+            ->field($activity_field)
+            ->where($activity_where)
+            ->group(implode(',', $activity_dimension))
+            ->buildSql();
 
         $res = $this->model->field($field)
-            ->withJoin($this->withJoinTable, $this->withJoinType)
+            ->leftJoin([$activity_summary => 'activity'], implode(' AND ', $activity_join_on))
             ->alias($alias)
             ->where($where);
-
 
         if ($app_filter) {
             $res = $res->where('app_id', 'in', $app_filter);
@@ -104,13 +137,11 @@ class Data extends Backend
             $res = $res->where('domain_id', 'in', $domain_filter);
         }
 
-//        $res = $res->fetchSql(true)->select();
-//        $this->error($res);
-
         unset($order['id']);
 
         $res = $res->order($order)->order('a_date', 'desc')
             ->group(implode(',', $dimension));
+
         return [$res, $limit, $dimension];
     }
 
@@ -122,32 +153,40 @@ class Data extends Backend
     {
 
         [$res, $limit, $dimension] = $this->calcData();
+        $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
         $res->visible(['domain' => ['domain']]);
 
         $total = [
-            'id'            => 10000,
-            'ad_revenue'    => 0,
-            'gross_revenue' => 0,
-            'requests'      => 0,
-            'fills'         => 0,
-            'impressions'   => 0,
-            'clicks'        => 0,
-            'a_date'        => '',
+            'id'                    => 10000,
+            'ad_revenue'            => 0,
+            'gross_revenue'         => 0,
+            'requests'              => 0,
+            'fills'                 => 0,
+            'impressions'           => 0,
+            'clicks'                => 0,
+            'activity_page_views'   => 0,
+            'activity_new_users'    => 0,
+            'activity_active_users' => 0,
+            'a_date'                => '',
         ];
         foreach ($res->items() as $v) {
-            $total['ad_revenue']    += $v['ad_revenue'];
-            $total['requests']      += $v['requests'];
-            $total['fills']         += $v['fills'];
-            $total['impressions']   += $v['impressions'];
-            $total['clicks']        += $v['clicks'];
-            $total['gross_revenue'] += $v['gross_revenue'];
+            $total['ad_revenue']            += $v['ad_revenue'];
+            $total['requests']              += $v['requests'];
+            $total['fills']                 += $v['fills'];
+            $total['impressions']           += $v['impressions'];
+            $total['clicks']                += $v['clicks'];
+            $total['gross_revenue']         += $v['gross_revenue'];
+            $total['activity_page_views']   += $v['activity_page_views'];
+            $total['activity_new_users']    += $v['activity_new_users'];
+            $total['activity_active_users'] += $v['activity_active_users'];
         }
 
         $list = array_merge($res->items(), [$total]);
-        $list = $this->rate($list);
+        $list = $this->rate($list, $dimension);
 
         $this->success('', [
+            '_'      => $this->auth->id == 1 ? $sql : '',
             'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
@@ -158,7 +197,7 @@ class Data extends Backend
     {
         [$list, $limit, $dimension] = $this->calcData();
         $list = $list->select();
-        $list = $this->rate($list);
+        $list = $this->rate($list, $dimension);
 
         $spreadsheet = new Spreadsheet();
         $sheet       = $spreadsheet->getActiveSheet();
@@ -180,7 +219,7 @@ class Data extends Backend
             'ecpm'            => 'eCPM',
         ];
 
-        foreach (['a_date', 'sub_channel', 'country_code', 'ad_placement_id'] as $v) {
+        foreach (['a_date', 'domain_id', 'country_code', 'ad_placement_id'] as $v) {
             if (!in_array($v, $dimension)) unset($cell[$v]);
         }
 
@@ -218,7 +257,7 @@ class Data extends Backend
         $spreadsheet->disconnectWorksheets();
     }
 
-    protected function rate($data)
+    protected function rate($data, $dimension)
     {
         foreach ($data as &$v) {
             // 点击率：  点击/展示
@@ -245,6 +284,18 @@ class Data extends Backend
             $v['impressions'] = (int)$v['impressions'];
 
             $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
+
+//            // 计算活跃数据
+//            if (in_array('ad_placement_id', $dimension)) {
+//                array_splice($dimension, array_search('ad_placement_id', $dimension), 1);
+//            }
+//
+//            if (in_array('sub_channel', $dimension)) {
+//                // 有域名的维度
+//                $v['activity_page_views'] = $v['activity_new_users'] = $v['activity_active_users'] = '-';
+//            } else {
+//                $activity = Activity::where('date', $v['a_date'])->where('')
+//            }
 
 
             if ($this->auth->id != 1) {

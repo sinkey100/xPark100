@@ -24,6 +24,9 @@ export default {
     raw_unit_price: '原始cpc',
     ecpm: 'eCPM',
     raw_ecpm: '原始eCPM',
+    activity_page_views: 'PV',
+    activity_new_users: '新增',
+    activity_active_users: '活跃',
 
     'quick Search Fields': 'id',
 }

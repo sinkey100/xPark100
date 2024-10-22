@@ -11,7 +11,7 @@
         >
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.sub_channel" label="域名" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.country_code" label="地区" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
@@ -61,7 +61,7 @@ const {t} = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
     a_date: true,
-    sub_channel: false,
+    domain_id: false,
     app_id: false,
     country_code: false,
     ad_placement_id: false
@@ -88,7 +88,7 @@ const baTable = new baTableClass(
                 comSearchRender: 'date',
                 operator: 'RANGE',
                 sortable: false,
-                width:110,
+                width: 110,
                 timeFormat: 'yyyy-mm-dd',
                 fixed: true
             },
@@ -126,7 +126,8 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 operator: false,
-                width:180,
+                show: false,
+                width: 180,
                 fixed: true
             },
             {
@@ -135,7 +136,8 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 show: adminInfo.id == 1,
-                operator: adminInfo.id == 1 ? 'eq' : false,
+                // operator: adminInfo.id == 1 ? 'eq' : false,
+                operator: false,
                 comSearchRender: 'remoteSelect',
                 remote: {
                     pk: 'id',
@@ -294,6 +296,27 @@ const baTable = new baTableClass(
                 operator: false,
                 sortable: false,
             },
+            {
+                label: t('xpark.data.activity_page_views'),
+                prop: 'activity_page_views',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_new_users'),
+                prop: 'activity_new_users',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_active_users'),
+                prop: 'activity_active_users',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
         ],
         dblClickNotEditColumn: [undefined],
     },
@@ -302,27 +325,50 @@ const baTable = new baTableClass(
     }, {}, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
+                // 广告单元维度不显示活跃数据
+                if (['activity_page_views', 'activity_new_users', 'activity_active_users'].includes(item.prop)) {
+                    if (baTable.table.filter?.search?.some(item => item.field === 'channel' || item.field === 'ad_placement_id')) {
+                        item.show = false;
+                        return;
+                    }
+                    item.show = baTable.table.filter!.dimensions['ad_placement_id'] == false && baTable.table.filter!.dimensions['domain_id'] == true;
+                    return;
+                }
+                // 管理员显示 original
                 if (adminInfo.id == 1 && rawField.includes(item.prop)) {
                     item.show = original.value;
                     return;
                 }
-                if(adminInfo.id == 1 && item.prop == 'channel'){
-                    item.show = dimensions.sub_channel;
+                // 管理员显示广告通道
+                if (adminInfo.id == 1 && item.prop == 'channel') {
+                    item.show = dimensions.domain_id;
                     return;
                 }
+                // 管理员显示用户
                 if (adminInfo.id == 1 && item.prop == 'admin') {
-                    item.show = dimensions.sub_channel;
+                    item.show = dimensions.domain_id;
                     return;
                 }
+                // 显示应用名称
                 if (item.prop == 'app_id') return;
                 if (item.prop == 'app_name') {
                     item.show = baTable.table.filter!.dimensions['app_id'] == true;
                     return;
                 }
+                // 显示国家T级
                 if (item.prop == 'country_level') {
                     item.show = baTable.table.filter!.dimensions['country_code'] == true;
                     return;
                 }
+                if (item.prop == 'sub_channel') {
+                    item.show = baTable.table.filter!.dimensions['domain_id'] == true;
+                    return;
+                }
+                if (item.prop == 'domain_id') {
+                    item.show = false;
+                    return;
+                }
+
 
                 if (baTable.table.filter!.dimensions[item.prop] == undefined) {
                     return;
