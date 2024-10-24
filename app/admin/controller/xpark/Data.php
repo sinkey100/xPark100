@@ -83,8 +83,9 @@ class Data extends Backend
 
         foreach ($where as $k => $v) {
             if ($v[0] == 'data.admin') {
-                $domain_filter = Domain::field(['id'])->where('admin_id', $v[2])->select();
-                $domain_filter = array_column($domain_filter->toArray(), 'id');
+                $app_filter       = Apps::field(['id'])->where('admin_id', $v[2])->select();
+                $app_filter       = array_column($app_filter->toArray(), 'id');
+                $activity_where[] = ['activity.app_id', 'in', $app_filter];
                 unset($where[$k]);
             }
             if (in_array($v[0], ['data.a_date', 'data.domain_id', 'data.app_id', 'data.country_code'])) {
@@ -114,7 +115,7 @@ class Data extends Backend
             ]);
         }
 
-        $activity_field = array_merge($activity_dimension, [
+        $activity_field   = array_merge($activity_dimension, [
             'SUM(activity.new_users) as new_users',
             'SUM(activity.active_users) as active_users',
             'SUM(activity.page_views) as page_views'
@@ -131,12 +132,8 @@ class Data extends Backend
             ->where($where);
 
         if ($app_filter) {
-            $res = $res->where('app_id', 'in', $app_filter);
+            $res = $res->where('data.app_id', 'in', $app_filter);
         }
-        if (isset($domain_filter) && $domain_filter) {
-            $res = $res->where('domain_id', 'in', $domain_filter);
-        }
-
         unset($order['id']);
 
         $res = $res->order($order)->order('a_date', 'desc')
@@ -219,7 +216,7 @@ class Data extends Backend
             'ecpm'            => 'eCPM',
         ];
 
-        foreach (['a_date', 'domain_id', 'country_code', 'ad_placement_id'] as $v) {
+        foreach (['data.a_date', 'data.domain_id', 'data.country_code', 'data.ad_placement_id'] as $v) {
             if (!in_array($v, $dimension)) unset($cell[$v]);
         }
 
@@ -282,6 +279,7 @@ class Data extends Backend
             $v['fills']       = (int)$v['fills'];
             $v['clicks']      = (int)$v['clicks'];
             $v['impressions'] = (int)$v['impressions'];
+            $v['rpm']         = empty($v['activity_page_views']) ? '' : round($v['ad_revenue'] / $v['activity_page_views'] * 1000, 3);
 
             $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
 
@@ -307,6 +305,7 @@ class Data extends Backend
                 $v['gross_revenue']  = round($v['gross_revenue'], 2);
                 $v['raw_unit_price'] = round($v['gross_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
                 $v['raw_ecpm']       = round($v['gross_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
+                $v['raw_rpm']        = empty($v['activity_page_views']) ? '' : round($v['gross_revenue'] / $v['activity_page_views'] * 1000, 3);
             }
         }
         return $data;

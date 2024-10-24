@@ -57,11 +57,9 @@ class MiTools extends Base
                 'cooltool.vip',
             ],
             8 => [
-                'minitool.app'
+                'minitool.app',
+                'infitimes.com'
             ],
-            9 => [
-                'tool.boatcloud.cn'
-            ]
         ];
 
         // 清除老数据
@@ -85,17 +83,7 @@ class MiTools extends Base
             $client->setAccessToken($account->auth);
 
             // 获取AFC
-            $adsense       = new AdSense($client);
-            $adsenseClient = $adsense->accounts_adclients->listAccountsAdclients($account->adsense_name);
-            $adsenseClient = array_filter($adsenseClient['adClients'], function ($item) {
-                return $item['productCode'] == 'AFC';
-            });
-            $adsenseClient = array_values($adsenseClient);
-            if (empty($adsenseClient)) throw new Exception('没有找到 AFC Client');
-            $adsenseClient = $adsenseClient[0];
-            $afcId         = substr($adsenseClient['name'], strrpos($adsenseClient['name'], '/') + 1);
-            if (empty($afcId)) throw new Exception('AFC Client 错误');
-
+            $adsense = new AdSense($client);
             // 拉取数据参数
             $startTime = strtotime("-" . ($days - 1) . " days");
             $params    = [
@@ -123,9 +111,11 @@ class MiTools extends Base
             ];
 
             // =================== 按域名维度拉取数据
-            $params['filters'] = array_map(function ($domain) {
-                return "DOMAIN_NAME=@$domain";
-            }, $domainList[$account->id]);
+            $filter = [];
+            foreach ($domainList[$account->id] as $domain) {
+                $filter[] = 'DOMAIN_NAME==' . $domain;
+            }
+            $params['filters'] = implode(',', $filter);
             $result            = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
 

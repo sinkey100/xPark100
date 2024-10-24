@@ -69,7 +69,7 @@ const dimensions = reactive({
 
 const adminInfo = useAdminInfo();
 const original = ref(false)
-const rawField = ['gross_revenue', 'raw_ecpm', 'raw_unit_price'];
+const rawField = ['gross_revenue', 'raw_ecpm', 'raw_unit_price', 'raw_rpm'];
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -136,8 +136,8 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 show: adminInfo.id == 1,
-                // operator: adminInfo.id == 1 ? 'eq' : false,
-                operator: false,
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                // operator: false,
                 comSearchRender: 'remoteSelect',
                 remote: {
                     pk: 'id',
@@ -198,6 +198,27 @@ const baTable = new baTableClass(
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: 'LIKE',
                 sortable: false
+            },
+            {
+                label: t('xpark.data.activity_page_views'),
+                prop: 'activity_page_views',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_new_users'),
+                prop: 'activity_new_users',
+                align: 'center',
+                operator: false,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_active_users'),
+                prop: 'activity_active_users',
+                align: 'center',
+                operator: false,
+                sortable: false,
             },
             {
                 label: t('xpark.data.ad_revenue'),
@@ -297,23 +318,17 @@ const baTable = new baTableClass(
                 sortable: false,
             },
             {
-                label: t('xpark.data.activity_page_views'),
-                prop: 'activity_page_views',
+                label: 'RPM',
+                prop: 'rpm',
                 align: 'center',
                 operator: false,
                 sortable: false,
             },
             {
-                label: t('xpark.data.activity_new_users'),
-                prop: 'activity_new_users',
+                label: '原始RPM',
+                prop: 'raw_rpm',
                 align: 'center',
-                operator: false,
-                sortable: false,
-            },
-            {
-                label: t('xpark.data.activity_active_users'),
-                prop: 'activity_active_users',
-                align: 'center',
+                show: original.value == true,
                 operator: false,
                 sortable: false,
             },
@@ -326,7 +341,7 @@ const baTable = new baTableClass(
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
                 // 广告单元维度不显示活跃数据
-                if (['activity_page_views', 'activity_new_users', 'activity_active_users'].includes(item.prop)) {
+                if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'rpm', 'raw_rpm'].includes(item.prop)) {
                     if (baTable.table.filter?.search?.some(item => item.field === 'channel' || item.field === 'ad_placement_id')) {
                         item.show = false;
                         return;
