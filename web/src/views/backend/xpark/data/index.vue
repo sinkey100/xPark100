@@ -115,6 +115,7 @@ const baTable = new baTableClass(
                 operatorPlaceholder: t('Click select'),
                 sortable: false,
                 show: false,
+                minWidth: 100,
                 // render: 'tag',
                 operator: adminInfo.id == 1 ? 'eq' : false,
                 // custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
@@ -127,7 +128,7 @@ const baTable = new baTableClass(
                 sortable: false,
                 operator: false,
                 show: false,
-                width: 180,
+                minWidth: 180,
                 fixed: true
             },
             {
@@ -136,6 +137,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 show: adminInfo.id == 1,
+                minWidth: 120,
                 operator: adminInfo.id == 1 ? 'eq' : false,
                 // operator: false,
                 comSearchRender: 'remoteSelect',
@@ -151,6 +153,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 show: false,
+                minWidth: 120,
                 operator: 'eq',
                 comSearchRender: 'remoteSelect',
                 remote: {
@@ -164,6 +167,7 @@ const baTable = new baTableClass(
                 prop: 'app_name',
                 align: 'center',
                 show: false,
+                minWidth: 160,
                 sortable: false,
                 operator: false,
             },
@@ -189,6 +193,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: false,
+                width: 60,
                 sortable: false,
             },
             {
@@ -197,6 +202,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: 'LIKE',
+                minWidth: 180,
                 sortable: false
             },
             {
@@ -204,6 +210,7 @@ const baTable = new baTableClass(
                 prop: 'activity_page_views',
                 align: 'center',
                 operator: false,
+                minWidth: 70,
                 sortable: false,
             },
             {
@@ -211,6 +218,7 @@ const baTable = new baTableClass(
                 prop: 'activity_new_users',
                 align: 'center',
                 operator: false,
+                minWidth: 70,
                 sortable: false,
             },
             {
@@ -218,12 +226,14 @@ const baTable = new baTableClass(
                 prop: 'activity_active_users',
                 align: 'center',
                 operator: false,
+                minWidth: 70,
                 sortable: false,
             },
             {
                 label: t('xpark.data.ad_revenue'),
                 prop: 'ad_revenue',
                 align: 'center',
+                minWidth: 110,
                 operator: false,
                 sortable: true,
             },
@@ -231,6 +241,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.gross_revenue'),
                 prop: 'gross_revenue',
                 align: 'center',
+                minWidth: 110,
                 show: original.value == true,
                 operator: false,
                 sortable: true,
@@ -240,6 +251,7 @@ const baTable = new baTableClass(
                 prop: 'requests',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: true,
             },
             {
@@ -247,6 +259,7 @@ const baTable = new baTableClass(
                 prop: 'fills',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: true,
             },
             {
@@ -254,6 +267,7 @@ const baTable = new baTableClass(
                 prop: 'fill_rate',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: false,
             },
             {
@@ -261,6 +275,7 @@ const baTable = new baTableClass(
                 prop: 'impressions',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: true,
             },
             {
@@ -268,6 +283,7 @@ const baTable = new baTableClass(
                 prop: 'impressions_rate',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: false,
             },
 
@@ -275,6 +291,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.clicks'),
                 prop: 'clicks',
                 align: 'center',
+                minWidth: 100,
                 operator: false,
                 sortable: true,
             },
@@ -283,6 +300,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.click_rate'),
                 prop: 'click_rate',
                 align: 'center',
+                minWidth: 100,
                 operator: false,
                 sortable: false,
             },
@@ -292,6 +310,7 @@ const baTable = new baTableClass(
                 prop: 'unit_price',
                 align: 'center',
                 operator: false,
+                minWidth: 100,
                 sortable: false,
             },
             {
@@ -300,6 +319,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 show: original.value == true,
                 operator: false,
+                minWidth: 100,
                 sortable: false,
             },
             {
@@ -313,6 +333,7 @@ const baTable = new baTableClass(
                 label: t('xpark.data.raw_ecpm'),
                 prop: 'raw_ecpm',
                 align: 'center',
+                minWidth: 100,
                 show: original.value == true,
                 operator: false,
                 sortable: false,
@@ -321,6 +342,7 @@ const baTable = new baTableClass(
                 label: 'RPM',
                 prop: 'rpm',
                 align: 'center',
+                minWidth: 100,
                 operator: false,
                 sortable: false,
             },
@@ -329,6 +351,7 @@ const baTable = new baTableClass(
                 prop: 'raw_rpm',
                 align: 'center',
                 show: original.value == true,
+                minWidth: 100,
                 operator: false,
                 sortable: false,
             },

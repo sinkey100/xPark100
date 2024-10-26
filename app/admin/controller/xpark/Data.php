@@ -261,7 +261,7 @@ class Data extends Backend
             $v['click_rate'] = $v['clicks'] / (!empty($v['impressions']) ? $v['impressions'] : 1);;
             $v['click_rate'] = number_format($v['click_rate'] * 100, 2) . '%';
 
-            // 填充率：  展示/请求
+            // 填充率：  填充/请求
             $v['fill_rate'] = $v['fills'] / (!empty($v['requests']) ? $v['requests'] : 1);
             $v['fill_rate'] = number_format($v['fill_rate'] * 100, 2) . '%';
 
