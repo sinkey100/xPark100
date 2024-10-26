@@ -156,6 +156,7 @@ class AdSense extends Base
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
                 $data[] = [
                     'channel'         => 'AdSense',
+                    'channel_full'    => 'AdSense-' . $account->flag,
                     'sub_channel'     => $insert['DOMAIN_NAME'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,
@@ -218,6 +219,7 @@ class AdSense extends Base
                     $CLICKS      = ($total_clicks - $unit_clicks) * 100 / $unit_requests * $item['total_requests'] / 100;
                     $data[]      = [
                         'channel'         => 'AdSense',
+                        'channel_full'    => $item['channel_full'],
                         'sub_channel'     => $item['sub_channel'],
                         'domain_id'       => $item['domain_id'],
                         'app_id'          => $item['app_id'],

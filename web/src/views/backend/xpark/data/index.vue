@@ -110,12 +110,12 @@ const baTable = new baTableClass(
             },
             {
                 label: t('xpark.data.channel'),
-                prop: 'channel',
+                prop: 'channel_full',
                 align: 'center',
                 operatorPlaceholder: t('Click select'),
                 sortable: false,
                 show: false,
-                minWidth: 100,
+                minWidth: 135,
                 // render: 'tag',
                 operator: adminInfo.id == 1 ? 'eq' : false,
                 // custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
@@ -365,7 +365,7 @@ const baTable = new baTableClass(
             baTable.table.column.forEach((item: any) => {
                 // 广告单元维度不显示活跃数据
                 if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'rpm', 'raw_rpm'].includes(item.prop)) {
-                    if (baTable.table.filter?.search?.some(item => item.field === 'channel' || item.field === 'ad_placement_id')) {
+                    if (baTable.table.filter?.search?.some(item => item.field === 'channel_full' || item.field === 'ad_placement_id')) {
                         item.show = false;
                         return;
                     }
@@ -378,7 +378,7 @@ const baTable = new baTableClass(
                     return;
                 }
                 // 管理员显示广告通道
-                if (adminInfo.id == 1 && item.prop == 'channel') {
+                if (adminInfo.id == 1 && item.prop == 'channel_full') {
                     item.show = dimensions.domain_id;
                     return;
                 }

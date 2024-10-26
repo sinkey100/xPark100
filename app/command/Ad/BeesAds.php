@@ -123,6 +123,7 @@ class BeesAds extends Base
                 [$domain_id, $app_id] = $this->getDomainRow($v['Domain'], $v['Date'], 'BeesAds');
                 $row    = [
                     'channel'         => 'BeesAds',
+                    'channel_full'    => 'BeesAds-' . $account,
                     'sub_channel'     => $v['Domain'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,

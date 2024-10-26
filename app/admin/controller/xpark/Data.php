@@ -97,6 +97,7 @@ class Data extends Backend
 
         $field = array_merge($dimension, [
             'data.channel',
+            'data.channel_full',
             'data.sub_channel',
             'data.country_level',
             'data.country_name',
