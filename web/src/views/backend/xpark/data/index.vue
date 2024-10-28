@@ -363,6 +363,11 @@ const baTable = new baTableClass(
     }, {}, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
+                // 管理员显示 original
+                if (rawField.includes(item.prop)) {
+                    item.show = adminInfo.id == 1 && original.value;
+                    return;
+                }
                 // 广告单元维度不显示活跃数据
                 if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'rpm', 'raw_rpm'].includes(item.prop)) {
                     if (baTable.table.filter?.search?.some(item => item.field === 'channel_full' || item.field === 'ad_placement_id')) {
@@ -370,11 +375,6 @@ const baTable = new baTableClass(
                         return;
                     }
                     item.show = baTable.table.filter!.dimensions['ad_placement_id'] == false && baTable.table.filter!.dimensions['domain_id'] == true;
-                    return;
-                }
-                // 管理员显示 original
-                if (adminInfo.id == 1 && rawField.includes(item.prop)) {
-                    item.show = original.value;
                     return;
                 }
                 // 管理员显示广告通道
