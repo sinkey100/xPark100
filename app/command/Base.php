@@ -72,7 +72,7 @@ class Base extends Command
         return array_reverse($periods);
     }
 
-    protected function csv_to_json($csv_string): array
+    protected function csv2json($csv_string): array
     {
         // 将CSV字符串按行分割
         $lines = explode("\n", $csv_string);
@@ -158,6 +158,35 @@ class Base extends Command
             $insertData[]       = $v;
         }
         Data::insertAll($insertData);
+    }
+
+    protected function getMailContent(&$inbox, &$email_uid): string
+    {
+        $message   = '';
+        $structure = imap_fetchstructure($inbox, $email_uid, FT_UID);
+        if (isset($structure->parts) && count($structure->parts)) {
+            for ($i = 0; $i < count($structure->parts); $i++) {
+                $part = $structure->parts[$i];
+                if ($part->subtype == 'HTML') {
+                    $partNumber = $i + 1;
+                    $message    = imap_fetchbody($inbox, $email_uid, $partNumber, FT_UID);
+                    if ($part->encoding == 3) {
+                        $message = base64_decode($message);
+                    } elseif ($part->encoding == 4) {
+                        $message = quoted_printable_decode($message);
+                    }
+                    break;
+                }
+            }
+        } else {
+            $message = imap_fetchbody($inbox, $email_uid, 1, FT_UID);
+            if ($structure->encoding == 3) {
+                $message = base64_decode($message);
+            } elseif ($structure->encoding == 4) {
+                $message = quoted_printable_decode($message);
+            }
+        }
+        return $message;
     }
 
 }

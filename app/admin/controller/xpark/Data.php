@@ -169,15 +169,22 @@ class Data extends Backend
             'a_date'                => '',
         ];
         foreach ($res->items() as $v) {
-            $total['ad_revenue']            += $v['ad_revenue'];
-            $total['requests']              += $v['requests'];
-            $total['fills']                 += $v['fills'];
-            $total['impressions']           += $v['impressions'];
-            $total['clicks']                += $v['clicks'];
-            $total['gross_revenue']         += $v['gross_revenue'];
-            $total['activity_page_views']   += $v['activity_page_views'];
-            $total['activity_new_users']    += $v['activity_new_users'];
-            $total['activity_active_users'] += $v['activity_active_users'];
+            $total['ad_revenue']    += $v['ad_revenue'];
+            $total['requests']      += $v['requests'];
+            $total['fills']         += $v['fills'];
+            $total['impressions']   += $v['impressions'];
+            $total['clicks']        += $v['clicks'];
+            $total['gross_revenue'] += $v['gross_revenue'];
+            if ($this->auth->id == 23) {
+                $total['activity_page_views']   += $v['activity_page_views'];
+                $total['activity_new_users']    += $v['activity_new_users'];
+                $total['activity_active_users'] += $v['activity_active_users'];
+            } else {
+                $total['activity_page_views']   = max($total['activity_page_views'], $v['activity_page_views']);
+                $total['activity_new_users']    = max($total['activity_new_users'], $v['activity_new_users']);
+                $total['activity_active_users'] = max($total['activity_active_users'], $v['activity_active_users']);
+            }
+
         }
 
         $list = array_merge($res->items(), [$total]);

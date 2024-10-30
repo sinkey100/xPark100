@@ -76,7 +76,7 @@ class Xpark extends Base
 
             foreach ($result['data']['list'] as $item_day) {
                 $csvRaw = file_get_contents($item_day['url']);
-                [$fields, $csvData] = $this->csv_to_json($csvRaw);
+                [$fields, $csvData] = $this->csv2json($csvRaw);
                 foreach ($csvData as &$v) {
                     [$domain_id, $app_id] = $this->getDomainRow($v['sub_channel'], $v['a_date'], 'xPark365');
                     $v['channel']       = 'xPark365';

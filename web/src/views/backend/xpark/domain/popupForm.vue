@@ -41,7 +41,7 @@
                     <FormItem :label="t('xpark.domain.channel')" type="radio" v-model="baTable.form.items!.channel"
                               prop="channel" :input-attr="{
                             border: true,
-                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense'},
+                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense', PremiumAds: 'PremiumAds'},
                         }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })"/>
 
                     <FormItem :label="t('xpark.domain.flag')"

@@ -32,7 +32,8 @@
         "ext-json": "*",
         "ext-gd": "*",
         "phpoffice/phpspreadsheet": "^2.2",
-        "google/apiclient": "^2.15"
+        "google/apiclient": "^2.15",
+        "ext-imap": "*"
     },
     "require-dev": {
         "symfony/var-dumper": "^5.4",

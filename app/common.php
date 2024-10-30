@@ -675,3 +675,24 @@ if (!function_exists('get_country_data')) {
         ];
     }
 }
+
+if (!function_exists('find_row_from_keyword')) {
+    /**
+     * 从一段文本中，根据字符串返回该行内容
+     * @param string $content
+     * @param string $keyword
+     * @return string
+     */
+    function find_row_from_keyword(string $content, string $keyword): string
+    {
+        $rows    = explode("\n", $content);
+        $message = '';
+        foreach ($rows as $row) {
+            if (str_contains($row, $keyword)) {
+                $message = $row;
+                break;
+            }
+        }
+        return $message;
+    }
+}

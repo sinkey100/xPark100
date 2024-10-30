@@ -16,6 +16,7 @@ use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
 use think\facade\Db;
 use sdk\Google as GoogleSDK;
+use think\facade\Env;
 
 
 class Demo extends Base
@@ -32,20 +33,8 @@ class Demo extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-//        $country_data = get_country_data();
-//        foreach ($country_data as $v) {
-//
-//            Data::where('country_code', $v['code'])->update([
-//                'country_name'  => $v['name'],
-//                'country_level' => $v['level'],
-//            ]);
-//
-//        }
-//        exit;
-
-        $data = Data::where('country_name', '')->group('country_code')->select();
-        $data = $data->toArray();
-        echo json_encode(array_column($data, 'country_code'));
 
     }
+
+
 }
