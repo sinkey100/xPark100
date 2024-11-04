@@ -41,14 +41,14 @@
                     <FormItem :label="t('xpark.domain.channel')" type="radio" v-model="baTable.form.items!.channel"
                               prop="channel" :input-attr="{
                             border: true,
-                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense', PremiumAds: 'PremiumAds'},
+                            content: { xpark365: 'xpark365', BeesAds: 'BeesAds', AdSense: 'AdSense', PremiumAds: 'PremiumAds',Adx: 'Adx'},
                         }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })"/>
 
                     <FormItem :label="t('xpark.domain.flag')"
                               v-if="baTable.form.items!.channel == 'AdSense'"
                               type="radio" v-model="baTable.form.items!.flag" prop="flag" :input-attr="{
                             border: true,
-                            content: { '传游': '传游', '泷泸': '泷泸', '沃克': '沃克'},
+                            content: { '传游': '传游', '泷泸': '泷泸', '沃克': '沃克', '柳紫闪': '柳紫闪'},
                         }" :placeholder="t('Please input field', { field: t('xpark.domain.flag') })"/>
 
                     <FormItem :label="t('xpark.domain.flag')"

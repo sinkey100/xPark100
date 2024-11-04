@@ -33,7 +33,9 @@
         "ext-gd": "*",
         "phpoffice/phpspreadsheet": "^2.2",
         "google/apiclient": "^2.15",
-        "ext-imap": "*"
+        "ext-imap": "*",
+        "googleads/googleads-php-lib": "66.0.0",
+        "ext-zlib": "*"
     },
     "require-dev": {
         "symfony/var-dumper": "^5.4",

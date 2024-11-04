@@ -29,13 +29,6 @@ class PremiumAds extends Base
             return;
         }
 
-        $this->log('准备删除历史数据');
-
-        for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'PremiumAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
-        $this->log('历史数据已删除');
-
         if (count($rawData) > 0) {
             $this->log('准备保存新的数据');
             $this->saveData($rawData);
@@ -67,11 +60,19 @@ class PremiumAds extends Base
 
             $message = $this->getMailContent($inbox, $email_uid);
 
-            $message = find_row_from_keyword($message, 'Download Report');
-            if (!$message) throw new Exception('没有找到下载链接');
+            $report_url = find_row_from_keyword($message, 'Download Report');
+            $from_date  = find_row_from_keyword($message, '<b>From:</b>');
+            $to_date    = find_row_from_keyword($message, '<b>To:</b>');
+            if (!$report_url) throw new Exception('没有找到下载链接');
+            if (!$from_date || !$to_date) throw new Exception('没有找到起止日期');
+            preg_match('/\d{4}-\d{2}-\d{2}/', $from_date, $matches);
+            $from_date = $matches[0];
+            preg_match('/\d{4}-\d{2}-\d{2}/', $to_date, $matches);
+            $to_date = $matches[0];
+            preg_match_all('~\bhttps?://[^"]+~', $report_url, $matches);
+            $report_url = $matches[0][0];
 
-            preg_match_all('~\bhttps?://[^"]+~', $message, $matches);
-            $csvRaw = file_get_contents($matches[0][0]);
+            $csvRaw = file_get_contents($report_url);
             [$fields, $csvData] = $this->csv2json($csvRaw);
             $data = [];
             if (!isset($csvData[0]['country_code']) || !isset($csvData[0]['ad_unit_id'])) continue;
@@ -85,7 +86,7 @@ class PremiumAds extends Base
                     'app_id'          => $app_id,
                     'a_date'          => $v['date'],
                     'country_code'    => $v['country_code'],
-                    'ad_placement_id' => $v['ad_unit_id'],
+                    'ad_placement_id' => $v['ad_name'],
                     'requests'        => $v['requests'],
                     'fills'           => $v['response'],
                     'impressions'     => $v['impressions'],
@@ -96,6 +97,11 @@ class PremiumAds extends Base
                 ];
                 $data[] = $row;
             }
+
+            $this->log('准备删除历史数据');
+            Data::where('domain_id', $domain_id)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
+            $this->log('历史数据已删除');
+
             $returnRows = array_merge($returnRows, $data);
         }
         imap_close($inbox);

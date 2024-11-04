@@ -39,6 +39,7 @@ class Google
         $client->addScope(GoogleAnalyticsAdmin::ANALYTICS_EDIT);
         $client->addScope(Oauth2::USERINFO_EMAIL); // 获取 Gmail
         $client->addScope(Oauth2::USERINFO_PROFILE);
+        $client->addScope('https://www.googleapis.com/auth/dfp'); // Ad Manager API权限范围
         $client->addScope(PeopleService::CONTACTS_READONLY);
         $client->setState($account->id);
         $client->setAccessType('offline');

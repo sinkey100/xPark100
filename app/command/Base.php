@@ -155,9 +155,10 @@ class Base extends Command
             // 备份数据
             $v['gross_revenue'] = $v['ad_revenue'];
             $v['ad_revenue']    = $v['ad_revenue'] * $rate;
-            $insertData[]       = $v;
+            Data::create($v);
+//            $insertData[]       = $v;
         }
-        Data::insertAll($insertData);
+//        Data::insertAll($insertData);
     }
 
     protected function getMailContent(&$inbox, &$email_uid): string

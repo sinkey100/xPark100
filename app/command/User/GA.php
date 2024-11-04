@@ -27,7 +27,9 @@ class GA extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        $this->days     = 3;
+        $this->log("\n\n======== GA 开始拉取数据 ========", false);
+        $this->log("任务开始，拉取 {$this->days} 天");
+
         $ga_account_ids = [
             4 => '315444308',
             8 => '322638147'
@@ -46,10 +48,13 @@ class GA extends Base
             Activity::where('channel', 'GA')->where('date', date("Y-m-d", strtotime("-$i days")))->delete();
         }
 
+        $this->log('历史数据已删除');
+        $this->log('开始拉取 GA 数据');
+
         foreach ($ga_account_ids as $account_id => $ga_account_id) {
             // 初始化
             $account = Account::where('id', $account_id)->find();
-            if (!$account) throw new Exception('AdSense 账号标记不存在');
+            if (!$account) throw new Exception('Google 账号标记不存在');
             $client = (new GoogleSDK())->init($account);
             $client->setAccessToken($account->auth);
             $analytics      = new AnalyticsData($client);
@@ -93,7 +98,7 @@ class GA extends Base
                     ]
                 ]));
 
-                $output->writeln("\n\n" . $domain['domain']);
+                $output->writeln($domain['domain']);
                 $rows = [];
                 foreach ($response['rows'] as $row) {
                     $rows[] = [
@@ -110,6 +115,8 @@ class GA extends Base
                 Activity::insertAll($rows);
             }
         }
+
+        $this->log('======== GA 拉取数据完成 ========', false);
 
     }
 

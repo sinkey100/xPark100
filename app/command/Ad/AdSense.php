@@ -66,9 +66,6 @@ class AdSense extends Base
             $domains_group[$flag][] = $domain['domain'];
         }
 
-        // 删除比对数据
-        Db::execute("truncate table ba_xpark_adsense;");
-
         // 获取数据
         foreach ($domains_group as $flag => $domains) {
             $account = Account::where('flag', $flag)->find();
@@ -95,53 +92,16 @@ class AdSense extends Base
                     'COST_PER_CLICK', 'IMPRESSIONS_RPM', 'IMPRESSIONS_CTR'
                 ],
                 'dimensions'      => [
-                    'DATE', 'COUNTRY_CODE', 'DOMAIN_NAME'
+                    'DATE', 'COUNTRY_CODE', 'DOMAIN_NAME', 'AD_UNIT_NAME'
                 ],
                 'orderBy'         => '+DATE',
                 'filters'         => implode(',', $filter)
             ];
 
-            // 按域名拉取
-            try {
-                $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
-            } catch (Exception $e) {
-                throw new Exception($e->getMessage());
-            }
-
-            if (!$result['rows'] || count($result['rows']) == 0) continue;
-            $this->log("{$flag} 地区数据拉取完成");
-
-            $headers = array_column($result['headers'], 'name');
-            $data    = [];
-            foreach ($result['rows'] as $row) {
-                $insert = [];
-                foreach ($headers as $k => $header) {
-                    $insert[$header] = $row['cells'][$k]['value'];
-                }
-                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
-                $data[]          = [
-                    'sub_channel'  => $insert['DOMAIN_NAME'],
-                    'a_date'       => $insert['DATE'],
-                    'country_code' => $insert['COUNTRY_CODE'],
-                    'requests'     => $insert['AD_REQUESTS'],
-                    'fills'        => $insert['FILLS'],
-                    'impressions'  => $insert['IMPRESSIONS'],
-                    'clicks'       => $insert['CLICKS'],
-                    'ad_revenue'   => $insert['ESTIMATED_EARNINGS'],
-                    'raw_cpc'      => $insert['COST_PER_CLICK'],
-                    'raw_ctr'      => $insert['IMPRESSIONS_CTR'],
-                    'raw_ecpm'     => $insert['IMPRESSIONS_RPM']
-                ];
-            }
-            XparkAdSense::insertAll($data);
-            unset($data, $insert, $result);
-
-            // 按广告单元拉取
-            $params['dimensions'][] = 'AD_UNIT_NAME';
-            $result                 = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
             if (!$result['rows'] || count($result['rows']) == 0) continue;
 
-            $this->log("{$flag} 广告位数据拉取完成");
+            $this->log("{$flag} 广告单元数据拉取完成");
 
             $headers = array_column($result['headers'], 'name');
             if (count($result['rows']) == 0) continue;
@@ -175,71 +135,53 @@ class AdSense extends Base
                     'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
                 ];
             }
+            unset($insert, $result);
+            $this->saveData($data);
+            unset($data);
+
+            // 自动广告拉取
+            $params['dimensions'] = ['DATE', 'AD_FORMAT_CODE', 'COUNTRY_CODE', 'DOMAIN_NAME'];
+            $result               = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            if (!$result['rows'] || count($result['rows']) == 0) continue;
+
+            $this->log("{$flag} 自动广告数据拉取完成");
+
+            $headers = array_column($result['headers'], 'name');
+            if (count($result['rows']) == 0) continue;
+            $data = [];
+            foreach ($result['rows'] as $row) {
+                $insert = [];
+                foreach ($headers as $k => $header) {
+                    $insert[$header] = $row['cells'][$k]['value'];
+                }
+                if($insert['AD_FORMAT_CODE'] == 'ON_PAGE') continue;
+                $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
+
+                [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+                $data[] = [
+                    'channel'         => 'AdSense',
+                    'channel_full'    => 'AdSense-' . $account->flag,
+                    'sub_channel'     => $insert['DOMAIN_NAME'],
+                    'domain_id'       => $domain_id,
+                    'app_id'          => $app_id,
+                    'a_date'          => $insert['DATE'],
+                    'country_code'    => $insert['COUNTRY_CODE'],
+                    'ad_placement_id' => strtolower('ADS_' . $insert['AD_FORMAT_CODE']),
+                    'requests'        => $insert['AD_REQUESTS'],
+                    'fills'           => $insert['FILLS'],
+                    'impressions'     => $insert['IMPRESSIONS'],
+                    'clicks'          => $insert['CLICKS'],
+                    'ad_revenue'      => $insert['ESTIMATED_EARNINGS'],
+                    'gross_revenue'   => $insert['ESTIMATED_EARNINGS'],
+                    'net_revenue'     => $insert['ESTIMATED_EARNINGS'],
+                    'raw_cpc'         => $insert['COST_PER_CLICK'],
+                    'raw_ctr'         => $insert['IMPRESSIONS_CTR'],
+                    'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
+                ];
+            }
             unset($insert, $result, $adsense);
             $this->saveData($data);
             unset($data);
-        }
-        $this->log("开始计算自动广告");
-
-        // 自动广告计算
-        for ($i = 0; $i < $this->days; $i++) {
-            foreach ($adsense_domains as $domain) {
-                // 总收入
-                $domain_name   = $domain['domain'];
-                $total_revenue = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('ad_revenue');
-                $unit_revenue  = Data::where('sub_channel', $domain_name)->where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('gross_revenue');
-
-                // 总请求数
-                $total_requests = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('requests');
-                $unit_requests  = Data::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('requests');
-
-                if (
-                    !($total_revenue > $unit_revenue)
-                    || !($total_requests > $unit_requests)
-                ) continue;
-
-                // 总展示
-                $total_impressions = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('impressions');
-                $unit_impressions  = Data::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('impressions');
-                // 总点击
-                $total_clicks = XparkAdSense::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('clicks');
-                $unit_clicks  = Data::where('sub_channel', $domain_name)->where('a_date', date("Y-m-d", strtotime("-$i days")))->sum('clicks');
-                $cursor       = Data::field(['*', 'sum(requests) as total_requests'])
-                    ->where('sub_channel', $domain_name)
-                    ->where('channel', 'AdSense')
-                    ->where('a_date', date("Y-m-d", strtotime("-$i days")))
-                    ->group('country_code')
-                    ->cursor();
-                $data         = [];
-                foreach ($cursor as $item) {
-                    // 计算自动广告
-                    $EARNINGS    = ($total_revenue - $unit_revenue) * 100 / $unit_requests * $item['total_requests'] / 100;
-                    $AD_REQUESTS = ($total_requests - $unit_requests) * 100 / $unit_requests * $item['total_requests'] / 100;
-                    $IMPRESSIONS = ($total_impressions - $unit_impressions) * 100 / $unit_requests * $item['total_requests'] / 100;
-                    $CLICKS      = ($total_clicks - $unit_clicks) * 100 / $unit_requests * $item['total_requests'] / 100;
-                    $data[]      = [
-                        'channel'         => 'AdSense',
-                        'channel_full'    => $item['channel_full'],
-                        'sub_channel'     => $item['sub_channel'],
-                        'domain_id'       => $item['domain_id'],
-                        'app_id'          => $item['app_id'],
-                        'a_date'          => $item['a_date'],
-                        'country_code'    => $item->getData('country_code'),
-                        'ad_placement_id' => 'auto_ad',
-                        'requests'        => ceil($AD_REQUESTS),
-                        'fills'           => ceil($AD_REQUESTS),
-                        'impressions'     => ceil($IMPRESSIONS),
-                        'clicks'          => $CLICKS,
-                        'ad_revenue'      => round($EARNINGS, 2),
-                        'gross_revenue'   => round($EARNINGS, 2),
-                        'net_revenue'     => $item['net_revenue'],
-                        'raw_cpc'         => round($EARNINGS / (!empty($CLICKS) ? $CLICKS : 1), 2),
-                        'raw_ecpm'        => round($EARNINGS / (!empty($IMPRESSIONS) ? $IMPRESSIONS : 1) * 1000, 3)
-                    ];
-                }
-                $this->saveData($data);
-                unset($data);
-            }
         }
     }
 

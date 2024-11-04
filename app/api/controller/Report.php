@@ -68,6 +68,7 @@ class Report extends Frontend
 
         $res = Data::field($field)
             ->where('app_id', 'in', $app_ids)
+            ->whereBetweenTime('a_date', $from_date, $to_date)
             ->order('a_date', 'desc')
             ->group(implode(',', $dimension))
             ->select()->toArray();

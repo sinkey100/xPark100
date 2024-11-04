@@ -10,6 +10,7 @@ return [
         'BeesAds'    => \app\command\Ad\BeesAds::class,
         'AdSense'    => \app\command\Ad\AdSense::class,
         'PremiumAds' => \app\command\Ad\PremiumAds::class,
+        'Adx'        => \app\command\Ad\Adx::class,
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
 

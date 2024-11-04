@@ -79,7 +79,8 @@ class Xpark extends Base
                 [$fields, $csvData] = $this->csv2json($csvRaw);
                 foreach ($csvData as &$v) {
                     [$domain_id, $app_id] = $this->getDomainRow($v['sub_channel'], $v['a_date'], 'xPark365');
-                    $v['channel']       = 'xPark365';
+                    $v['channel']      = 'xPark365';
+                    $v['channel_full'] = 'xPark365';
                     $v['domain_id']     = $domain_id;
                     $v['app_id']        = $app_id;
                     $v['sub_channel']   = str_replace($this->prefix, '', $v['sub_channel']);
