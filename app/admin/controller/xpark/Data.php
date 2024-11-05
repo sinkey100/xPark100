@@ -166,6 +166,7 @@ class Data extends Backend
             'activity_page_views'   => 0,
             'activity_new_users'    => 0,
             'activity_active_users' => 0,
+            'activity_per_display'  => 0,
             'a_date'                => '',
         ];
         foreach ($res->items() as $v) {
@@ -279,6 +280,11 @@ class Data extends Backend
             // 展示率：展示次数/填充次数
             $v['impressions_rate'] = $v['impressions'] / (!empty($v['fills']) ? $v['fills'] : 1);
             $v['impressions_rate'] = number_format($v['impressions_rate'] * 100, 2) . '%';
+
+            // 人均展示：展示次数/UV
+            $v['activity_per_display'] = empty($v['activity_active_users'])
+                ? ''
+                : round($v['impressions'] / $v['activity_active_users'], 2);
 
             // ECPM = 收入/网页展示次数×1000
             $v['ecpm']        = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
