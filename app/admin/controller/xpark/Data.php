@@ -226,7 +226,9 @@ class Data extends Backend
         ];
 
         foreach (['data.a_date', 'data.domain_id', 'data.country_code', 'data.ad_placement_id'] as $v) {
-            if (!in_array($v, $dimension)) unset($cell[$v]);
+            $field = explode('.', $v);
+            $field = $field[count($field) - 1];
+            if (!in_array($v, $dimension)) unset($cell[$field]);
         }
 
 
