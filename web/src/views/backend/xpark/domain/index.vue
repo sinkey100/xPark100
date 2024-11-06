@@ -59,7 +59,8 @@ const baTable = new baTableClass(
             { type: 'selection', align: 'center', operator: false },
             { label: t('xpark.domain.id'), prop: 'id', align: 'center', width: 70, operator: false, sortable: 'custom' },
             { label: t('xpark.domain.domain'), prop: 'domain', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('xpark.domain.channel'), prop: 'channel', align: 'center', operatorPlaceholder: t('Fuzzy query'),render: 'tag', operator: false, sortable: false },
+            { label: t('xpark.domain.channel'), prop: 'channel', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            { label: t('xpark.domain.flag'), prop: 'flag', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             {
                 render: 'slot',
                 slotName: 'rate',

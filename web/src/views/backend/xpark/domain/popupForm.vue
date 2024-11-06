@@ -42,7 +42,7 @@
                               prop="channel" :input-attr="{
                             border: true,
                             content: {
-                                xpark365: 'xpark365',
+                                xPark365: 'xPark365',
                                 BeesAds: 'BeesAds',
                                 AdSense: 'AdSense',
                                 PremiumAds: 'PremiumAds',
