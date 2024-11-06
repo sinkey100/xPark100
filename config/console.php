@@ -12,6 +12,7 @@ return [
         'PremiumAds' => \app\command\Ad\PremiumAds::class,
         'Adx'        => \app\command\Ad\Adx::class,
         'AdSkeeper'  => \app\command\Ad\AdSkeeper::class,
+        'AnyMind'    => \app\command\Ad\AnyMind::class,
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
 

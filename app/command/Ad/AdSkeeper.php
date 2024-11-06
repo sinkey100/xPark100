@@ -73,7 +73,7 @@ class AdSkeeper extends Base
                 "startDate"    => date("Y-m-d", strtotime("-$days days")),
                 "endDate"      => date("Y-m-d", strtotime('-1 days')),
                 "dimensions"   => "date,domain,countryIso,widgetName",
-                "metrics"      => "adRequests,impressions,visibilityRate,wages,clicks,eCpm,adRequests,cpc,ctr"
+                "metrics"      => "adRequests,impressions,visibilityRate,wages,clicks,eCpm,cpc,ctr"
             ],
             'headers' => [
                 'Authorization' => "Bearer $token",
@@ -83,10 +83,12 @@ class AdSkeeper extends Base
         if (isset($result['errors'])) {
             $this->log('拉取数据错误');
             $this->log(json_encode($result));
+            return;
         }
         if (count($result) == 0) {
             $this->log('拉取数据完成，长度0');
             $this->log(json_encode($result));
+            return;
         }
         $saveData = [];
         foreach ($result as $v) {
@@ -117,8 +119,6 @@ class AdSkeeper extends Base
                 'raw_ecpm'        => $v['eCpm']
             ];
         }
-        print_r($saveData);
-
         $this->saveData($saveData);
 
     }
