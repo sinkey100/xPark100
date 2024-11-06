@@ -200,7 +200,7 @@ class Adx extends Base
                     'country_code'    => $v['Dimension.COUNTRY_CODE'],
                     'ad_placement_id' => $adUnits[$v['Dimension.AD_UNIT_ID']] ?? $v['Dimension.AD_UNIT_ID'],
                     'requests'        => $v['Column.AD_EXCHANGE_TOTAL_REQUESTS'],
-                    'fills'           => $v['Column.AD_EXCHANGE_MATCH_RATE'],
+                    'fills'           => $v['Column.AD_EXCHANGE_MATCH_RATE'] * $v['Column.AD_EXCHANGE_TOTAL_REQUESTS'],
                     'impressions'     => $v['Column.AD_EXCHANGE_ACTIVE_VIEW_VIEWABLE_IMPRESSIONS'],
                     'clicks'          => $v['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_CLICKS'],
                     'ad_revenue'      => $v['Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE'],

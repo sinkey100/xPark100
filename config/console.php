@@ -11,6 +11,7 @@ return [
         'AdSense'    => \app\command\Ad\AdSense::class,
         'PremiumAds' => \app\command\Ad\PremiumAds::class,
         'Adx'        => \app\command\Ad\Adx::class,
+        'AdSkeeper'  => \app\command\Ad\AdSkeeper::class,
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
 
