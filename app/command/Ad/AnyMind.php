@@ -2,19 +2,15 @@
 
 namespace app\command\Ad;
 
-use app\admin\model\google\Account;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\XparkAdSense;
 use app\command\Base;
-use Google\Service\Adsense as GoogleAdSense;
-use sdk\Google as GoogleSDK;
+use GuzzleHttp\Exception\GuzzleException;
 use think\console\Input;
 use think\console\Output;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
-use think\facade\Db;
 use Exception;
 use think\facade\Env;
 
@@ -51,11 +47,9 @@ class AnyMind extends Base
 
     /**
      * @throws DataNotFoundException
-     * @throws \Google\Exception
-     * @throws \Google\Service\Exception
      * @throws ModelNotFoundException
      * @throws DbException
-     * @throws Exception
+     * @throws Exception|GuzzleException
      */
     protected function pull(): void
     {

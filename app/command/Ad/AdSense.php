@@ -5,7 +5,6 @@ namespace app\command\Ad;
 use app\admin\model\google\Account;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\XparkAdSense;
 use app\command\Base;
 use Google\Service\Adsense as GoogleAdSense;
 use sdk\Google as GoogleSDK;
@@ -14,7 +13,6 @@ use think\console\Output;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
-use think\facade\Db;
 use Exception;
 
 class AdSense extends Base
