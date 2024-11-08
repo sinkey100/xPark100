@@ -363,6 +363,22 @@ const baTable = new baTableClass(
                 operator: false,
                 sortable: false,
             },
+            {
+                label: '广告类型',
+                show: false,
+                prop: 'channel_type',
+                align: 'center',
+                render: 'tag',
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                sortable: false,
+                width: 100,
+                replaceValue: {
+                    0: 'H5',
+                    1: 'Native',
+                },
+
+
+            },
         ],
         dblClickNotEditColumn: [undefined],
     },

@@ -96,6 +96,7 @@ class AppLovin extends Base
             $saveData[] = [
                 'channel'         => 'AppLovin',
                 'channel_full'    => 'AppLovin',
+                'channel_type'    => 1,
                 'sub_channel'     => $v['package_name'],
                 'domain_id'       => $domain_id,
                 'app_id'          => $app_id,
