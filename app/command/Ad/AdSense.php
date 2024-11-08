@@ -27,11 +27,6 @@ class AdSense extends Base
     {
         $this->log("\n\n======== AdSense 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
-
-        for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'AdSense')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
-        $this->log('历史数据已删除');
         $this->log('开始拉取 AdSense 数据');
         try {
             $this->pull();
@@ -41,6 +36,15 @@ class AdSense extends Base
             $this->log('======== AdSense 拉取数据失败 ========', false);
             return;
         }
+
+        for ($i = 0; $i < $this->days; $i++) {
+            Data::where('channel', 'AdSense')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'AdSense')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
+                'status' => 0
+            ]);
+        }
+
+        $this->log('历史数据已删除');
 
         $this->log('======== AdSense 拉取数据完成 ========', false);
     }
@@ -152,7 +156,7 @@ class AdSense extends Base
                 foreach ($headers as $k => $header) {
                     $insert[$header] = $row['cells'][$k]['value'];
                 }
-                if($insert['AD_FORMAT_CODE'] == 'ON_PAGE') continue;
+                if ($insert['AD_FORMAT_CODE'] == 'ON_PAGE') continue;
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');

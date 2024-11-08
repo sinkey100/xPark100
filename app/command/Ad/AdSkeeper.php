@@ -28,10 +28,6 @@ class AdSkeeper extends Base
         $this->log("\n\n======== AdSkeeper 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
-        for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'AdSkeeper')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
-        $this->log('历史数据已删除');
         $this->log('开始拉取 AdSkeeper 数据');
         try {
             $this->pull();
@@ -41,6 +37,14 @@ class AdSkeeper extends Base
             $this->log('======== AdSkeeper 拉取数据失败 ========', false);
             return;
         }
+
+        for ($i = 0; $i < $this->days; $i++) {
+            Data::where('channel', 'AdSkeeper')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'AdSkeeper')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
+                'status' => 0
+            ]);
+        }
+        $this->log('历史数据已删除');
 
         $this->log('======== AdSkeeper 拉取数据完成 ========', false);
     }

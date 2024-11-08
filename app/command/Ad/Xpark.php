@@ -31,17 +31,19 @@ class Xpark extends Base
             return;
         }
 
-        $this->log('准备删除历史数据');
-
-        for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'xPark365')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
-        $this->log('历史数据已删除');
-
         if (count($rawData) > 0) {
             $this->log('准备保存新的数据');
             $this->saveData($rawData);
         }
+
+        $this->log('准备删除历史数据');
+        for ($i = 0; $i < $this->days; $i++) {
+            Data::where('channel', 'xPark365')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'xPark365')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
+                'status' => 0
+            ]);
+        }
+        $this->log('历史数据已删除');
 
         $this->log('======== xPark 拉取数据完成 ========', false);
     }

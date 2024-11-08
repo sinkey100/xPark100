@@ -39,7 +39,10 @@ class BeesAds extends Base
 
         $this->log('准备删除历史数据');
         for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'BeesAds')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'BeesAds')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'BeesAds')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
+                'status' => 0
+            ]);
         }
         $this->log('历史数据已删除');
 

@@ -99,7 +99,10 @@ class PremiumAds extends Base
             }
 
             $this->log('准备删除历史数据');
-            Data::where('domain_id', $domain_id)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
+            Data::where('domain_id', $domain_id)->where('status', 0)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
+            Data::where('domain_id', $domain_id)->where('status', 1)->whereBetweenTime('a_date', $from_date, $to_date)->update([
+                'status' => 0
+            ]);
             $this->log('历史数据已删除');
 
             $returnRows = array_merge($returnRows, $data);

@@ -5,14 +5,12 @@ namespace app\command\Ad;
 use app\admin\model\google\Account;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\XparkAdSense;
 use app\command\Base;
 use Google\AdsApi\AdManager\AdManagerServices;
 use Google\AdsApi\AdManager\AdManagerSession;
 use Google\AdsApi\AdManager\AdManagerSessionBuilder;
 use Google\AdsApi\AdManager\Util\v202408\ReportDownloader;
 use Google\AdsApi\AdManager\Util\v202408\StatementBuilder;
-use Google\AdsApi\AdManager\v202408\InventoryService;
 use Google\AdsApi\AdManager\v202408\ReportJobStatus;
 use Google\AdsApi\AdManager\v202408\Date;
 use Google\AdsApi\AdManager\v202408\ExportFormat;
@@ -20,18 +18,14 @@ use Google\AdsApi\AdManager\v202408\ReportJob;
 use Google\AdsApi\AdManager\v202408\ReportQuery;
 use Google\AdsApi\AdManager\v202408\ReportService;
 use Google\AdsApi\AdManager\v202408\ServiceFactory;
-use Google\AdsApi\AdManager\v202408\Statement;
 use Google\AdsApi\Common\OAuth2TokenBuilder;
-use Google\Service\Adsense as GoogleAdSense;
 use Google\AdsApi\AdManager\v202408\Dimension;
 use Google\AdsApi\AdManager\v202408\Column;
-use sdk\Google as GoogleSDK;
 use think\console\Input;
 use think\console\Output;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
-use think\facade\Db;
 use Exception;
 
 class Adx extends Base
@@ -50,10 +44,6 @@ class Adx extends Base
         $this->log("\n\n======== Adx 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
-        for ($i = 0; $i < $this->days; $i++) {
-            Data::where('channel', 'Adx')->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
-        $this->log('历史数据已删除');
         $this->log('开始拉取 Adx 数据');
         try {
             $this->pull();
@@ -63,6 +53,14 @@ class Adx extends Base
             $this->log('======== Adx 拉取数据失败 ========', false);
             return;
         }
+
+        for ($i = 0; $i < $this->days; $i++) {
+            Data::where('channel', 'Adx')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Data::where('channel', 'Adx')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
+                'status' => 0
+            ]);
+        }
+        $this->log('历史数据已删除');
 
         $this->log('======== Adx 拉取数据完成 ========', false);
     }

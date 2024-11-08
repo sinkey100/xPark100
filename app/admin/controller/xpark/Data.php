@@ -130,6 +130,7 @@ class Data extends Backend
         $res = $this->model->field($field)
             ->leftJoin([$activity_summary => 'activity'], implode(' AND ', $activity_join_on))
             ->alias($alias)
+            ->where('status', 0)
             ->where($where);
 
         if ($app_filter) {
