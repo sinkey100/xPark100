@@ -49,6 +49,7 @@
                                 Adx: 'Adx',
                                 AdSkeeper: 'AdSkeeper',
                                 AnyMind: 'AnyMind',
+                                AppLovin: 'AppLovin',
                             },
                         }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })"/>
 

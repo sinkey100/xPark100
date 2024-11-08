@@ -22,22 +22,13 @@ class PremiumAds extends Base
         $this->log("\n\n======== PremiumAds 开始拉取数据 ========", false);
         $this->log("任务开始，拉取当天邮件");
 
-        $rawData = $this->pull();
+        $this->pull();
 
-        if (empty($rawData) || count($rawData) == 0) {
-            $this->log('======== PremiumAds 拉取数据完成 ========', false);
-            return;
-        }
-
-        if (count($rawData) > 0) {
-            $this->log('准备保存新的数据');
-            $this->saveData($rawData);
-        }
 
         $this->log('======== PremiumAds 拉取数据完成 ========', false);
     }
 
-    protected function pull(): array
+    protected function pull()
     {
         try {
             $inbox = imap_open(Env::get('MAIL.FS_HOSTNAME'), Env::get('MAIL.FS_USERNAME'), Env::get('MAIL.FS_PASSWORD'));
@@ -98,6 +89,11 @@ class PremiumAds extends Base
                 $data[] = $row;
             }
 
+            if (count($data) > 0) {
+                $this->log('准备保存新的数据');
+                $this->saveData($data);
+            }
+
             $this->log('准备删除历史数据');
             Data::where('domain_id', $domain_id)->where('status', 0)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
             Data::where('domain_id', $domain_id)->where('status', 1)->whereBetweenTime('a_date', $from_date, $to_date)->update([
@@ -105,11 +101,10 @@ class PremiumAds extends Base
             ]);
             $this->log('历史数据已删除');
 
-            $returnRows = array_merge($returnRows, $data);
+
+            $this->log('拉取数据完成: ' . count($data));
         }
         imap_close($inbox);
-        $this->log('拉取数据完成: ' . count($returnRows));
-        return $returnRows;
     }
 
 }
