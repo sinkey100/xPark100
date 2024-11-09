@@ -369,7 +369,7 @@ const baTable = new baTableClass(
                 prop: 'channel_type',
                 align: 'center',
                 render: 'tag',
-                operator: adminInfo.id == 1 ? 'eq' : false,
+                operator: 'eq',
                 sortable: false,
                 width: 100,
                 replaceValue: {

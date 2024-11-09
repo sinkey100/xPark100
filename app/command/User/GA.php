@@ -27,6 +27,7 @@ class GA extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        $this->days = 7;
         $this->log("\n\n======== GA 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
@@ -99,9 +100,8 @@ class GA extends Base
                 ]));
 
                 $output->writeln($domain['domain']);
-                $rows = [];
                 foreach ($response['rows'] as $row) {
-                    $rows[] = [
+                    $insert = [
                         'app_id'       => $domain->app_id,
                         'domain_id'    => $domain->id,
                         'channel'      => 'GA',
@@ -111,8 +111,8 @@ class GA extends Base
                         'active_users' => $row['metricValues'][1]['value'],
                         'page_views'   => $row['metricValues'][2]['value'],
                     ];
+                    Activity::create($insert);
                 }
-                Activity::insertAll($rows);
             }
         }
 
