@@ -3,6 +3,7 @@
 namespace app\command\Ad;
 
 use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Domain;
 use app\command\Base;
 use think\console\Input;
 use think\console\Output;
@@ -30,6 +31,10 @@ class PremiumAds extends Base
 
     protected function pull()
     {
+        // 获取账号和域名
+        $ad_domains = Domain::where('channel', 'PremiumAds')->select()->toArray();
+        $ad_domains = array_column($ad_domains, 'domain');
+
         try {
             $inbox = imap_open(Env::get('MAIL.FS_HOSTNAME'), Env::get('MAIL.FS_USERNAME'), Env::get('MAIL.FS_PASSWORD'));
         } catch (Exception $e) {
@@ -68,6 +73,7 @@ class PremiumAds extends Base
             $data = [];
             if (!isset($csvData[0]['country_code']) || !isset($csvData[0]['ad_unit_id'])) continue;
             foreach ($csvData as $v) {
+                if (!in_array($v['app_key'], $ad_domains)) continue;
                 [$domain_id, $app_id] = $this->getDomainRow($v['app_key'], $v['date'], 'PremiumAds');
                 $row    = [
                     'channel'         => 'PremiumAds',
@@ -95,8 +101,8 @@ class PremiumAds extends Base
             }
 
             $this->log('准备删除历史数据');
-            Data::where('domain_id', $domain_id)->where('status', 0)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
-            Data::where('domain_id', $domain_id)->where('status', 1)->whereBetweenTime('a_date', $from_date, $to_date)->update([
+            Data::where('channel', 'PremiumAds')->where('status', 0)->whereBetweenTime('a_date', $from_date, $to_date)->delete();
+            Data::where('channel', 'PremiumAds')->where('status', 1)->whereBetweenTime('a_date', $from_date, $to_date)->update([
                 'status' => 0
             ]);
             $this->log('历史数据已删除');
