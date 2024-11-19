@@ -30,7 +30,7 @@ class Data extends Backend
     protected string|array $quickSearchField = ['id'];
 
     protected array $domains = [];
-    protected array $apps = [];
+    protected array $apps    = [];
 
     public function initialize(): void
     {
@@ -80,6 +80,9 @@ class Data extends Backend
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $activity_where = [];
+        if ($this->auth->id == 1) {
+            $activity_where[] = ['activity.status', '=', 0];
+        }
 
         foreach ($where as $k => $v) {
             if ($v[0] == 'data.admin') {

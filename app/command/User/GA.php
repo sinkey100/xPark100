@@ -32,8 +32,9 @@ class GA extends Base
         $this->log("任务开始，拉取 {$this->days} 天");
 
         $ga_account_ids = [
-            4 => '315444308',
-            8 => '322638147'
+            ['google_account_id' => 4, 'ga_account_id' => 315444308],
+            ['google_account_id' => 8, 'ga_account_id' => 322638147],
+            ['google_account_id' => 8, 'ga_account_id' => 336921805],
         ];
         // 更新 G-ID
         $domains = Domain::where('ga', '')->select();
@@ -44,17 +45,12 @@ class GA extends Base
             $domain->save();
         }
 
-        // 清除数据
-        for ($i = 0; $i < $this->days; $i++) {
-            Activity::where('channel', 'GA')->where('date', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
 
-        $this->log('历史数据已删除');
         $this->log('开始拉取 GA 数据');
 
-        foreach ($ga_account_ids as $account_id => $ga_account_id) {
+        foreach ($ga_account_ids as $ga_account_info) {
             // 初始化
-            $account = Account::where('id', $account_id)->find();
+            $account = Account::where('id', $ga_account_info['google_account_id'])->find();
             if (!$account) throw new Exception('Google 账号标记不存在');
             $client = (new GoogleSDK())->init($account);
             $client->setAccessToken($account->auth);
@@ -67,7 +63,7 @@ class GA extends Base
             do {
                 $response = $analyticsAdmin->properties->listProperties([
                     'pageSize'  => 50,
-                    'filter'    => 'parent:accounts/' . $ga_account_id,
+                    'filter'    => 'parent:accounts/' . $ga_account_info['ga_account_id'],
                     'pageToken' => $pageToken
                 ]);
                 foreach ($response->getProperties() as $property) {
@@ -110,11 +106,20 @@ class GA extends Base
                         'new_users'    => $row['metricValues'][0]['value'],
                         'active_users' => $row['metricValues'][1]['value'],
                         'page_views'   => $row['metricValues'][2]['value'],
+                        'status'       => 1
                     ];
                     Activity::create($insert);
                 }
             }
         }
+
+        // 清除数据
+        for ($i = 0; $i < $this->days; $i++) {
+            Activity::where('channel', 'GA')->where('status', 0)->where('date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Activity::where('channel', 'GA')->where('status', 1)->where('date', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
+        }
+
+        $this->log('历史数据已删除');
 
         $this->log('======== GA 拉取数据完成 ========', false);
 
