@@ -31,7 +31,7 @@ export default {
     'take a plane': 'Take a plane',
     'Take the high-speed railway': 'Take the high-speed rail',
     'full name': 'Full name',
-    hour: 'Hour',
+    hour: 'DataHour',
     minute: 'Minute',
     second: 'Second',
     day: 'Day',

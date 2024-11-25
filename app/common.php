@@ -696,3 +696,16 @@ if (!function_exists('find_row_from_keyword')) {
         return $message;
     }
 }
+
+if (!function_exists('convert_to_utc')) {
+    function convert_to_utc($datetime, $returnTimestamp = false): int|string
+    {
+        $date = new DateTime($datetime, new DateTimeZone(date_default_timezone_get()));
+        $date->setTimezone(new DateTimeZone('UTC'));
+        if ($returnTimestamp) {
+            return $date->getTimestamp();
+        } else {
+            return $date->format('Y-m-d H:i:s');
+        }
+    }
+}

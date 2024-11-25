@@ -13,9 +13,10 @@ return [
         'Adx'        => \app\command\Ad\Adx::class,
         'AdSkeeper'  => \app\command\Ad\AdSkeeper::class,
         'AnyMind'    => \app\command\Ad\AnyMind::class,
-        'AppLovin'    => \app\command\Ad\AppLovin::class,
+        'AppLovin'   => \app\command\Ad\AppLovin::class,
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
+        'Hour'       => \app\command\User\Hour::class,
 
         // 小米工具
         'MiTools'    => \app\command\MiTools::class,
