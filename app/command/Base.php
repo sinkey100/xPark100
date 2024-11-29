@@ -11,6 +11,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use think\console\Command;
 use think\console\Output;
+use DateTime;
 
 class Base extends Command
 {
@@ -195,5 +196,40 @@ class Base extends Command
         }
         return $message;
     }
+
+
+    protected function adManagerReportCsv(string $content): array
+    {
+        function parseDateRange(string $dateRange): array
+        {
+            $dates          = explode(' - ', $dateRange);
+            $formattedDates = [];
+            foreach ($dates as $date) {
+                $dateTime         = DateTime::createFromFormat('M d, Y', $date);
+                $formattedDates[] = $dateTime->format('Y-m-d');
+            }
+            return $formattedDates;
+        }
+
+        $flag      = false;
+        $rows      = [];
+        $dateRange = [];
+        foreach (explode("\n", $content) as $line) {
+            if (str_starts_with($line, 'Date range')) {
+                $dateRange = str_replace(['"', 'Date range,'], '', $line);
+                $dateRange = parseDateRange($dateRange);
+            }
+            if (str_starts_with($line, 'Total,')) {
+                $flag = false;
+                continue;
+            }
+            if (str_starts_with($line, 'Date,')) $flag = true;
+
+            if ($flag) $rows[] = $line;
+        }
+        [$fields, $csvData] = $this->csv2json(implode("\n", $rows));
+        return [$dateRange, $fields, $csvData];
+    }
+
 
 }

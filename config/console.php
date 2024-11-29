@@ -14,6 +14,7 @@ return [
         'AdSkeeper'  => \app\command\Ad\AdSkeeper::class,
         'AnyMind'    => \app\command\Ad\AnyMind::class,
         'AppLovin'   => \app\command\Ad\AppLovin::class,
+        'Mango'      => \app\command\Ad\Mango::class,
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
         'Hour'       => \app\command\User\Hour::class,
