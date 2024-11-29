@@ -2,6 +2,7 @@
 
 namespace app\command;
 
+use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\DomainRate;
@@ -14,14 +15,17 @@ use think\console\Output;
 class Base extends Command
 {
 
-    protected array $domains = [];
-    protected array $dateRate = [];
-    protected int $days = 3;
-    protected array $prefix = ['cy-'];
+    protected array $domains     = [];
+    protected array $dateRate    = [];
+    protected int   $days        = 3;
+    protected array $prefix      = ['cy-'];
+    protected array $channelList = [];
 
     public function __construct()
     {
         parent::__construct();
+        $this->channelList = Channel::field(['id', 'channel_alias', 'ad_type'])->select()->toArray();
+        $this->channelList = array_column($this->channelList, null, 'channel_alias');
     }
 
     /**
@@ -100,7 +104,7 @@ class Base extends Command
     {
         //domain_id
         $domain     = str_replace($this->prefix, '', $original_domain);
-        $domain_row = Domain::where('original_domain', $original_domain)->find();
+        $domain_row = Domain::where('original_domain', $original_domain)->where('channel', $channel)->find();
         if (!$domain_row) {
             $domain_row = Domain::create([
                 'domain'          => $domain,

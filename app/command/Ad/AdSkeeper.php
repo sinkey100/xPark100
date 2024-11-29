@@ -92,13 +92,16 @@ class AdSkeeper extends Base
         foreach ($result as $v) {
             if (!isset($v['widgetName'])) continue;
             $domain_name = explode('_', $v['widgetName'])[0];
-            if(!in_array($domain_name, $ad_domains)) continue;
+            if (!in_array($domain_name, $ad_domains)) continue;
 
             [$domain_id, $app_id] = $this->getDomainRow($domain_name, $v['date'], 'AdSkeeper');
+            $channel_full = 'AdSkeeper';
 
             $saveData[] = [
                 'channel'         => 'AdSkeeper',
-                'channel_full'    => 'AdSkeeper',
+                'channel_full'    => $channel_full,
+                'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                 'sub_channel'     => $domain_name,
                 'domain_id'       => $domain_id,
                 'app_id'          => $app_id,
@@ -113,7 +116,7 @@ class AdSkeeper extends Base
                 'gross_revenue'   => $v['wages'],
                 'net_revenue'     => $v['wages'],
                 'raw_cpc'         => $v['cpc'],
-                'raw_ctr'         => $v['ctr']/ 100,
+                'raw_ctr'         => $v['ctr'] / 100,
                 'raw_ecpm'        => $v['eCpm']
             ];
         }

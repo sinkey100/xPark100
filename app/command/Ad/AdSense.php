@@ -116,9 +116,14 @@ class AdSense extends Base
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+
+                $channel_full = 'AdSense-' . $account->flag;
+
                 $data[] = [
                     'channel'         => 'AdSense',
-                    'channel_full'    => 'AdSense-' . $account->flag,
+                    'channel_full'    => $channel_full,
+                    'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                    'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                     'sub_channel'     => $insert['DOMAIN_NAME'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,

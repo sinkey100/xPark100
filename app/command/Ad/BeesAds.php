@@ -124,9 +124,13 @@ class BeesAds extends Base
 
             foreach ($result['data']['rows'] as $v) {
                 [$domain_id, $app_id] = $this->getDomainRow($v['Domain'], $v['Date'], 'BeesAds');
+                $channel_full ='BeesAds-' . $account;
+
                 $row    = [
                     'channel'         => 'BeesAds',
-                    'channel_full'    => 'BeesAds-' . $account,
+                    'channel_full'    => $channel_full,
+                    'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                    'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                     'sub_channel'     => $v['Domain'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,

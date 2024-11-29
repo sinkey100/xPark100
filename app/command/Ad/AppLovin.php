@@ -92,11 +92,13 @@ class AppLovin extends Base
             if (!in_array($v['package_name'], $ad_domains)) continue;
 
             [$domain_id, $app_id] = $this->getDomainRow($v['package_name'], $v['day'], 'AppLovin');
+            $channel_full = 'AppLovin';
 
             $saveData[] = [
                 'channel'         => 'AppLovin',
-                'channel_full'    => 'AppLovin',
-                'channel_type'    => 1,
+                'channel_full'    => $channel_full,
+                'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                 'sub_channel'     => $v['package_name'],
                 'domain_id'       => $domain_id,
                 'app_id'          => $app_id,

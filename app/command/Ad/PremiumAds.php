@@ -75,9 +75,13 @@ class PremiumAds extends Base
             foreach ($csvData as $v) {
                 if (!in_array($v['app_key'], $ad_domains)) continue;
                 [$domain_id, $app_id] = $this->getDomainRow($v['app_key'], $v['date'], 'PremiumAds');
+                $channel_full = 'PremiumAds';
+
                 $row    = [
                     'channel'         => 'PremiumAds',
-                    'channel_full'    => 'PremiumAds',
+                    'channel_full'    => $channel_full,
+                    'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                    'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                     'sub_channel'     => $v['app_key'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,

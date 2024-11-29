@@ -102,10 +102,13 @@ class AnyMind extends Base
             if (!in_array($v['site_app'], $ad_domains)) continue;
 
             [$domain_id, $app_id] = $this->getDomainRow($v['site_app'], $v['date'], 'AnyMind');
+            $channel_full = 'AnyMind';
 
             $saveData[] = [
                 'channel'         => 'AnyMind',
-                'channel_full'    => 'AnyMind',
+                'channel_full'    => $channel_full,
+                'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                 'sub_channel'     => $v['site_app'],
                 'domain_id'       => $domain_id,
                 'app_id'          => $app_id,

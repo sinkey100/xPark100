@@ -116,7 +116,6 @@ class Adx extends Base
         }
 
 
-
         $reportQuery = new ReportQuery();
 
         $endDate = new Date();
@@ -187,10 +186,13 @@ class Adx extends Base
                 }
 
                 [$domain_id, $app_id] = $this->getDomainRow($v['Dimension.SITE_NAME'], $v['Dimension.DATE'], 'Adx');
+                $channel_full = 'Adx-传游';
 
                 $saveData[] = [
                     'channel'         => 'Adx',
-                    'channel_full'    => 'Adx',
+                    'channel_full'    => $channel_full,
+                    'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                    'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
                     'sub_channel'     => $v['Dimension.SITE_NAME'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,
