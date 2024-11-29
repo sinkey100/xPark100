@@ -38,34 +38,11 @@
                               :placeholder="t('Please input field', { field: t('xpark.domain.original_domain') })"/>
                     <FormItem :label="t('xpark.domain.rate')" type="number" v-model="baTable.form.items!.rate"
                               prop="rate" :placeholder="t('Please input field', { field: t('xpark.domain.rate') })"/>
-                    <FormItem :label="t('xpark.domain.channel')" type="radio" v-model="baTable.form.items!.channel"
-                              prop="channel" :input-attr="{
-                            border: true,
-                            content: {
-                                xPark365: 'xPark365',
-                                BeesAds: 'BeesAds',
-                                AdSense: 'AdSense',
-                                PremiumAds: 'PremiumAds',
-                                Adx: 'Adx',
-                                AdSkeeper: 'AdSkeeper',
-                                AnyMind: 'AnyMind',
-                                AppLovin: 'AppLovin',
-                            },
-                        }" :placeholder="t('Please input field', { field: t('xpark.domain.channel') })"/>
 
-                    <FormItem :label="t('xpark.domain.flag')"
-                              v-if="baTable.form.items!.channel == 'AdSense'"
-                              type="radio" v-model="baTable.form.items!.flag" prop="flag" :input-attr="{
-                            border: true,
-                            content: { '传游': '传游', '泷泸': '泷泸', '沃克': '沃克', '柳紫闪': '柳紫闪'},
-                        }" :placeholder="t('Please input field', { field: t('xpark.domain.flag') })"/>
-
-                    <FormItem :label="t('xpark.domain.flag')"
-                              v-if="baTable.form.items!.channel == 'BeesAds'"
-                              type="radio" v-model="baTable.form.items!.flag" prop="flag" :input-attr="{
-                            border: true,
-                            content: { CY: '传游',  TXHD: '天下互动'},
-                        }" :placeholder="t('Please input field', { field: t('xpark.domain.flag') })"/>
+                    <FormItem :label="t('xpark.domain.channel')" type="remoteSelect"
+                              v-model="baTable.form.items!.channel_id" prop="channel_id"
+                              :input-attr="{ pk: 'ba_xpark_channel.id', field: 'channel_alias', remoteUrl: '/admin/xpark.Channel/index' }"
+                              :placeholder="t('Please select field', { field: t('xpark.domain.channel') })"/>
 
                 </el-form>
 
