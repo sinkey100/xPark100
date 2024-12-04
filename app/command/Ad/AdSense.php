@@ -26,6 +26,9 @@ class AdSense extends Base
     protected function execute(Input $input, Output $output): void
     {
         $this->log("\n\n======== AdSense 开始拉取数据 ========", false);
+
+        Data::where('channel', 'AdSense')->where('status', 1)->delete();
+
         $this->log("任务开始，拉取 {$this->days} 天");
         $this->log('开始拉取 AdSense 数据');
         try {

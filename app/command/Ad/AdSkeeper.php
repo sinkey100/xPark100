@@ -26,6 +26,9 @@ class AdSkeeper extends Base
     {
 
         $this->log("\n\n======== AdSkeeper 开始拉取数据 ========", false);
+
+        Data::where('channel', 'AdSkeeper')->where('status', 1)->delete();
+
         $this->log("任务开始，拉取 {$this->days} 天");
 
         $this->log('开始拉取 AdSkeeper 数据');

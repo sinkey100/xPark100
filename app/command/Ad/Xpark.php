@@ -18,6 +18,8 @@ class Xpark extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        Data::where('channel', 'xPark365')->where('status', 1)->delete();
+
         // 上个月1号到今天的间隔日期
         $h          = ceil((time() - strtotime(date("Y-m-01", strtotime('last month'))) + 3600) / 86400);
         $this->days = date("H") == 0 ? $h : 3;

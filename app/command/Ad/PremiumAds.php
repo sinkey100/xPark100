@@ -22,6 +22,7 @@ class PremiumAds extends Base
     {
         $this->log("\n\n======== PremiumAds 开始拉取数据 ========", false);
         $this->log("任务开始，拉取当天邮件");
+        Data::where('channel', 'PremiumAds')->where('status', 1)->delete();
 
         $this->pull();
 

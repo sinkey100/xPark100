@@ -23,6 +23,8 @@ class Mango extends Base
         $this->log("\n\n======== Mango 开始拉取数据 ========", false);
         $this->log("任务开始，拉取当天邮件");
 
+        Data::where('channel', 'Mango')->where('status', 1)->delete();
+
         try {
             $this->pull();
         }catch (Exception $e){

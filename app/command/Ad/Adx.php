@@ -44,6 +44,8 @@ class Adx extends Base
         $this->log("\n\n======== Adx 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
 
+        Data::where('channel', 'Adx')->where('status', 1)->delete();
+
         $this->log('开始拉取 Adx 数据');
         try {
             $this->pull();

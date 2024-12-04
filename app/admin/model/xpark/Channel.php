@@ -13,6 +13,6 @@ class Channel extends Model
     protected $name = 'xpark_channel';
 
     // 自动写入时间戳字段
-    protected $autoWriteTimestamp = true;
+    protected $autoWriteTimestamp = 'datetime';
 
 }

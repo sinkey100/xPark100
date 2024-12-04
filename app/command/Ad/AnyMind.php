@@ -26,6 +26,9 @@ class AnyMind extends Base
     {
 
         $this->log("\n\n======== AnyMind 开始拉取数据 ========", false);
+
+        Data::where('channel', 'AnyMind')->where('status', 1)->delete();
+
         $this->log("任务开始，拉取 {$this->days} 天");
 
         $this->log('开始拉取 AnyMind 数据');

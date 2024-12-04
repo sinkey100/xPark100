@@ -20,6 +20,8 @@ class BeesAds extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        Data::where('channel', 'BeesAds')->where('status', 1)->delete();
+
         // 获取小蜜蜂账号数量
         $accounts = Domain::field('flag')->where('channel', 'BeesAds')->group('flag')->select();
         $accounts = array_column($accounts->toArray(), 'flag');
