@@ -235,6 +235,13 @@ class Data extends Backend
             if (!in_array($v, $dimension)) unset($cell[$field]);
         }
 
+        if (in_array('data.domain_id', $dimension) && !in_array('data.ad_placement_id', $dimension)) {
+            $cell = array_merge($cell, [
+                'activity_page_views'   => 'PV',
+                'activity_new_users'    => '新增',
+                'activity_active_users' => '活跃'
+            ]);
+        }
 
         $i = 0;
         foreach ($cell as $k => $v) {
