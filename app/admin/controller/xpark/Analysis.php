@@ -11,6 +11,7 @@ use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Analysis as DataModel;
 use app\admin\model\xpark\Clear as ClearModel;
 use app\admin\model\xpark\Hold as HoldModel;
+use app\admin\model\xpark\Tidy as TidyModel;
 
 /**
  * xPark数据
@@ -67,7 +68,13 @@ class Analysis extends Backend
                 "fixed"  => "left"
             ], [
                 "colKey" => "hold",
-                "title"  => "Hold",
+                "title"  => "PaymentHold",
+                "align"  => "center",
+                "width"  => 120,
+                "fixed"  => "left"
+            ], [
+                "colKey" => "tidy",
+                "title"  => "调整",
                 "align"  => "center",
                 "width"  => 110,
                 "fixed"  => "left"
@@ -86,6 +93,12 @@ class Analysis extends Backend
             ], [
                 "colKey"   => "col-hold",
                 "title"    => "PaymentHold",
+                "align"    => "center",
+                "width"    => 'auto',
+                "children" => []
+            ], [
+                "colKey"   => "col-tidy",
+                "title"    => "调整",
                 "align"    => "center",
                 "width"    => 'auto',
                 "children" => []
@@ -133,7 +146,7 @@ class Analysis extends Backend
             $item['ad_revenue'] = DataModel::where('channel_id', $item['channel_id'])
                 ->whereMonth('a_date', date("Y-m", strtotime($item['month'])))->sum('ad_revenue');
             // 插入表格列
-            $this->columns[7]['children'][] = [
+            $this->columns[8]['children'][] = [
                 "colKey"   => "c_{$item['channel_id']}",
                 "title"    => $item['channel_alias'],
                 "align"    => "center",
@@ -144,8 +157,7 @@ class Analysis extends Backend
         unset($item);
 
         // 筛选时间段内有hold的通道
-        $month_range = [$filter_months[count($filter_months) - 1] . '-01 00:00:00', date("Y-m-t", strtotime($filter_months[0])) . ' 23:59:59'];
-        $hold_list   = HoldModel::alias('hold')
+        $hold_list = HoldModel::alias('hold')
             ->field(['hold.*', 'channel.channel_alias'])
             ->join('xpark_channel channel', 'channel.id = hold.channel_id', 'left')
             ->where('hold.channel_id', 'in', $filter_channel_ids)
@@ -153,7 +165,7 @@ class Analysis extends Backend
             ->select()->toArray();
         foreach ($hold_list as &$item) {
             // 插入表格列
-            $this->columns[8]['children'][] = [
+            $this->columns[9]['children'][] = [
                 "colKey"   => "h_{$item['channel_id']}",
                 "title"    => $item['channel_alias'],
                 "align"    => "center",
@@ -163,10 +175,32 @@ class Analysis extends Backend
         }
         unset($item);
 
+        // 筛选动态调整数据
+        $tidy_list = TidyModel::alias('tidy')
+            ->field(['tidy.*', 'channel.channel_alias'])
+            ->join('xpark_channel channel', 'channel.id = tidy.channel_id', 'left')
+            ->where('tidy.channel_id', 'in', $filter_channel_ids)
+            ->where('tidy.month', 'between', $month_range)
+            ->select()->toArray();
+        foreach ($tidy_list as &$item) {
+            // 查询核减通道在当月的收入
+            $item['ad_revenue'] = DataModel::where('channel_id', $item['channel_id'])
+                ->whereNotIn('app_id', $item['exclude_id'])
+                ->whereMonth('a_date', date("Y-m", strtotime($item['month'])))->sum('ad_revenue');
+            // 插入表格列
+            $this->columns[10]['children'][] = [
+                "colKey"   => "t_{$item['channel_id']}",
+                "title"    => $item['channel_alias'],
+                "align"    => "center",
+                "ellipsis" => true,
+                "width"    => 150
+            ];
+        }
+        unset($item);
 
         // 插入表格列
         foreach ($filter_channel as $channel) {
-            $this->columns[6]['children'][] = [
+            $this->columns[7]['children'][] = [
                 "colKey"   => "r_{$channel['id']}",
                 "title"    => $channel['channel_alias'],
                 "align"    => "center",
@@ -186,6 +220,7 @@ class Analysis extends Backend
                     'revenue'  => 0, // 收入
                     'clear'    => 0, // 核减
                     'hold'     => 0, // Hold
+                    'tidy'     => 0, // 动态调整
                     'settle'   => 0, // 结算
                 ];
 
@@ -205,10 +240,10 @@ class Analysis extends Backend
                             $clear['channel_id'] == $channel['id']
                             && $clear['month'] == $month . '-01'
                         ) {
-                            $clear                 = round($sum / $clear['ad_revenue'] * $clear['money'], 2);
-                            $item["c_$channel_id"] = $clear;
-                            $item['clear']         += $clear;
-                            $item['settle']        -= $clear;
+                            $clear_money           = round($sum / $clear['ad_revenue'] * $clear['money'], 2);
+                            $item["c_$channel_id"] = $clear_money;
+                            $item['clear']         += $clear_money;
+                            $item['settle']        -= $clear_money;
                         }
                     }
                     // Hold
@@ -222,24 +257,42 @@ class Analysis extends Backend
                             $item['settle']        -= $sum;
                         }
                     }
+
+                    // 动态调整
+                    foreach ($tidy_list as $tidy) {
+                        if (
+                            $tidy['channel_id'] == $channel['id']
+                            && $tidy['month'] == $month . '-01'
+                            && !in_array($app, $tidy['exclude_id'])
+                        ) {
+                            $tidy_money            = round($sum / $tidy['ad_revenue'] * $tidy['money'], 2);
+                            $item["t_$channel_id"] = $tidy_money;
+                            $item['tidy']          += $tidy_money;
+                            $item['settle']        += $tidy_money;
+                        }
+                    }
                 }
 
-                // 结算
-
+                // 格式化
                 $item['revenue'] = round($item['revenue'], 2);
                 $item['clear']   = round($item['clear'], 2);
                 $item['hold']    = round($item['hold'], 2);
                 $item['settle']  = round($item['settle'], 2);
-
+                $item['tidy']    = round($item['tidy'], 2);
                 // 空数据不记录
                 if ($item['revenue'] == 0) continue;
                 $items[] = $item;
             }
         }
 
+        if(count($tidy_list) == 0) unset($this->columns[6]);
+        if(count($hold_list) == 0) unset($this->columns[5]);
+        if(count($clear_list) == 0) unset($this->columns[4]);
+
+
         $this->success('', [
             'list'    => $items,
-            'columns' => $this->columns,
+            'columns' => array_values($this->columns),
         ]);
     }
 

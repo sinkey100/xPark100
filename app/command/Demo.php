@@ -44,6 +44,10 @@ class Demo extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        print_r(array_intersect(["2","6",7], [1,2,3,4,5]));
+        exit;
+
+
         $this->runReport();
     }
 

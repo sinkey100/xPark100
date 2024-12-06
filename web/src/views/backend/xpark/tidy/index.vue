@@ -6,7 +6,7 @@
         <!-- 自定义按钮请使用插槽，甚至公共搜索也可以使用具名插槽渲染，参见文档 -->
         <TableHeader
             :buttons="['refresh', 'add', 'comSearch', 'columnDisplay']"
-            :quick-search-placeholder="t('Quick search placeholder', { fields: t('xpark.hold.quick Search Fields') })"
+            :quick-search-placeholder="t('Quick search placeholder', { fields: t('xpark.tidy.quick Search Fields') })"
         ></TableHeader>
 
         <!-- 表格 -->
@@ -30,7 +30,7 @@ import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
 
 defineOptions({
-    name: 'xpark/hold',
+    name: 'xpark/tidy',
 })
 
 const { t } = useI18n()
@@ -41,22 +41,23 @@ const optButtons: OptButton[] = defaultOptButtons(['edit', 'delete'])
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
  */
 const baTable = new baTableClass(
-    new baTableApi('/admin/xpark.Hold/'),
+    new baTableApi('/admin/xpark.Tidy/'),
     {
         pk: 'id',
         column: [
             { type: 'selection', align: 'center', operator: false },
-            { label: t('xpark.hold.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
-            { label: t('xpark.hold.month'), prop: 'month', align: 'center', render: 'month', operator: false, sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd' },
-            { label: t('xpark.hold.channel__channel_alias'), prop: 'channel.channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), render: 'tags', operator: 'LIKE' },
-            { label: t('xpark.hold.remark'), prop: 'remark', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('xpark.hold.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
+            { label: t('xpark.tidy.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
+            { label: t('xpark.tidy.month'), prop: 'month', align: 'center', render: 'month', operator: false, sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd' },
+            { label: t('xpark.tidy.channel__channel_alias'), prop: 'channel.channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), render: 'tags', operator: 'LIKE' },
+            { label: t('xpark.tidy.money'), prop: 'money', align: 'center', operator: 'RANGE', sortable: false },
+            { label: t('xpark.tidy.remark'), prop: 'remark', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            { label: t('xpark.tidy.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
     },
     {
-        defaultItems: { month: null },
+        defaultItems: { month: null, money: 0, exclude_id: [] },
     }
 )
 
