@@ -10,6 +10,7 @@ use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Analysis as DataModel;
 use app\admin\model\xpark\Clear as ClearModel;
+use app\admin\model\xpark\Hold as HoldModel;
 
 /**
  * xPark数据
@@ -39,53 +40,52 @@ class Analysis extends Backend
                 "align"  => "center",
                 "width"  => 120,
                 "fixed"  => 'left'
-            ],
-            [
+            ], [
                 "colKey" => "app_name",
                 "title"  => "应用",
                 "align"  => "center",
                 "width"  => 180,
                 "fixed"  => "left"
 
-            ],
-            [
+            ], [
                 "colKey" => "settle",
                 "title"  => "结算金额",
                 "align"  => "center",
                 "width"  => 110,
                 "fixed"  => "left"
-            ],
-            [
+            ], [
                 "colKey" => "revenue",
                 "title"  => "收入",
                 "align"  => "center",
                 "width"  => 110,
                 "fixed"  => "left"
-            ],
-            [
+            ], [
                 "colKey" => "clear",
                 "title"  => "核减",
                 "align"  => "center",
                 "width"  => 110,
                 "fixed"  => "left"
-            ],
-            [
+            ], [
                 "colKey" => "hold",
                 "title"  => "Hold",
                 "align"  => "center",
                 "width"  => 110,
                 "fixed"  => "left"
-            ],
-            [
+            ], [
                 "title"    => "收入",
                 "colKey"   => "col-revenue",
                 "align"    => "center",
                 "width"    => 'auto',
                 "children" => []
-            ],
-            [
+            ], [
                 "colKey"   => "col-clear",
                 "title"    => "核减",
+                "align"    => "center",
+                "width"    => 'auto',
+                "children" => []
+            ], [
+                "colKey"   => "col-hold",
+                "title"    => "PaymentHold",
                 "align"    => "center",
                 "width"    => 'auto',
                 "children" => []
@@ -143,6 +143,27 @@ class Analysis extends Backend
         }
         unset($item);
 
+        // 筛选时间段内有hold的通道
+        $month_range = [$filter_months[count($filter_months) - 1] . '-01 00:00:00', date("Y-m-t", strtotime($filter_months[0])) . ' 23:59:59'];
+        $hold_list   = HoldModel::alias('hold')
+            ->field(['hold.*', 'channel.channel_alias'])
+            ->join('xpark_channel channel', 'channel.id = hold.channel_id', 'left')
+            ->where('hold.channel_id', 'in', $filter_channel_ids)
+            ->where('hold.month', 'between', $month_range)
+            ->select()->toArray();
+        foreach ($hold_list as &$item) {
+            // 插入表格列
+            $this->columns[8]['children'][] = [
+                "colKey"   => "h_{$item['channel_id']}",
+                "title"    => $item['channel_alias'],
+                "align"    => "center",
+                "ellipsis" => true,
+                "width"    => 150
+            ];
+        }
+        unset($item);
+
+
         // 插入表格列
         foreach ($filter_channel as $channel) {
             $this->columns[6]['children'][] = [
@@ -164,6 +185,7 @@ class Analysis extends Backend
                     'app_name' => $this->apps[$app]['app_name'] ?? 'Unknown',
                     'revenue'  => 0, // 收入
                     'clear'    => 0, // 核减
+                    'hold'     => 0, // Hold
                     'settle'   => 0, // 结算
                 ];
 
@@ -189,12 +211,24 @@ class Analysis extends Backend
                             $item['settle']        -= $clear;
                         }
                     }
-
+                    // Hold
+                    foreach ($hold_list as $hold) {
+                        if (
+                            $hold['channel_id'] == $channel['id']
+                            && $hold['month'] == $month . '-01'
+                        ) {
+                            $item["h_$channel_id"] = $sum;
+                            $item['hold']          += $sum;
+                            $item['settle']        -= $sum;
+                        }
+                    }
                 }
 
                 // 结算
 
                 $item['revenue'] = round($item['revenue'], 2);
+                $item['clear']   = round($item['clear'], 2);
+                $item['hold']    = round($item['hold'], 2);
                 $item['settle']  = round($item['settle'], 2);
 
                 // 空数据不记录
@@ -202,7 +236,6 @@ class Analysis extends Backend
                 $items[] = $item;
             }
         }
-
 
         $this->success('', [
             'list'    => $items,

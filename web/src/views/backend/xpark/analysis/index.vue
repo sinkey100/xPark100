@@ -131,11 +131,15 @@ onMounted(() => {
     }
 
     .t-table__th-col-revenue, th[data-colkey^="r_"] {
-        background-color: var(--el-color-primary-light-9);
+        background-color: var(--el-color-primary-light-8);
     }
 
     .t-table__th-col-clear, th[data-colkey^="c_"] {
-        background-color: var(--el-color-danger-light-9);
+        background-color: var(--el-color-danger-light-8);
+    }
+
+    .t-table__th-col-hold, th[data-colkey^="h_"] {
+        background-color: var(--el-color-warning-light-8);
     }
 }
 
