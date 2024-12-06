@@ -1,6 +1,6 @@
 <template>
     <!-- Icon -->
-    <Icon class="ba-icon-dark" v-if="field.render == 'icon'" :name="fieldValue ? fieldValue : field.default ?? ''" />
+    <Icon class="ba-icon-dark" v-if="field.render == 'icon'" :name="fieldValue ? fieldValue : field.default ?? ''"/>
 
     <!-- switch -->
     <el-switch
@@ -40,7 +40,8 @@
 
     <!-- tag -->
     <div v-if="field.render == 'tag' && fieldValue !== ''">
-        <el-tag :type="getTagType(fieldValue, field.custom)" :effect="field.effect ?? 'light'" :size="field.size ?? 'default'">
+        <el-tag :type="getTagType(fieldValue, field.custom)" :effect="field.effect ?? 'light'"
+                :size="field.size ?? 'default'">
             {{ field.replaceValue ? field.replaceValue[fieldValue] : fieldValue }}
         </el-tag>
     </div>
@@ -56,7 +57,8 @@
                     :effect="field.effect ?? 'light'"
                     :size="field.size ?? 'default'"
                 >
-                    {{ field.replaceValue ? field.replaceValue[tag] ?? tag : tag }}</el-tag
+                    {{ field.replaceValue ? field.replaceValue[tag] ?? tag : tag }}
+                </el-tag
                 >
             </template>
         </template>
@@ -68,7 +70,8 @@
                 :effect="field.effect ?? 'light'"
                 :size="field.size ?? 'default'"
             >
-                {{ field.replaceValue ? field.replaceValue[fieldValue] ?? fieldValue : fieldValue }}</el-tag
+                {{ field.replaceValue ? field.replaceValue[fieldValue] ?? fieldValue : fieldValue }}
+            </el-tag
             >
         </template>
     </div>
@@ -80,7 +83,7 @@
                 <el-button
                     @click="typeof field.click == 'function' ? field.click(row, field, fieldValue, column, index) : openUrl(fieldValue, field)"
                 >
-                    <Icon :color="'#606266'" name="el-icon-Position" />
+                    <Icon :color="'#606266'" name="el-icon-Position"/>
                 </el-button>
             </template>
         </el-input>
@@ -89,6 +92,11 @@
     <!-- datetime -->
     <div v-if="field.render == 'datetime'">
         {{ !fieldValue ? '-' : timeFormat(fieldValue, field.timeFormat ?? undefined) }}
+    </div>
+
+    <!-- month -->
+    <div v-if="field.render == 'month'">
+        {{ fieldValue.slice(0, 7) }}
     </div>
 
     <div v-if="field.render == 'datetimeAndTotal'">
@@ -133,7 +141,7 @@
                     :disabled="btn.disabled && btn.disabled(row, field)"
                     v-bind="btn.attr"
                 >
-                    <Icon :name="btn.icon" />
+                    <Icon :name="btn.icon"/>
                     <div v-if="btn.text" class="table-operate-text">{{ btn.text }}</div>
                 </el-button>
 
@@ -153,7 +161,7 @@
                         :disabled="btn.disabled && btn.disabled(row, field)"
                         v-bind="btn.attr"
                     >
-                        <Icon :name="btn.icon" />
+                        <Icon :name="btn.icon"/>
                         <div v-if="btn.text" class="table-operate-text">{{ btn.text }}</div>
                     </el-button>
                 </el-tooltip>
@@ -167,7 +175,8 @@
                 >
                     <template #reference>
                         <div class="ml-6">
-                            <el-tooltip :disabled="btn.title ? false : true" :content="btn.title ? t(btn.title) : ''" placement="top">
+                            <el-tooltip :disabled="btn.title ? false : true" :content="btn.title ? t(btn.title) : ''"
+                                        placement="top">
                                 <el-button
                                     v-blur
                                     :class="btn.class"
@@ -176,7 +185,7 @@
                                     :disabled="btn.disabled && btn.disabled(row, field)"
                                     v-bind="btn.attr"
                                 >
-                                    <Icon :name="btn.icon" />
+                                    <Icon :name="btn.icon"/>
                                     <div v-if="btn.text" class="table-operate-text">{{ btn.text }}</div>
                                 </el-button>
                             </el-tooltip>
@@ -198,7 +207,7 @@
                         :disabled="btn.disabled && btn.disabled(row, field)"
                         v-bind="btn.attr"
                     >
-                        <Icon :name="btn.icon" />
+                        <Icon :name="btn.icon"/>
                         <div v-if="btn.text" class="table-operate-text">{{ btn.text }}</div>
                     </el-button>
                 </el-tooltip>
@@ -208,14 +217,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
-import type { TagProps, TableColumnCtx } from 'element-plus'
-import { openUrl } from '/@/components/table'
-import { useI18n } from 'vue-i18n'
-import { fullUrl, arrayFullUrl, timeFormat } from '/@/utils/common'
+import {ref, inject} from 'vue'
+import type {TagProps, TableColumnCtx} from 'element-plus'
+import {openUrl} from '/@/components/table'
+import {useI18n} from 'vue-i18n'
+import {fullUrl, arrayFullUrl, timeFormat} from '/@/utils/common'
 import type baTableClass from '/@/utils/baTable'
 
-const { t } = useI18n()
+const {t} = useI18n()
 const baTable = inject('baTable') as baTableClass
 
 interface Props {
@@ -224,6 +233,7 @@ interface Props {
     column: TableColumnCtx<TableRow>
     index: number
 }
+
 const props = defineProps<Props>()
 
 // 字段值（单元格值）
@@ -243,7 +253,7 @@ if (props.field.renderFormatter && typeof props.field.renderFormatter == 'functi
 }
 
 const onChangeField = (value: any) => {
-    baTable.onTableAction('field-change', { value: value, ...props })
+    baTable.onTableAction('field-change', {value: value, ...props})
 }
 
 const onButtonClick = (btn: OptButton) => {
@@ -263,39 +273,49 @@ const getTagType = (value: string, custom: any): TagProps['type'] => {
 .m-10 {
     margin: 4px;
 }
+
 .ba-render-image {
     text-align: center;
 }
+
 .images-item {
     width: 50px;
     margin: 0 5px;
 }
+
 .el-image {
     height: 36px;
     width: 36px;
 }
+
 .table-operate-text {
     padding-left: 5px;
 }
+
 .table-operate {
     padding: 4px 5px;
     height: auto;
 }
+
 .table-operate .icon {
     font-size: 14px !important;
     color: var(--ba-bg-color-overlay) !important;
 }
+
 .move-button {
     cursor: move;
 }
+
 .ml-6 {
     display: inline-flex;
     vertical-align: middle;
     margin-left: 6px;
 }
+
 .ml-6 + .el-button {
     margin-left: 6px;
 }
+
 .ba-render-color {
     height: 25px;
     width: 100%;

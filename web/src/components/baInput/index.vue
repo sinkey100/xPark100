@@ -174,6 +174,9 @@ export default defineComponent({
                 case 'date':
                     valueFormat = 'YYYY-MM-DD'
                     break
+                case 'month':
+                    valueFormat = 'YYYY-MM'
+                    break
                 case 'year':
                     valueFormat = 'YYYY'
                     break
@@ -265,6 +268,22 @@ export default defineComponent({
                             class: 'w100',
                             type: props.type,
                             'value-format': 'YYYY',
+                            ...attrs.value,
+                            modelValue: valueComputed.value,
+                            'onUpdate:modelValue': onValueUpdate,
+                        })
+                    }
+                },
+            ],
+            [
+                'month',
+                () => {
+                    return () => {
+                        const valueComputed = computed(() => (!props.modelValue ? null : '' + props.modelValue))
+                        return createVNode(resolveComponent('el-date-picker'), {
+                            class: 'w100',
+                            type: props.type,
+                            'value-format': 'YYYY-MM',
                             ...attrs.value,
                             modelValue: valueComputed.value,
                             'onUpdate:modelValue': onValueUpdate,

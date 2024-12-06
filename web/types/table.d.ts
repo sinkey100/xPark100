@@ -144,6 +144,7 @@ declare global {
             | 'tag'
             | 'tags'
             | 'url'
+            | 'month'
             | 'datetime'
             | 'datetimeAndTotal'
             | 'color'

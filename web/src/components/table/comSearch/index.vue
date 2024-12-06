@@ -15,7 +15,10 @@
                         >
                             <!-- 外部可以使用 :deep() 选择器修改css样式 -->
                             <div class="com-search-col" :class="item.prop">
-                                <div class="com-search-col-label" v-if="item.comSearchShowLabel !== false">{{ item.label }}</div>
+                                <div class="com-search-col-label" v-if="item.comSearchShowLabel !== false">{{
+                                        item.label
+                                    }}
+                                </div>
                                 <div class="com-search-col-input">
                                     <!-- 自定义组件/函数渲染 -->
                                     <component
@@ -27,15 +30,48 @@
                                     />
 
                                     <!-- 自定义渲染-slot -->
-                                    <slot v-else-if="item.comSearchRender == 'slot'" :name="item.comSearchSlotName"></slot>
+                                    <slot v-else-if="item.comSearchRender == 'slot'"
+                                          :name="item.comSearchSlotName"></slot>
+                                </div>
+                            </div>
+                        </el-col>
+
+                        <!-- 月份范围 -->
+                        <el-col
+                            v-else-if="item.render == 'month' && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')"
+                            :xs="24" :sm="6">
+                            <div class="com-search-col" :class="item.prop">
+                                <div class="com-search-col-label w16" v-if="item.comSearchShowLabel !== false">
+                                    {{ item.label }}
+                                </div>
+                                <div class="com-search-col-input-range w83">
+                                    <el-date-picker
+                                        class="datetime-picker"
+                                        v-model="baTable.comSearch.form[item.prop!]"
+                                        :default-value="
+                                            baTable.comSearch.form[item.prop! + '-default']
+                                                ? baTable.comSearch.form[item.prop! + '-default']
+                                                : [new Date(), new Date()]
+                                        "
+                                        type="monthrange"
+                                        :range-separator="$t('To')"
+                                        start-placeholder="开始月份"
+                                        end-placeholder="结束月份"
+                                        value-format="YYYY-MM-DD"
+                                        :teleported="false"
+                                    />
                                 </div>
                             </div>
                         </el-col>
 
                         <!-- 时间范围 -->
-                        <el-col v-else-if="(item.render == 'datetime' || item.render == 'datetimeAndTotal') && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')" :xs="24" :sm="6">
+                        <el-col
+                            v-else-if="(item.render == 'datetime' || item.render == 'datetimeAndTotal') && (item.operator == 'RANGE' || item.operator == 'NOT RANGE')"
+                            :xs="24" :sm="6">
                             <div class="com-search-col" :class="item.prop">
-                                <div class="com-search-col-label w16" v-if="item.comSearchShowLabel !== false">{{ item.label }}</div>
+                                <div class="com-search-col-label w16" v-if="item.comSearchShowLabel !== false">
+                                    {{ item.label }}
+                                </div>
                                 <div class="com-search-col-input-range w83">
                                     <el-date-picker
                                         class="datetime-picker"
@@ -58,9 +94,13 @@
                         </el-col>
                         <el-col v-else :xs="24" :sm="6">
                             <div class="com-search-col" :class="item.prop">
-                                <div class="com-search-col-label" v-if="item.comSearchShowLabel !== false">{{ item.label }}</div>
+                                <div class="com-search-col-label" v-if="item.comSearchShowLabel !== false">{{
+                                        item.label
+                                    }}
+                                </div>
                                 <!-- 数字范围 -->
-                                <div v-if="item.operator == 'RANGE' || item.operator == 'NOT RANGE'" class="com-search-col-input-range">
+                                <div v-if="item.operator == 'RANGE' || item.operator == 'NOT RANGE'"
+                                     class="com-search-col-input-range">
                                     <el-input
                                         :placeholder="item.operatorPlaceholder"
                                         type="string"
@@ -76,8 +116,10 @@
                                     ></el-input>
                                 </div>
                                 <!-- 是否 [NOT] NULL -->
-                                <div v-else-if="item.operator == 'NULL' || item.operator == 'NOT NULL'" class="com-search-col-input">
-                                    <el-checkbox v-model="baTable.comSearch.form[item.prop!]" :label="item.operator" size="large"></el-checkbox>
+                                <div v-else-if="item.operator == 'NULL' || item.operator == 'NOT NULL'"
+                                     class="com-search-col-input">
+                                    <el-checkbox v-model="baTable.comSearch.form[item.prop!]" :label="item.operator"
+                                                 size="large"></el-checkbox>
                                 </div>
                                 <div v-else-if="item.operator" class="com-search-col-input">
                                     <!-- 时间筛选 -->
@@ -106,7 +148,8 @@
                                         v-model="baTable.comSearch.form[item.prop!]"
                                         :clearable="true"
                                     >
-                                        <el-option v-for="(opt, okey) in item.replaceValue" :key="item.prop! + okey" :label="opt" :value="okey" />
+                                        <el-option v-for="(opt, okey) in item.replaceValue" :key="item.prop! + okey"
+                                                   :label="opt" :value="okey"/>
                                     </el-select>
 
                                     <!-- 远程 select -->
@@ -127,11 +170,12 @@
                                         class="w100"
                                     >
                                         <template v-if="!isEmpty(item.replaceValue)">
-                                            <el-option v-for="(opt, okey) in item.replaceValue" :key="item.prop! + okey" :label="opt" :value="okey" />
+                                            <el-option v-for="(opt, okey) in item.replaceValue" :key="item.prop! + okey"
+                                                       :label="opt" :value="okey"/>
                                         </template>
                                         <template v-else>
-                                            <el-option :label="$t('utils.open')" value="1" />
-                                            <el-option :label="$t('utils.close')" value="0" />
+                                            <el-option :label="$t('utils.open')" value="1"/>
+                                            <el-option :label="$t('utils.close')" value="0"/>
                                         </template>
                                     </el-select>
 
@@ -166,7 +210,7 @@
 <script setup lang="ts">
 import {inject, ref} from 'vue'
 import type baTableClass from '/@/utils/baTable'
-import { isEmpty } from 'lodash-es'
+import {isEmpty} from 'lodash-es'
 import BaInput from '/@/components/baInput/index.vue'
 
 const baTable = inject('baTable') as baTableClass
@@ -210,7 +254,7 @@ const onComSearch = () => {
 
         let val = ''
         let fieldDataTemp = baTable.comSearch.fieldData.get(key)
-        if ((fieldDataTemp.render == 'datetime'|| fieldDataTemp.render == 'datetimeAndTotal') && (fieldDataTemp.operator == 'RANGE' || fieldDataTemp.operator == 'NOT RANGE')) {
+        if ((fieldDataTemp.render == 'datetime' || fieldDataTemp.render == 'datetimeAndTotal' || fieldDataTemp.render == 'month') && (fieldDataTemp.operator == 'RANGE' || fieldDataTemp.operator == 'NOT RANGE')) {
             // 时间范围组件返回的是时间数组
             if (baTable.comSearch.form[key] && baTable.comSearch.form[key].length >= 2) {
                 // 数组转字符串，以实现通过url参数传递预设搜索值
@@ -248,7 +292,7 @@ const onResetForm = () => {
     for (const key in baTable.comSearch.form) {
         baTable.comSearch.form[key] = ''
     }
-    if(baTable.table.filter!.dimensions){
+    if (baTable.table.filter!.dimensions) {
         for (const key in baTable.table.filter!.dimensions) {
             baTable.table.filter!.dimensions[key] = true
         }
@@ -258,8 +302,8 @@ const onResetForm = () => {
 
 // 获取搜索字段数
 const fieldNum = ref(0);
-baTable.table.column.forEach(item=>{
-    if(item.operator != false){
+baTable.table.column.forEach(item => {
+    if (item.operator != false) {
         fieldNum.value++;
     }
 })
@@ -282,10 +326,12 @@ const gapFieldNum = ref(totalNum.value - fieldNum.value - 1);
     padding: 13px 15px;
     font-size: 14px;
     position: relative;
-    .com-search-btn{
-        display: block!important;
-        text-align: right!important;
+
+    .com-search-btn {
+        display: block !important;
+        text-align: right !important;
     }
+
     .com-search-col {
         display: flex;
         align-items: center;
@@ -293,6 +339,7 @@ const gapFieldNum = ref(totalNum.value - fieldNum.value - 1);
         color: var(--el-text-color-regular);
         font-size: 13px;
     }
+
     .com-search-col-label {
         width: 33.33%;
         padding: 0 15px;
@@ -300,29 +347,36 @@ const gapFieldNum = ref(totalNum.value - fieldNum.value - 1);
         overflow: hidden;
         white-space: nowrap;
     }
+
     .com-search-col-input {
         padding: 0 15px;
         width: 66.66%;
     }
+
     .com-search-col-input-range {
         display: flex;
         align-items: center;
         padding: 0 15px;
         width: 66.66%;
+
         .range-separator {
             padding: 0 5px;
         }
     }
 }
+
 :deep(.datetime-picker) {
     width: 100%;
 }
+
 .pl-20 {
     padding-left: 20px;
 }
+
 .w16 {
     width: 16.5% !important;
 }
+
 .w83 {
     width: 83.5% !important;
 }

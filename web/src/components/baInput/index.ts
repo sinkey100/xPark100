@@ -16,6 +16,7 @@ export const inputTypes = [
     'datetime',
     'year',
     'date',
+    'month',
     'time',
     'select',
     'selects',
