@@ -109,7 +109,7 @@ class Analysis extends Backend
     public function index(): void
     {
         // 筛选月份
-        $filter_months = array_map(fn($i) => date("Y-m", strtotime("-$i months")), range(0, 2));
+        $filter_months = array_map(fn($i) => date("Y-m", strtotime("-$i months")), range(0, 1));
         // 过滤应用
         $map = [];
         if ($this->auth->id > 1) $map[] = ['admin_id', '=', $this->auth->id];
@@ -285,9 +285,9 @@ class Analysis extends Backend
             }
         }
 
-        if(count($tidy_list) == 0) unset($this->columns[6]);
-        if(count($hold_list) == 0) unset($this->columns[5]);
-        if(count($clear_list) == 0) unset($this->columns[4]);
+        if (count($tidy_list) == 0) unset($this->columns[6]);
+        if (count($hold_list) == 0) unset($this->columns[5]);
+        if (count($clear_list) == 0) unset($this->columns[4]);
 
 
         $this->success('', [
