@@ -47,7 +47,6 @@ class Analysis extends Backend
                 "align"  => "center",
                 "width"  => 180,
                 "fixed"  => "left"
-
             ], [
                 "colKey" => "settle",
                 "title"  => "结算金额",
@@ -70,7 +69,7 @@ class Analysis extends Backend
                 "colKey" => "hold",
                 "title"  => "PaymentHold",
                 "align"  => "center",
-                "width"  => 120,
+                "width"  => 130,
                 "fixed"  => "left"
             ], [
                 "colKey" => "tidy",

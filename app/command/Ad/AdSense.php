@@ -122,6 +122,32 @@ class AdSense extends Base
 
                 $channel_full = 'AdSense-' . $account->flag;
 
+                if ($app_id == 23 && time() > 1733932800) {
+                    [$domain_id_5b, $app_id_5b] = $this->getDomainRow('5b-' . $insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+                    $data[] = [
+                        'channel'         => 'AdSense',
+                        'channel_full'    => $channel_full,
+                        'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                        'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
+                        'sub_channel'     => '5b-' . $insert['DOMAIN_NAME'],
+                        'domain_id'       => $domain_id_5b,
+                        'app_id'          => $app_id_5b,
+                        'a_date'          => $insert['DATE'],
+                        'country_code'    => $insert['COUNTRY_CODE'],
+                        'ad_placement_id' => $insert['AD_UNIT_NAME'],
+                        'requests'        => $insert['AD_REQUESTS'],
+                        'fills'           => $insert['FILLS'],
+                        'impressions'     => $insert['IMPRESSIONS'],
+                        'clicks'          => $insert['CLICKS'],
+                        'ad_revenue'      => $insert['ESTIMATED_EARNINGS'],
+                        'gross_revenue'   => $insert['ESTIMATED_EARNINGS'],
+                        'net_revenue'     => $insert['ESTIMATED_EARNINGS'],
+                        'raw_cpc'         => $insert['COST_PER_CLICK'],
+                        'raw_ctr'         => $insert['IMPRESSIONS_CTR'],
+                        'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
+                    ];
+                }
+
                 $data[] = [
                     'channel'         => 'AdSense',
                     'channel_full'    => $channel_full,
@@ -168,6 +194,31 @@ class AdSense extends Base
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+
+                if ($app_id == 23 && time() > 1733932800) {
+                    [$domain_id_5b, $app_id_5b] = $this->getDomainRow('5b-' . $insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+                    $data[] = [
+                        'channel'         => 'AdSense',
+                        'channel_full'    => 'AdSense-' . $account->flag,
+                        'sub_channel'     => '5b-' . $insert['DOMAIN_NAME'],
+                        'domain_id'       => $domain_id_5b,
+                        'app_id'          => $app_id_5b,
+                        'a_date'          => $insert['DATE'],
+                        'country_code'    => $insert['COUNTRY_CODE'],
+                        'ad_placement_id' => strtolower('ADS_' . $insert['AD_FORMAT_CODE']),
+                        'requests'        => $insert['AD_REQUESTS'],
+                        'fills'           => $insert['FILLS'],
+                        'impressions'     => $insert['IMPRESSIONS'],
+                        'clicks'          => $insert['CLICKS'],
+                        'ad_revenue'      => $insert['ESTIMATED_EARNINGS'],
+                        'gross_revenue'   => $insert['ESTIMATED_EARNINGS'],
+                        'net_revenue'     => $insert['ESTIMATED_EARNINGS'],
+                        'raw_cpc'         => $insert['COST_PER_CLICK'],
+                        'raw_ctr'         => $insert['IMPRESSIONS_CTR'],
+                        'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
+                    ];
+                }
+
                 $data[] = [
                     'channel'         => 'AdSense',
                     'channel_full'    => 'AdSense-' . $account->flag,

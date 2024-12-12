@@ -23,7 +23,7 @@ class Hour extends Base
 
     protected array $domains;
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('DataHour');
     }
