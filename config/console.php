@@ -18,6 +18,7 @@ return [
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
         'Hour'       => \app\command\User\Hour::class,
+        'Bot'        => \app\command\Bot::class,
 
         // 小米工具
         'MiTools'    => \app\command\MiTools::class,
