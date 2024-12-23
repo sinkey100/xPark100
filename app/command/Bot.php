@@ -116,14 +116,14 @@ class Bot extends Base
 
         $rows = Data::alias('data')
             ->field([
-                'data.domain_id', 'data.sub_channel', 'data.app_id', 'apps.app_name',
+                'data.domain_id', 'data.sub_channel', 'data.app_id', 'apps.app_name', 'data.channel_type',
                 'SUM(clicks) AS total_clicks',
                 'SUM(ad_revenue) AS total_ad_revenue',
                 'SUM(impressions) AS total_impressions',
                 '(SUM(clicks) / SUM(impressions)) AS ctr'
             ])
             ->join('xpark_apps apps', 'apps.id = data.app_id', 'left')
-            ->whereDay('data.a_date', '2024-11-20')
+            ->whereDay('data.a_date', date("Y-m-d"))
             ->group('data.domain_id')
             ->having('ctr > 0.1')
             ->order('data.app_id desc')
@@ -133,6 +133,8 @@ class Bot extends Base
 
         foreach ($rows as $row) {
             $app_name = empty($row->app_name) ? '[未分配]' : $row->app_name;
+            if (in_array($app_name, ['th5apk', 'th5apk5b'])) continue;
+            if ($row->channel_type == 1) continue;
             if (!isset($arr[$app_name])) $arr[$app_name] = [];
             $arr[$app_name][] = $row;
         }
@@ -205,14 +207,14 @@ class Bot extends Base
 
         $rows = Data::alias('data')
             ->field([
-                'data.domain_id', 'data.sub_channel', 'data.app_id', 'apps.app_name',
+                'data.domain_id', 'data.sub_channel', 'data.app_id', 'apps.app_name', 'data.channel_type',
                 'SUM(requests) AS total_requests',
                 'SUM(ad_revenue) AS total_ad_revenue',
                 'SUM(fills) AS total_fills',
                 '(SUM(fills) / SUM(requests)) AS rate'
             ])
             ->join('xpark_apps apps', 'apps.id = data.app_id', 'left')
-            ->whereDay('data.a_date', '2024-11-20')
+            ->whereDay('data.a_date', date("Y-m-d"))
             ->group('data.domain_id')
             ->having('rate < 0.8')
             ->order('data.app_id desc')
@@ -223,6 +225,8 @@ class Bot extends Base
 
         foreach ($rows as $row) {
             $app_name = empty($row->app_name) ? '[未分配]' : $row->app_name;
+            if (in_array($app_name, ['th5apk', 'th5apk5b'])) continue;
+            if ($row->channel_type == 1) continue;
             if (!isset($arr[$app_name])) $arr[$app_name] = [];
             $arr[$app_name][] = $row;
         }

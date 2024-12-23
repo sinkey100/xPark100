@@ -8,6 +8,7 @@ use app\admin\model\xpark\ActivityHour;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\DataHour;
 use app\admin\model\xpark\Domain;
+use app\admin\model\xpark\Utc;
 use app\command\Base;
 use Google\Service\Analytics;
 use Google\Service\GoogleAnalyticsAdmin;
@@ -17,6 +18,7 @@ use think\console\Output;
 use Exception;
 use Google\Service\AnalyticsData;
 use Google\Service\AnalyticsData\RunReportRequest;
+use think\facade\Db;
 
 class Hour extends Base
 {
@@ -30,11 +32,17 @@ class Hour extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        $this->days    = 3;
+        $this->days    = date("H") == 0 ? 3 : 1;
+//        $this->days    = 5;
         $this->domains = Domain::where('ga', '<>', '')->select()->toArray();
+
+        Db::execute('truncate table ba_xpark_activity_hour;');
+        DataHour::where('status', 1)->delete();
+        Utc::where('status', 1)->delete();
 
         $this->pull();
         $this->calc();
+        $this->push();
 
     }
 
@@ -42,6 +50,7 @@ class Hour extends Base
     {
         $this->log("\n\n======== GA 开始拉取数据 ========", false);
         $this->log("任务开始，拉取 {$this->days} 天");
+
 
         $ga_account_ids = [
             ['google_account_id' => 4, 'ga_account_id' => 315444308],
@@ -110,17 +119,11 @@ class Hour extends Base
                         'time_utc_8' => $time_utc_8,
                         'time_utc_0' => $time_utc_0,
                         'page_views' => $row['metricValues'][0]['value'],
-                        'status'     => 1
+                        'status'     => 0
                     ];
                     ActivityHour::create($insert);
                 }
             }
-        }
-
-        // 清除数据
-        for ($i = 0; $i < $this->days; $i++) {
-            ActivityHour::where('status', 0)->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))->delete();
-            ActivityHour::where('status', 1)->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
         }
 
         $this->log('历史数据已删除');
@@ -131,9 +134,7 @@ class Hour extends Base
     protected function calc(): void
     {
         foreach ($this->domains as $domain) {
-            // if ($domain['id'] != 38) continue;
             for ($i = $this->days; $i >= 0; $i--) {
-                // if(date("Y-m-d", strtotime("-$i days")) != '2024-11-19') continue;
 
                 // 获取当前域名一天的流量分配
                 $hour_detail = ActivityHour::where('domain_id', $domain['id'])
@@ -161,10 +162,12 @@ class Hour extends Base
                 $money = 0;
 
 
+
                 // 均分出每小时的数据
                 foreach ($daily_revenue as $daily) {
                     $insertData = [];
                     foreach ($hour_detail as $hour) {
+
                         // 比例
                         $rate  = $hour['rate'];
                         $money = $money + $daily['ad_revenue'] * $rate;
@@ -173,6 +176,7 @@ class Hour extends Base
                             'app_id'          => $daily['app_id'],
                             'domain_id'       => $daily['domain_id'],
                             'channel'         => $daily['channel'],
+                            'channel_id'      => $daily['channel_id'],
                             'channel_full'    => $daily['channel_full'],
                             'country_level'   => $daily['country_level'],
                             'country_code'    => $daily->getData('country_code'),
@@ -198,10 +202,39 @@ class Hour extends Base
         // 清除数据
         for ($i = 0; $i < $this->days; $i++) {
             DataHour::where('status', 0)->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))->delete();
-            DataHour::where('status', 1)->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
         }
+        DataHour::where('status', 1)->update(['status' => 0]);
 
         $this->log('历史数据已删除');
+
+    }
+
+    protected function push(): void
+    {
+        for ($i = $this->days; $i >= 0; $i--) {
+
+            $list = DataHour::whereDay('time_utc_0', date("Y-m-d", strtotime("-$i days")))
+                ->field([
+                    "DATE(time_utc_0) AS a_date",
+                    "app_id", "domain_id", "country_code", "ad_placement_id",
+                    "channel", "channel_id", "channel_full", "country_level", "country_name",
+                    "sub_channel", "channel_type",
+                    "SUM(requests) AS requests",
+                    "SUM(fills) AS fills",
+                    "SUM(impressions) AS impressions",
+                    "SUM(clicks) AS clicks",
+                    "SUM(ad_revenue) AS ad_revenue",
+                    "SUM(gross_revenue) AS gross_revenue",
+                    "1 AS status"
+                ])
+                ->group("a_date, domain_id, country_code, ad_placement_id")
+                ->select()->toArray();
+
+            Utc::insertAll($list);
+            Utc::where('status', 0)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Utc::where('status', 1)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
+            unset($list);
+        }
 
     }
 

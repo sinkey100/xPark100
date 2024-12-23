@@ -11,4 +11,6 @@ export default {
     [adminBaseRoutePath + '/user/rule']: ['./backend/${lang}/auth/rule.ts'],
     [adminBaseRoutePath + '/user/scoreLog']: ['./backend/${lang}/user/moneyLog.ts'],
     [adminBaseRoutePath + '/crud/crud']: ['./backend/${lang}/crud/log.ts', './backend/${lang}/crud/state.ts'],
+    [adminBaseRoutePath + '/xpark/utc']: ['./backend/${lang}/xpark/data.ts'],
+
 }
