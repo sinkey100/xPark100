@@ -49,14 +49,14 @@ const baTable = new baTableClass(
             { label: t('xpark.clear.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
             { label: t('xpark.clear.month'), prop: 'month', align: 'center', render: 'month', operator: false, sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd' },
             { label: t('xpark.clear.channel__channel_alias'), prop: 'channel.channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), render: 'tags', operator: 'LIKE' },
-            { label: t('xpark.clear.money'), prop: 'money', align: 'center', operator: 'RANGE', sortable: false },
+            { label: t('xpark.clear.rate'), prop: 'rate', align: 'center', operator: 'RANGE', sortable: false },
             { label: t('xpark.clear.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
     },
     {
-        defaultItems: { month: null, money: 0 },
+        defaultItems: { month: null, rate: 0 },
     }
 )
 

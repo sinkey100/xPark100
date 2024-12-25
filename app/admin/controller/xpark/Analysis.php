@@ -141,9 +141,6 @@ class Analysis extends Backend
             ->where('clear.month', 'between', $month_range)
             ->select()->toArray();
         foreach ($clear_list as &$item) {
-            // 查询核减通道在当月的收入
-            $item['ad_revenue'] = DataModel::where('channel_id', $item['channel_id'])
-                ->whereMonth('a_date', date("Y-m", strtotime($item['month'])))->sum('ad_revenue');
             // 插入表格列
             $this->columns[8]['children'][] = [
                 "colKey"   => "c_{$item['channel_id']}",
@@ -228,7 +225,7 @@ class Analysis extends Backend
                 $rows = array_column($rows, null, 'id');
                 foreach ($filter_channel as $channel) {
                     $channel_id            = $channel['id'];
-                    $sum                   = $rows[$channel['id']]['ad_revenue'] ?? 0;
+                    $sum                   = round($rows[$channel['id']]['ad_revenue'] ?? 0, 2);
                     $item["r_$channel_id"] = $sum;
                     $item['revenue']       += $sum;
                     $item['settle']        += $sum;
@@ -239,7 +236,7 @@ class Analysis extends Backend
                             $clear['channel_id'] == $channel['id']
                             && $clear['month'] == $month . '-01'
                         ) {
-                            $clear_money           = round($sum / $clear['ad_revenue'] * $clear['money'], 2);
+                            $clear_money           = round($sum * $clear['rate'], 2);
                             $item["c_$channel_id"] = $clear_money;
                             $item['clear']         += $clear_money;
                             $item['settle']        -= $clear_money;
