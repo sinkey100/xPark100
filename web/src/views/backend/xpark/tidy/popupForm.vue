@@ -32,7 +32,7 @@
                 >
                     <FormItem :label="t('xpark.tidy.month')" type="month" v-model="baTable.form.items!.month" prop="month" :placeholder="t('Please select field', { field: t('xpark.tidy.month') })" />
                     <FormItem :label="t('xpark.tidy.channel_id')" type="remoteSelect" v-model="baTable.form.items!.channel_id" prop="channel_id" :input-attr="{ pk: 'ba_xpark_channel.id', field: 'channel_alias', remoteUrl: '/admin/xpark.Channel/index' }" :placeholder="t('Please select field', { field: t('xpark.tidy.channel_id') })" />
-                    <FormItem :label="t('xpark.tidy.money')" type="number" prop="money" :input-attr="{ step: 1 }" v-model.number="baTable.form.items!.money" :placeholder="t('Please input field', { field: t('xpark.tidy.money') })" />
+                    <FormItem :label="t('xpark.tidy.money')" type="string" prop="money"  v-model="baTable.form.items!.money" :placeholder="t('Please input field', { field: t('xpark.tidy.money') })" />
                     <FormItem :label="t('xpark.tidy.exclude_id')" type="remoteSelects" v-model="baTable.form.items!.exclude_id" prop="exclude_id" :input-attr="{ pk: 'ba_xpark_apps.id', field: 'app_name', remoteUrl: '/admin/xpark.Apps/index' }" :placeholder="t('Please select field', { field: t('xpark.tidy.exclude_id') })" />
                     <FormItem :label="t('xpark.tidy.remark')" type="string" v-model="baTable.form.items!.remark" prop="remark" :placeholder="t('Please input field', { field: t('xpark.tidy.remark') })" />
                 </el-form>

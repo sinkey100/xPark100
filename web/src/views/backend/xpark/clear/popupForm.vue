@@ -32,7 +32,7 @@
                 >
                     <FormItem :label="t('xpark.clear.month')" type="month" v-model="baTable.form.items!.month" prop="month" :placeholder="t('Please select field', { field: t('xpark.clear.month') })" />
                     <FormItem :label="t('xpark.clear.channel_id')" type="remoteSelect" v-model="baTable.form.items!.channel_id" prop="channel_id" :input-attr="{ pk: 'ba_xpark_channel.id', field: 'channel_alias', remoteUrl: '/admin/xpark.Channel/index' }" :placeholder="t('Please select field', { field: t('xpark.clear.channel_id') })" />
-                    <FormItem :label="t('xpark.clear.rate')" type="number" prop="rate" :input-attr="{ step: 1 }" v-model.number="baTable.form.items!.rate" :placeholder="t('Please input field', { field: t('xpark.clear.rate') })" />
+                    <FormItem :label="t('xpark.clear.rate')" type="string" prop="rate"  v-model="baTable.form.items!.rate" :placeholder="t('Please input field', { field: t('xpark.clear.rate') })" />
                     <FormItem :label="t('xpark.clear.remark')" type="textarea" v-model="baTable.form.items!.remark" prop="remark" :input-attr="{ rows: 3 }" @keyup.enter.stop="" @keyup.ctrl.enter="baTable.onSubmit(formRef)" :placeholder="t('Please input field', { field: t('xpark.clear.remark') })" />
                 </el-form>
             </div>

@@ -2,28 +2,23 @@
 
 namespace app\command\User;
 
-
-use app\admin\model\google\Account;
-use app\admin\model\xpark\ActivityHour;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\DataHour;
+use app\admin\model\sls\Hour as SLSHour;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Utc;
 use app\command\Base;
-use Google\Service\Analytics;
-use Google\Service\GoogleAnalyticsAdmin;
-use sdk\Google as GoogleSDK;
+use sdk\SLS;
 use think\console\Input;
 use think\console\Output;
-use Exception;
-use Google\Service\AnalyticsData;
-use Google\Service\AnalyticsData\RunReportRequest;
 use think\facade\Db;
 
 class Hour extends Base
 {
 
     protected array $domains;
+    protected SLS   $sls;
+    protected int   $start_time;
 
     protected function configure(): void
     {
@@ -32,112 +27,87 @@ class Hour extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        $this->days    = date("H") == 0 ? 3 : 1;
-//        $this->days    = 5;
-        $this->domains = Domain::where('ga', '<>', '')->select()->toArray();
+        ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
+        $this->sls = new SLS();
 
-        Db::execute('truncate table ba_xpark_activity_hour;');
+        $this->days       = 2;
+        $this->start_time = strtotime(date('Y-m-d 00:00:00', strtotime("-1 day")));
+
         DataHour::where('status', 1)->delete();
+        SLSHour::where('status', 1)->delete();
         Utc::where('status', 1)->delete();
 
         $this->pull();
         $this->calc();
         $this->push();
-
     }
 
     protected function pull(): void
     {
-        $this->log("\n\n======== GA 开始拉取数据 ========", false);
-        $this->log("任务开始，拉取 {$this->days} 天");
+        $this->log("\n\n======== SLS 开始拉取数据 ========", false);
 
+        // 查找所有SLS域名
+        $sls_domains = Db::connect('chuanyou')->table('i_site_website')->alias('website')
+            ->field(['website.*', 'domain.domain as domain_name'])
+            ->join('i_build_domain domain', 'website.domain_id = domain.id')
+            ->where('website.sls_switch', 1)
+            ->select()
+            ->toArray();
+        $sls_domains = array_column($sls_domains, 'domain_name');
+        foreach ($sls_domains as $sls_domain) {
+            $domain_info = Domain::where('domain', $sls_domain)->find();
+            if (!$domain_info) continue;
+            $this->domains[] = $domain_info;
+        }
 
-        $ga_account_ids = [
-            ['google_account_id' => 4, 'ga_account_id' => 315444308],
-            ['google_account_id' => 8, 'ga_account_id' => 322638147],
-            ['google_account_id' => 8, 'ga_account_id' => 336921805],
-        ];
+        foreach ($this->domains as $domain) {
 
-        $this->log('开始拉取 GA 数据');
+            $sls_sql = <<<EOT
+SELECT 
+    "attribute.country_id",
+    date_format(from_unixtime(__time__), '%Y-%m-%d %H:00:00') AS hour,
+    count(*) as total
+FROM log 
+WHERE 
+    "attribute.t" = 'pv' and
+    "attribute.page.host" = '{$domain->domain}' 
+GROUP BY "attribute.country_id", 
+    hour
+EOT;
 
-        foreach ($ga_account_ids as $ga_account_info) {
-            // 初始化
-            $account = Account::where('id', $ga_account_info['google_account_id'])->find();
-            if (!$account) throw new Exception('Google 账号标记不存在');
-            $client = (new GoogleSDK())->init($account);
-            $client->setAccessToken($account->auth);
-            $analytics      = new AnalyticsData($client);
-            $analyticsAdmin = new GoogleAnalyticsAdmin($client);
+            $result = $this->sls->getLogsWithPowerSql($this->start_time, time(), $sls_sql);
 
-            // 查询衡量ID和数字ID对应表
-            $pageToken       = null;
-            $properties_list = [];
-            do {
-                $response = $analyticsAdmin->properties->listProperties([
-                    'pageSize'  => 50,
-                    'filter'    => 'parent:accounts/' . $ga_account_info['ga_account_id'],
-                    'pageToken' => $pageToken
-                ]);
-                foreach ($response->getProperties() as $property) {
-                    $properties_list[$property['displayName']] = $property['name'];
-                }
-                $pageToken = $response->getNextPageToken();
-            } while ($pageToken);
+            foreach ($result as $row) {
+                $item       = $row->getContents();
+                $time_utc_0 = convert_to_utc($item['hour']);
 
-            // GA账户列表
-            $days = $this->days - 1;
-            foreach ($this->domains as $domain) {
-                if (!isset($properties_list[$domain['domain']])) continue;
-                $response = $analytics->properties->runReport($properties_list[$domain['domain']], new RunReportRequest([
-                    'dimensions' => [
-                        ['name' => 'date'],
-                        ['name' => 'hour'],
-                    ],
-                    'metrics'    => [
-                        ['name' => 'screenPageViews'],
-                    ],
-                    'dateRanges' => [
-                        [
-                            'startDate' => date("Y-m-d", strtotime("-{$days} days")),
-                            'endDate'   => date("Y-m-d")
-                        ],
-                    ]
-                ]));
-
-                $this->output->writeln($domain['domain']);
-
-                foreach ($response['rows'] as $row) {
-                    $date       = date("Y-m-d", strtotime($row['dimensionValues'][0]['value']));
-                    $hour       = $row['dimensionValues'][1]['value'];
-                    $time_utc_8 = "$date $hour:00:00";
-                    $time_utc_0 = convert_to_utc($time_utc_8);
-
-                    $insert = [
-                        'app_id'     => $domain['app_id'],
-                        'domain_id'  => $domain['id'],
-                        'g_id'       => $domain['ga'],
-                        'time_utc_8' => $time_utc_8,
-                        'time_utc_0' => $time_utc_0,
-                        'page_views' => $row['metricValues'][0]['value'],
-                        'status'     => 0
-                    ];
-                    ActivityHour::create($insert);
-                }
+                $insert = [
+                    'app_id'       => $domain['app_id'],
+                    'domain_id'    => $domain['id'],
+                    'domain_name'  => $domain['domain'],
+                    'time_utc_8'   => $item['hour'],
+                    'time_utc_0'   => $time_utc_0,
+                    'country_code' => $item['attribute.country_id'],
+                    'page_views'   => $item['total'],
+                    'status'       => 1
+                ];
+                SLSHour::create($insert);
             }
         }
 
-        $this->log('历史数据已删除');
-
-        $this->log('======== GA 拉取数据完成 ========', false);
+        SLSHour::where('status', 0)->whereTime('time_utc_8', '>=', date("Y-m-d", $this->start_time))->delete();
+        SLSHour::where('status', 1)->update(['status' => 0]);
     }
+
 
     protected function calc(): void
     {
+
         foreach ($this->domains as $domain) {
-            for ($i = $this->days; $i >= 0; $i--) {
+            for ($i = $this->days - 1; $i >= 0; $i--) {
 
                 // 获取当前域名一天的流量分配
-                $hour_detail = ActivityHour::where('domain_id', $domain['id'])
+                $hour_detail = SLSHour::where('domain_id', $domain['id'])
                     ->where('status', 0)
                     ->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))
                     ->order('time_utc_8', 'asc')
@@ -160,8 +130,6 @@ class Hour extends Base
                     ->select();
                 if (count($daily_revenue) == 0) continue;
                 $money = 0;
-
-
 
                 // 均分出每小时的数据
                 foreach ($daily_revenue as $daily) {
@@ -200,9 +168,7 @@ class Hour extends Base
             }
         }
         // 清除数据
-        for ($i = 0; $i < $this->days; $i++) {
-            DataHour::where('status', 0)->whereDay('time_utc_8', date("Y-m-d", strtotime("-$i days")))->delete();
-        }
+        DataHour::where('status', 0)->whereTime('time_utc_8', '>=', date("Y-m-d", $this->start_time))->delete();
         DataHour::where('status', 1)->update(['status' => 0]);
 
         $this->log('历史数据已删除');
@@ -211,8 +177,7 @@ class Hour extends Base
 
     protected function push(): void
     {
-        for ($i = $this->days; $i >= 0; $i--) {
-
+        for ($i = $this->days - 1; $i >= 0; $i--) {
             $list = DataHour::whereDay('time_utc_0', date("Y-m-d", strtotime("-$i days")))
                 ->field([
                     "DATE(time_utc_0) AS a_date",
