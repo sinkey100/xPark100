@@ -5,6 +5,7 @@ namespace app\admin\controller\xpark;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
+use app\admin\model\sls\Hour as SLSHour;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Apps;
@@ -28,8 +29,9 @@ class Utc extends Backend
 
     protected string|array $quickSearchField = ['id'];
 
-    protected array $domains = [];
-    protected array $apps    = [];
+    protected array $domains          = [];
+    protected array $apps             = [];
+    protected array $active_dimension = [];
 
     public function initialize(): void
     {
@@ -54,13 +56,17 @@ class Utc extends Backend
             $this->select();
         }
 
-        $dimensions         = $this->request->get('dimensions/a', []);
-        $dimension          = [];
+        $dimensions = $this->request->get('dimensions/a', []);
+        $dimension  = [];
 
         foreach ($dimensions as $k => $v) {
             if ($k && $v == 'true') {
                 $dimension[] = 'utc.' . $k;
             }
+            if (in_array($k, ['a_date', 'domain_id', 'app_id', 'country_code']) && $v == 'true') {
+                $this->active_dimension[] = $k;
+            }
+
         }
 
 
@@ -71,11 +77,10 @@ class Utc extends Backend
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
-
         foreach ($where as $k => $v) {
             if ($v[0] == 'utc.admin') {
-                $app_filter       = Apps::field(['id'])->where('admin_id', $v[2])->select();
-                $app_filter       = array_column($app_filter->toArray(), 'id');
+                $app_filter = Apps::field(['id'])->where('admin_id', $v[2])->select();
+                $app_filter = array_column($app_filter->toArray(), 'id');
                 unset($where[$k]);
             }
         }
@@ -93,8 +98,6 @@ class Utc extends Backend
             'SUM(utc.ad_revenue) AS ad_revenue',
             'SUM(utc.gross_revenue) AS gross_revenue'
         ]);
-
-
 
 
         $res = $this->model->field($field)
@@ -126,14 +129,14 @@ class Utc extends Backend
         $res->visible(['domain' => ['domain']]);
 
         $total = [
-            'id'                    => 10000,
-            'ad_revenue'            => 0,
-            'gross_revenue'         => 0,
-            'requests'              => 0,
-            'fills'                 => 0,
-            'impressions'           => 0,
-            'clicks'                => 0,
-            'a_date'                => '',
+            'id'            => 10000,
+            'ad_revenue'    => 0,
+            'gross_revenue' => 0,
+            'requests'      => 0,
+            'fills'         => 0,
+            'impressions'   => 0,
+            'clicks'        => 0,
+            'a_date'        => '',
         ];
         foreach ($res->items() as $v) {
             $total['ad_revenue']    += $v['ad_revenue'];
@@ -186,7 +189,6 @@ class Utc extends Backend
             $field = $field[count($field) - 1];
             if (!in_array($v, $dimension)) unset($cell[$field]);
         }
-
 
 
         $i = 0;
@@ -253,10 +255,35 @@ class Utc extends Backend
 
             $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
 
-//            // 计算活跃数据
-//            if (in_array('ad_placement_id', $dimension)) {
-//                array_splice($dimension, array_search('ad_placement_id', $dimension), 1);
-//            }
+            // 计算活跃数据
+            if (
+                !in_array('utc.ad_placement_id', $dimension)
+                && in_array('utc.a_date', $dimension)
+                && in_array('utc.domain_id', $dimension)
+                && $v['id'] != 10000
+            ) {
+                // 新增、活跃、PV
+                $active = SLSHour::field([
+                    'sum(new_users) as new_users',
+                    'sum(active_users) as active_users',
+                    'sum(page_views) as page_views',
+                    'sum(total_time) as total_time',
+                ])->whereDay('time_utc_0', date("Y-m-d", strtotime($v['a_date'])));
+                if (in_array('domain_id', $this->active_dimension)) $active = $active->where('domain_id', $v['domain_id']);
+                if (in_array('country_code', $this->active_dimension)) $active = $active->where('country_code', $v->getData('country_code'));
+                $active = $active->find();
+                if ($active) {
+                    $v['activity_new_users']    = $active->new_users;
+                    $v['activity_active_users'] = $active->active_users;
+                    $v['activity_page_views'] = $active->page_views;
+                    $v['total_time'] = format_milliseconds((int)$active->total_time);
+                }
+//                // PV
+//                $pv = SLSHour::where('status', 0)->whereDay('time_utc_0', date("Y-m-d", strtotime($v['a_date'])));
+//                if (in_array('domain_id', $this->active_dimension)) $pv = $pv->where('domain_id', $v['domain_id']);
+//                if (in_array('country_code', $this->active_dimension)) $pv = $pv->where('country_code', $v->getData('country_code'));
+//                $v['activity_page_views'] = $pv->sum('page_views');
+            }
 
 
             if ($this->auth->id != 1) {

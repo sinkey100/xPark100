@@ -749,9 +749,43 @@ if (!function_exists('country_id2code')) {
 }
 
 if (!function_exists('percent2decimal')) {
-    function percent2decimal(string $percent) :float
+    function percent2decimal(string $percent): float
     {
         $percent = str_replace('%', '', $percent);
         return floatval($percent) / 100;
     }
+}
+
+if (!function_exists('format_milliseconds')) {
+    function format_milliseconds(int $milliseconds): string
+    {
+        if (empty($milliseconds)) return '-';
+
+        $seconds = intval($milliseconds / 1000);
+        $minutes = intval($seconds / 60);
+        $hours   = intval($minutes / 60);
+        $days    = intval($hours / 24);
+
+        $seconds %= 60;
+        $minutes %= 60;
+        $hours   %= 24;
+
+        $result = [];
+
+        if ($days > 0) {
+            $result[] = $days . '天';
+            $result[] = $hours . '小时';
+        } elseif ($hours > 0) {
+            $result[] = $hours . '小时';
+            $result[] = $minutes . '分钟';
+        } elseif ($minutes > 0) {
+            $result[] = $minutes . '分钟';
+            $result[] = $seconds . '秒';
+        } else {
+            $result[] = $seconds . '秒';
+        }
+
+        return implode(' ', array_slice($result, 0, 2));
+    }
+
 }

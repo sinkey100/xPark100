@@ -27,6 +27,7 @@ export default {
     activity_page_views: 'PV',
     activity_new_users: '新增',
     activity_active_users: '活跃',
+    total_time: '时长',
     activity_per_display: '人均展示',
 
     'quick Search Fields': 'id',

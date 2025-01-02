@@ -171,6 +171,38 @@ const baTable = new baTableClass(
                 operator: false,
             },
             {
+                label: t('xpark.data.activity_page_views'),
+                prop: 'activity_page_views',
+                align: 'center',
+                operator: false,
+                minWidth: 70,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_new_users'),
+                prop: 'activity_new_users',
+                align: 'center',
+                operator: false,
+                minWidth: 70,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.activity_active_users'),
+                prop: 'activity_active_users',
+                align: 'center',
+                operator: false,
+                minWidth: 70,
+                sortable: false,
+            },
+            {
+                label: t('xpark.data.total_time'),
+                prop: 'total_time',
+                align: 'center',
+                operator: false,
+                minWidth: 120,
+                sortable: false,
+            },
+            {
                 label: t('xpark.data.country_code'),
                 prop: 'country_code',
                 align: 'center',
@@ -349,6 +381,15 @@ const baTable = new baTableClass(
                 // 管理员显示 original
                 if (rawField.includes(item.prop)) {
                     item.show = adminInfo.id == 1 && original.value;
+                    return;
+                }
+                // 广告单元维度不显示活跃数据
+                if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'total_time', 'activity_per_display', 'rpm', 'raw_rpm'].includes(item.prop)) {
+                    if (baTable.table.filter?.search?.some(item => item.field === 'channel_full' || item.field === 'ad_placement_id')) {
+                        item.show = false;
+                        return;
+                    }
+                    item.show = baTable.table.filter!.dimensions['ad_placement_id'] == false && baTable.table.filter!.dimensions['domain_id'] == true;
                     return;
                 }
                 // 管理员显示广告通道
