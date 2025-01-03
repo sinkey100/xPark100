@@ -195,11 +195,19 @@ const baTable = new baTableClass(
                 sortable: false,
             },
             {
+                label: t('xpark.data.activity_per_display'),
+                prop: 'activity_per_display',
+                align: 'center',
+                operator: false,
+                minWidth: 70,
+                sortable: false,
+            },
+            {
                 label: t('xpark.data.total_time'),
                 prop: 'total_time',
                 align: 'center',
                 operator: false,
-                minWidth: 120,
+                minWidth: 90,
                 sortable: false,
             },
             {
@@ -384,7 +392,7 @@ const baTable = new baTableClass(
                     return;
                 }
                 // 广告单元维度不显示活跃数据
-                if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'total_time', 'activity_per_display', 'rpm', 'raw_rpm'].includes(item.prop)) {
+                if (['activity_page_views', 'activity_new_users', 'activity_active_users', 'total_time', 'activity_per_display', 'activity_per_display', 'rpm', 'raw_rpm'].includes(item.prop)) {
                     if (baTable.table.filter?.search?.some(item => item.field === 'channel_full' || item.field === 'ad_placement_id')) {
                         item.show = false;
                         return;

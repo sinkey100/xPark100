@@ -133,6 +133,7 @@ class Utc extends Backend
             'ad_revenue'    => 0,
             'gross_revenue' => 0,
             'requests'      => 0,
+            'activity_per_display'      => 0,
             'fills'         => 0,
             'impressions'   => 0,
             'clicks'        => 0,
@@ -242,8 +243,6 @@ class Utc extends Backend
             $v['impressions_rate'] = $v['impressions'] / (!empty($v['fills']) ? $v['fills'] : 1);
             $v['impressions_rate'] = number_format($v['impressions_rate'] * 100, 2) . '%';
 
-            // 人均展示：展示次数/UV
-
 
             // ECPM = 收入/网页展示次数×1000
             $v['ecpm']        = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
@@ -283,6 +282,11 @@ class Utc extends Backend
 //                if (in_array('domain_id', $this->active_dimension)) $pv = $pv->where('domain_id', $v['domain_id']);
 //                if (in_array('country_code', $this->active_dimension)) $pv = $pv->where('country_code', $v->getData('country_code'));
 //                $v['activity_page_views'] = $pv->sum('page_views');
+
+                // 人均展示：展示次数/UV
+                $v['activity_per_display'] = empty($v['activity_active_users'])
+                    ? ''
+                    : round($v['impressions'] / $v['activity_active_users'], 2);
             }
 
 

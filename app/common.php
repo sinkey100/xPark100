@@ -777,15 +777,15 @@ if (!function_exists('format_milliseconds')) {
             $result[] = $hours . '小时';
         } elseif ($hours > 0) {
             $result[] = $hours . '小时';
-            $result[] = $minutes . '分钟';
+            $result[] = $minutes . '分';
         } elseif ($minutes > 0) {
-            $result[] = $minutes . '分钟';
+            $result[] = $minutes . '分';
             $result[] = $seconds . '秒';
         } else {
             $result[] = $seconds . '秒';
         }
 
-        return implode(' ', array_slice($result, 0, 2));
+        return implode('', array_slice($result, 0, 2));
     }
 
 }
