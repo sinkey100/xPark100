@@ -185,12 +185,19 @@ class Utc extends Backend
             'ecpm'            => 'eCPM',
         ];
 
-        foreach (['utc.a_date', 'utc.domain_id', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
+        foreach (['utc.a_date', 'utc.domain_id','utc.sub_channel', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
             $field = explode('.', $v);
             $field = $field[count($field) - 1];
             if (!in_array($v, $dimension)) unset($cell[$field]);
         }
 
+        if (in_array('utc.domain_id', $dimension) && !in_array('utc.ad_placement_id', $dimension)) {
+            $cell = array_merge($cell, [
+                'activity_page_views'   => 'PV',
+                'activity_new_users'    => '新增',
+                'activity_active_users' => '活跃'
+            ]);
+        }
 
         $i = 0;
         foreach ($cell as $k => $v) {

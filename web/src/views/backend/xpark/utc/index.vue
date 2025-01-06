@@ -457,7 +457,7 @@ onMounted(() => {
 const derive = () => {
     createAxios<any, AxiosPromise>(
         {
-            url: '/admin/xpark.data/export',
+            url: '/admin/xpark.utc/export',
             method: 'get',
             params: baTable.table.filter,
 
