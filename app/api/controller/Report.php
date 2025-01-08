@@ -4,7 +4,7 @@ namespace app\api\controller;
 
 use app\admin\model\Admin;
 use app\admin\model\AdminLog;
-use app\admin\model\sls\Hour as SLSHour;
+use app\admin\model\sls\Active as SLSActive;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Utc;
@@ -156,13 +156,13 @@ class Report extends Frontend
             $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             $v['ad_revenue'] = floatval(number_format($v['ad_revenue'], 5));
             // 计算活跃数据
-            $active = SLSHour::field([
+            $active = SLSActive::field([
                 'sum(new_users) as new_users',
                 'sum(active_users) as active_users',
                 'sum(page_views) as page_views',
-//                'sum(total_time) as total_time',
+                //                'sum(total_time) as total_time',
             ])
-                ->whereDay('time_utc_0', date("Y-m-d", strtotime($v['a_date'])))
+                ->where('date', $v['a_date'])
                 ->where('domain_id', $v['domain_id'])
                 ->where('country_code', substr($v['country_code'], 0, 2))
                 ->find();

@@ -18,7 +18,12 @@ return [
         // 活跃数据
         'GA'         => \app\command\User\GA::class,
         'Hour'       => \app\command\User\Hour::class,
+        'Active'     => \app\command\User\Active::class,
         'Bot'        => \app\command\Bot::class,
+
+        // 投放
+        'TikTok'     => \app\command\Spend\Tiktok::class,
+
 
         // 小米工具
         'MiTools'    => \app\command\MiTools::class,

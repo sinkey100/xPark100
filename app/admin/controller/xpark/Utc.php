@@ -5,7 +5,7 @@ namespace app\admin\controller\xpark;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
-use app\admin\model\sls\Hour as SLSHour;
+use app\admin\model\sls\Active as SLSActive;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Apps;
@@ -269,12 +269,12 @@ class Utc extends Backend
                 && $v['id'] != 10000
             ) {
                 // 新增、活跃、PV
-                $active = SLSHour::field([
+                $active = SLSActive::field([
                     'sum(new_users) as new_users',
                     'sum(active_users) as active_users',
                     'sum(page_views) as page_views',
-                    'sum(total_time) as total_time',
-                ])->whereDay('time_utc_0', date("Y-m-d", strtotime($v['a_date'])));
+                    'avg(total_time) as total_time',
+                ])->where('date', $v['a_date']);
                 if (in_array('domain_id', $this->active_dimension)) $active = $active->where('domain_id', $v['domain_id']);
                 if (in_array('country_code', $this->active_dimension)) $active = $active->where('country_code', $v->getData('country_code'));
                 $active = $active->find();
