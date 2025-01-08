@@ -12,15 +12,18 @@ use GuzzleHttp\Exception\GuzzleException;
 use think\console\Command;
 use think\console\Output;
 use DateTime;
+use ClickHouseDB\Client as ClickHouseDB;
+use think\facade\Config;
 
 class Base extends Command
 {
 
-    protected array $domains     = [];
-    protected array $dateRate    = [];
-    protected int   $days        = 3;
-    protected array $prefix      = ['cy-'];
-    protected array $channelList = [];
+    protected array        $domains     = [];
+    protected array        $dateRate    = [];
+    protected int          $days        = 3;
+    protected array        $prefix      = ['cy-'];
+    protected array        $channelList = [];
+    protected ClickHouseDB $clickhouse;
 
     public function __construct()
     {
@@ -156,16 +159,17 @@ class Base extends Command
                 $rate = floatval($this->dateRate[$_date][$_domain]['rate']);
             }
 
-//            $this->output->writeln($rate);
             // 备份数据
             $v['gross_revenue'] = $v['ad_revenue'];
             $v['ad_revenue']    = $v['ad_revenue'] * $rate;
 
-            $v['status'] = 1;
-            Data::create($v);
-//            $insertData[]       = $v;
+            $v['status']  = 1;
+            $insertData[] = $v;
         }
-//        Data::insertAll($insertData);
+        $chunks = array_chunk($insertData, 100);
+        foreach ($chunks as $chunk) {
+            Data::insertAll($chunk);
+        }
     }
 
     protected function getMailContent(&$inbox, &$email_uid): string
@@ -229,6 +233,19 @@ class Base extends Command
         }
         [$fields, $csvData] = $this->csv2json(implode("\n", $rows));
         return [$dateRange, $fields, $csvData];
+    }
+
+    protected function init_clickhouse(string $database = ''): ClickHouseDB
+    {
+        $config     = Config::get('database.connections.clickhouse');
+        $clickhouse = new ClickHouseDB([
+            'host'     => $config['hostname'],
+            'port'     => $config['port'],
+            'username' => $config['username'],
+            'password' => $config['password'],
+        ]);
+        $clickhouse->database($database ?: $config['database']);
+        return $clickhouse;
     }
 
 

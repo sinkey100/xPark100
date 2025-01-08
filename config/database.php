@@ -20,7 +20,7 @@ return [
 
     // 数据库连接配置信息
     'connections'     => [
-        'mysql' => [
+        'mysql'      => [
             // 数据库类型
             'type'            => env('database.type', 'mysql'),
             // 服务器地址
@@ -59,7 +59,7 @@ return [
         ],
 
         // 更多的数据库配置信息
-        'chuanyou' => [
+        'chuanyou'   => [
             // 数据库类型
             'type'            => env('chuanyou.type', 'mysql'),
             // 服务器地址
@@ -95,6 +95,16 @@ return [
             'trigger_sql'     => env('app_debug', false),
             // 开启字段缓存
             'fields_cache'    => false,
+        ],
+        'clickhouse' => [
+            'type'     => 'clickhouse',
+            'hostname' => env('clickhouse.hostname', ''),
+            'database' => env('clickhouse.database', ''),
+            'username' => env('clickhouse.username', ''),
+            'password' => env('clickhouse.password', ''),
+            'port'     => env('clickhouse.hostport', 8123),
+            'prefix'   => env('clickhouse.prefix', ''),
+            'options'  => [],
         ],
     ],
 ];

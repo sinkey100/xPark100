@@ -3,9 +3,7 @@
 namespace app\command\User;
 
 use app\admin\model\xpark\Data;
-use app\admin\model\xpark\DataHour;
 use app\admin\model\sls\Hour as SLSHour;
-use app\admin\model\sls\User as SLSUser;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Utc;
 use app\command\Base;
@@ -29,18 +27,24 @@ class Hour extends Base
 
     protected function execute(Input $input, Output $output): void
     {
+        // 确认参数
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
-        $this->sls = new SLS();
-
+        $this->sls        = new SLS();
+        $this->clickhouse = $this->init_clickhouse();
         $this->days       = 2;
-        $this->start_time = strtotime(date('Y-m-d 00:00:00', strtotime("-" . ($this->days - 1) . " day")));
-//        $this->end_time   = strtotime(date("Y-m-d H:10:00"));
-        $this->end_time = strtotime('-1 hour', strtotime(date('Y-m-d H:00:00')));
+        $this->start_time = strtotime(date('Y-m-d 00:00:00', strtotime("-" . ($this->days - 1) . " day"))) - 8 * 3600;
+        $this->end_time   = strtotime('-1 hour', strtotime(date('Y-m-d H:00:00')));
 
-        DataHour::where('status', 1)->delete();
-        SLSHour::where('status', 1)->delete();
+        // 查找所有SLS域名
+        $sls_domains   = Domain::where('channel_id', '>', 0)->select()->toArray();
+        $this->domains = array_column($sls_domains, null, 'domain');
+
+        // 重置数据
+        $this->clickhouse->write('truncate table ba_xpark_data_hour;');
+        Db::execute('truncate table ba_sls_hour;');
         Utc::where('status', 1)->delete();
 
+        // 开始任务
         $this->pull();
         $this->calc();
         $this->push();
@@ -48,192 +52,45 @@ class Hour extends Base
 
     protected function pull(): void
     {
-        // 查找所有SLS域名
-        $sls_domains = Db::connect('chuanyou')->table('i_site_website')->alias('website')
-            ->field(['website.*', 'domain.domain as domain_name'])
-            ->join('i_build_domain domain', 'website.domain_id = domain.id')
-            ->where('website.sls_switch', 1)
-            ->select()
-            ->toArray();
-        $sls_domains = array_column($sls_domains, 'domain_name');
-        foreach ($sls_domains as $sls_domain) {
-            $domain_info = Domain::where('domain', $sls_domain)->find();
-            if (!$domain_info) continue;
-            $this->domains[] = $domain_info;
+        $this->log("\n\n======== SLS 拉取PV开始 ========", false);
+
+        $this->log('SLS查询开始...');
+        $result = $this->sls->getLogsWithPowerSql($this->start_time, $this->end_time, SLSHour::$SQL_PV_BY_HOUR);
+        $this->log('SLS查询完成，共查询到' . count($result) . '条，开始保存小时数据');
+
+        $insert_list = [];
+        foreach ($result as $row) {
+            $row    = $row->getContents();
+            $domain = $this->domains[$row['attribute.page.host']] ?? false;
+            if (!$domain) continue;
+
+            $insert_list[] = [
+                'app_id'       => $domain['app_id'],
+                'domain_id'    => $domain['id'],
+                'domain_name'  => $domain['domain'],
+                'country_code' => $row['attribute.country_id'],
+                'time_utc_8'   => $row['hour'],
+                'time_utc_0'   => convert_to_utc($row['hour']),
+                'page_views'   => (int)$row['page_views'],
+                'status'       => 0
+            ];
         }
+        SLSHour::insertAll($insert_list);
+        $this->log('数据保存完成...');
 
-        $this->sls_hour();
-        $this->sls_new_user();
-        $this->sls_total_time();
-    }
+        $this->log("======== SLS 拉取PV完成 ========", false);
 
-    protected function sls_hour(): void
-    {
-        $this->log("\n\n======== SLS 开始拉取PV数据 ========", false);
-
-        foreach ($this->domains as $domain) {
-
-            $sls_sql = <<<EOT
-* | SELECT 
-    "attribute.country_id",
-    date_format(from_unixtime(__time__), '%Y-%m-%d %H:00:00') AS hour,
-    count(*) as page_views
-FROM log 
-WHERE 
-    "attribute.t" = 'pv' and
-    "attribute.page.host" = '{$domain->domain}' 
-GROUP BY "attribute.country_id", 
-    hour
-ORDER BY 
-    hour
-EOT;
-
-            $result = $this->sls->getLogsWithPowerSql($this->start_time, $this->end_time, $sls_sql);
-
-            foreach ($result as $row) {
-                $row        = $row->getContents();
-                $time_utc_0 = convert_to_utc($row['hour']);
-
-                $map  = [
-                    'domain_id'    => $domain['id'],
-                    'country_code' => $row['attribute.country_id'],
-                    'time_utc_8'   => $row['hour'],
-                ];
-                $item = SLSHour::where($map)->find();
-                if (!$item) {
-                    $map['app_id']      = $domain['app_id'];
-                    $map['domain_name'] = $domain['domain'];
-                    $map['time_utc_0']  = $time_utc_0;
-                    $item               = SLSHour::create($map);
-                }
-                $item->page_views = (int)$row['page_views'];
-                $item->status     = 0;
-                $item->save();
-
-            }
-        }
-
-        $this->log("======== SLS 拉取PV数据完成 ========", false);
-
-    }
-
-    protected function sls_new_user(): void
-    {
-        $this->log("\n\n======== SLS 开始拉取活跃数据 ========", false);
-
-        // 查找所有SLS域名
-
-        foreach ($this->domains as $domain) {
-            $sls_sql = <<<EOT
-* | SELECT 
-    "attribute.country_id",
-    date_format(from_unixtime(__time__), '%Y-%m-%d %H:00:00') AS hour,
-    ARRAY_AGG(DISTINCT "attribute.uid") AS user_list
-FROM log 
-WHERE 
-    "attribute.t" = 'pv' AND
-    "attribute.page.host" = '{$domain->domain}' 
-GROUP BY 
-    "attribute.country_id", 
-    hour
-ORDER BY
-    hour
-EOT;
-            $result  = $this->sls->getLogsWithPowerSql($this->start_time, $this->end_time, $sls_sql);
-            foreach ($result as $row) {
-                $row        = $row->getContents();
-                $time_utc_0 = convert_to_utc($row['hour']);
-                $user_list  = json_decode($row['user_list'], true);
-                // 新用户注册
-                foreach ($user_list as $uid) {
-                    $user = SLSUser::where('uid', $uid)->find();
-                    if (!$user) {
-                        SLSUser::create([
-                            'app_id'       => $domain['app_id'],
-                            'domain_id'    => $domain['id'],
-                            'domain_name'  => $domain['domain'],
-                            'uid'          => $uid,
-                            'time_utc_8'   => $row['hour'],
-                            'time_utc_0'   => $time_utc_0,
-                            'country_code' => $row['attribute.country_id'],
-                        ]);
-                    }
-                }
-                // 记录
-                $map  = [
-                    'domain_id'    => $domain['id'],
-                    'country_code' => $row['attribute.country_id'],
-                    'time_utc_0'   => $time_utc_0,
-                ];
-                $item = SLSHour::where($map)->find();
-                if (!$item) continue;
-                $item->new_users    = SLSUser::where($map)->count();
-                $item->active_users = count($user_list);
-                $item->save();
-
-            }
-        }
-
-        $this->log("\n\n======== SLS 拉取用户数据完成 ========", false);
-    }
-
-    protected function sls_total_time(): void
-    {
-        $this->log("\n\n======== SLS 开始拉取时长数据 ========", false);
-
-        // 查找所有SLS域名
-
-        foreach ($this->domains as $domain) {
-
-            $sls_sql = <<<EOT
-* | SELECT 
-    "attribute.country_id", 
-    hour, 
-    AVG(total_time_per_user) AS total_time
-FROM (
-    SELECT 
-        "attribute.country_id",
-        "attribute.uid", 
-            date_format(from_unixtime(__time__), '%Y-%m-%d %H:00:00') AS hour,
-        SUM("attribute.totalTimeMs") AS total_time_per_user
-    FROM log 
-    WHERE 
-        "attribute.t" = 'log' 
-        AND "attribute.log.key" = 'page_duration' 
-        AND "attribute.page.host" = '{$domain->domain}' 
-    GROUP BY 
-       "attribute.country_id",  "attribute.uid", hour
-) 
-GROUP BY 
-    "attribute.country_id",hour
-ORDER BY
-    hour
-EOT;
-
-            $result = $this->sls->getLogsWithPowerSql($this->start_time, $this->end_time, $sls_sql);
-
-            foreach ($result as $row) {
-                $item       = $row->getContents();
-                $time_utc_0 = convert_to_utc($item['hour']);
-
-                SLSHour::where('domain_id', $domain['id'])
-                    ->where('country_code', $item['attribute.country_id'])
-                    ->where('time_utc_0', $time_utc_0)
-                    ->update([
-                        'total_time' => $item['total_time']
-                    ]);
-            }
-        }
-
-        $this->log("\n\n======== SLS 拉取时长数据完成 ========", false);
     }
 
     protected function calc(): void
     {
+        $this->log("\n\n======== SLS 分配小时收入开始 ========", false);
 
+        $this->log('开始分配，共' . count($this->domains) . '个域名');
         foreach ($this->domains as $domain) {
             for ($i = $this->days - 1; $i >= 0; $i--) {
 
+                $this->log('获取小时数据开始：' . $domain['domain']);
                 // 获取当前域名一天的流量分配
                 $hour_detail = SLSHour::where('domain_id', $domain['id'])
                     ->where('status', 0)
@@ -251,6 +108,8 @@ EOT;
                 unset($item);
                 if ($total_rate != 1) $hour_detail[count($hour_detail) - 1]['rate'] += 1 - $total_rate;
 
+                $this->log('获取收入数据');
+
                 // 获取当前域名的收入数据
                 $daily_revenue = Data::where('domain_id', $domain['id'])
                     ->where('status', 0)
@@ -259,76 +118,70 @@ EOT;
                 if (count($daily_revenue) == 0) continue;
                 $money = 0;
 
+                $this->log('计算UTC数据并保存');
+
                 // 均分出每小时的数据
                 foreach ($daily_revenue as $daily) {
-                    $insertData = [];
+                    $insert_list = [];
                     foreach ($hour_detail as $hour) {
-
                         // 比例
-                        $rate  = $hour['rate'];
-                        $money = $money + $daily['ad_revenue'] * $rate;
-
-                        $insertData[] = [
-                            'app_id'          => $daily['app_id'],
-                            'domain_id'       => $daily['domain_id'],
-                            'channel'         => $daily['channel'],
-                            'channel_id'      => $daily['channel_id'],
-                            'channel_full'    => $daily['channel_full'],
-                            'country_level'   => $daily['country_level'],
-                            'country_code'    => $daily->getData('country_code'),
-                            'country_name'    => $daily['country_name'],
-                            'sub_channel'     => $daily['sub_channel'],
-                            'ad_placement_id' => $daily['ad_placement_id'],
-                            'requests'        => $daily['requests'] * $rate,
-                            'fills'           => $daily['fills'] * $rate,
-                            'impressions'     => $daily['impressions'] * $rate,
-                            'clicks'          => $daily['clicks'] * $rate,
-                            'ad_revenue'      => $daily['ad_revenue'] * $rate,
-                            'gross_revenue'   => $daily['gross_revenue'] * $rate,
-                            'channel_type'    => $daily['channel_type'],
-                            'time_utc_0'      => $hour['time_utc_0'],
-                            'time_utc_8'      => $hour['time_utc_8'],
-                            'status'          => 1
+                        $rate          = $hour['rate'];
+                        $money         = $money + $daily['ad_revenue'] * $rate;
+                        $insert_list[] = [
+                            $daily['app_id'],
+                            $daily['domain_id'],
+                            $daily['channel'],
+                            $daily['channel_id'],
+                            $daily['channel_full'],
+                            $daily['country_level'],
+                            $daily->getData('country_code'),
+                            $daily['country_name'],
+                            $daily['sub_channel'],
+                            $daily['ad_placement_id'],
+                            $daily['requests'] * $rate,
+                            $daily['fills'] * $rate,
+                            $daily['impressions'] * $rate,
+                            $daily['clicks'] * $rate,
+                            $daily['ad_revenue'] * $rate,
+                            $daily['gross_revenue'] * $rate,
+                            $daily['channel_type'],
+                            $hour['time_utc_0'],
+                            $hour['time_utc_8'],
+                            0
                         ];
                     }
-                    DataHour::insertAll($insertData);
+                    $this->clickhouse->insert('ba_xpark_data_hour', $insert_list,
+                        [
+                            'app_id', 'domain_id', 'channel', 'channel_id', 'channel_full', 'country_level', 'country_code',
+                            'country_name', 'sub_channel', 'ad_placement_id', 'requests', 'fills', 'impressions',
+                            'clicks', 'ad_revenue', 'gross_revenue', 'channel_type', 'time_utc_0', 'time_utc_8', 'status'
+                        ]
+                    );
                 }
+
+                $this->log("保存完成\n");
             }
         }
-        // 清除数据
-        DataHour::where('status', 0)->whereTime('time_utc_8', '>=', date("Y-m-d", $this->start_time))->delete();
-        DataHour::where('status', 1)->update(['status' => 0]);
-
-        $this->log('历史数据已删除');
-
+        $this->log('数据分配完成');
+        $this->log("======== SLS 分配小时收入完成 ========", false);
     }
 
     protected function push(): void
     {
+        $this->log("\n\n======== 合并UTC收入开始 ========", false);
         for ($i = $this->days - 1; $i >= 0; $i--) {
-            $list = DataHour::whereDay('time_utc_0', date("Y-m-d", strtotime("-$i days")))
-                ->field([
-                    "DATE(time_utc_0) AS a_date",
-                    "app_id", "domain_id", "country_code", "ad_placement_id",
-                    "channel", "channel_id", "channel_full", "country_level", "country_name",
-                    "sub_channel", "channel_type",
-                    "SUM(requests) AS requests",
-                    "SUM(fills) AS fills",
-                    "SUM(impressions) AS impressions",
-                    "SUM(clicks) AS clicks",
-                    "SUM(ad_revenue) AS ad_revenue",
-                    "SUM(gross_revenue) AS gross_revenue",
-                    "1 AS status"
-                ])
-                ->group("a_date, domain_id, country_code, ad_placement_id")
-                ->select()->toArray();
-
-            Utc::insertAll($list);
+            $date   = date("Y-m-d", strtotime("-$i days"));
+            $list   = $this->clickhouse->select(SLSHour::SQL_HOUR_TO_UTC($date))->rows();
+            $chunks = array_chunk($list, 1000);
+            foreach ($chunks as $chunk) {
+                Utc::insertAll($chunk);
+            }
             Utc::where('status', 0)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             Utc::where('status', 1)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
             unset($list);
+            $this->log('第' . ($this->days - $i) . '/' . $this->days . '天 完成');
         }
-
+        $this->log("======== SLS 合并UTC收入完成 ========", false);
     }
 
 }
