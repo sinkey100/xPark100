@@ -23,7 +23,7 @@ class FeishuBot
         ];
 
         $http  = new Client(['verify' => false]);
-        $token = self::getTenantAccessToken($config);
+        $token = self::getTenantAccessToken($config['app_id'], $config['app_secret']);
 
         $body = [
             "msg_type"   => $msg_type,
@@ -51,9 +51,9 @@ class FeishuBot
     /**
      * @throws Exception
      */
-    protected static function getTenantAccessToken(array $config): string
+    public static function getTenantAccessToken(string $app_id, string $app_secret): string
     {
-        $token_key = 'fs_app_token_' . $config['app_id'];
+        $token_key = 'fs_app_token_' . $app_id;
         $token     = Cache::get($token_key);
         if ($token) return $token;
 
@@ -63,8 +63,8 @@ class FeishuBot
         try {
             $response = $http->request('POST', 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', [
                 'json' => [
-                    'app_id'     => $config['app_id'],
-                    'app_secret' => $config['app_secret'],
+                    'app_id'     => $app_id,
+                    'app_secret' => $app_secret
                 ]
             ]);
             $response = json_decode($response->getBody()->getContents(), true);

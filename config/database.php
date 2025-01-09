@@ -105,6 +105,7 @@ return [
             'port'     => env('clickhouse.hostport', 8123),
             'prefix'   => env('clickhouse.prefix', ''),
             'options'  => [],
+            'deploy'   => 0,
         ],
     ],
 ];

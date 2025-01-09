@@ -9,6 +9,7 @@ use app\admin\model\xpark\DomainRate;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use app\admin\model\spend\Data as SpendData;
 use think\console\Command;
 use think\console\Output;
 use DateTime;
@@ -137,9 +138,10 @@ class Base extends Command
         $insertData = [];
         foreach ($data as $v) {
             // 地区
-            if ($v['country_code'] == 'N/A') $v['country_code'] = '';
+            if (in_array(strtolower($v['country_code']), ['n/a', 'none'])) $v['country_code'] = '';
             $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
             $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
+            $v['country_code']  = substr($v['country_code'], 0, 2);
 
             // 需要特殊处理
             $v['a_date'] = $_date = date("Y-m-d", strtotime($v['a_date']));
@@ -169,6 +171,29 @@ class Base extends Command
         $chunks = array_chunk($insertData, 100);
         foreach ($chunks as $chunk) {
             Data::insertAll($chunk);
+        }
+    }
+
+    protected function saveSpendData($data): void
+    {
+        $country_data = array_column(get_country_data(), null, 'code');
+
+        $insertData = [];
+        foreach ($data as $v) {
+            // 地区
+            if (in_array(strtolower($v['country_code']), ['n/a', 'none'])) $v['country_code'] = '';
+            $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
+            $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
+            $v['country_code']  = substr($v['country_code'], 0, 2);
+
+            // 需要特殊处理
+            $v['date']    = date("Y-m-d", strtotime($v['date']));
+            $v['status']  = 1;
+            $insertData[] = $v;
+        }
+        $chunks = array_chunk($insertData, 100);
+        foreach ($chunks as $chunk) {
+            SpendData::insertAll($chunk);
         }
     }
 
@@ -246,6 +271,59 @@ class Base extends Command
         ]);
         $clickhouse->database($database ?: $config['database']);
         return $clickhouse;
+    }
+
+    /*
+     * 获取飞书表格投放对应表
+     */
+    protected function getSpendTable(string $platform = ''): array
+    {
+//        $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
+//        $token        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_TOKEN');
+//        $table        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_ID');
+//        $result       = $this->http('GET', "https://open.feishu.cn/open-apis/bitable/v1/apps/$token/tables/$table/records", [
+//            'query'   => [
+//                'page_size' => 500
+//            ],
+//            'headers' => [
+//                'Authorization' => 'Bearer ' . $access_token,
+//            ],
+//        ]);
+//
+//        $result = array_map(fn($item) => $item['fields'], $result['data']['items']);
+
+        $result = json_decode('[{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.minitool.app","campaign_name":"toapp_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.minitool.app","campaign_name":"toapp_spark2"},{"ad_platform":"tiktok","advertiser_id":"7450035687132381200","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"tiktok","advertiser_id":"7447376617032237057","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"unity","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"unity","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"facebook","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"facebook","advertiser_id":"903977011846146","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark3.minitool.app","campaign_name":"toapp_spark3"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark4.minitool.app","campaign_name":"toapp_spark4"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark5.minitool.app","campaign_name":"toapp_spark5"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark6.minitool.app","campaign_name":"toapp_spark6"},{"ad_platform":"facebook","advertiser_id":"384771248026058","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.infitools.cc","campaign_name":"tocc_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.infitools.cc","campaign_name":"tocc_spark2"},{"ad_platform":"unity","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"tiktok","advertiser_id":"7447376649525788689","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"}]', true);
+
+        // 原始数据
+        if ($platform) $result = array_values(array_filter($result, fn($item) => $item['ad_platform'] == $platform));
+
+        // advertiser_ids
+        $advertiser_ids = [];
+        foreach (array_column($result, 'advertiser_id') as $v) {
+            if (empty($v)) continue;
+            $advertiser_ids = array_merge($advertiser_ids, explode(',', $v));
+        }
+        $advertiser_ids = array_filter(array_unique($advertiser_ids));
+
+        $campaigns = [];
+        // campaign_name to domain
+        foreach ($result as $v) {
+            $campaigns[$v['campaign_name']] = $v['app_package_name_or_url'];
+        }
+
+        return [$advertiser_ids, $campaigns, $result];
+    }
+
+    protected function campaignToDomain(string $campaign_full_name, array $list): string
+    {
+        $domain_name = '';
+        foreach ($list as $campaign_name => $domain) {
+            if (str_starts_with($campaign_full_name, $campaign_name)) {
+                $domain_name = $domain;
+                break;
+            }
+        }
+        return $domain_name;
     }
 
 
