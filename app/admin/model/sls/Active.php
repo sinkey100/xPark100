@@ -47,6 +47,7 @@ EOT;
 
     public static function SQL_MERGE_NEW_USERS($domain_name, $appid, $domain_id, $country_code, $date): string
     {
+        $country_code = substr(trim($country_code), 0, 2);
         return <<<EOT
 INSERT INTO ba_sls_user (domain_name, app_id, domain_id, uid, country_code, date)
 SELECT 

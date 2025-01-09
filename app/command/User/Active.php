@@ -28,7 +28,7 @@ class Active extends Base
         // 确认参数
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
         $this->sls        = new SLS();
-        $this->days       = 1;
+        $this->days       = 2;
         $this->clickhouse = $this->init_clickhouse();
         // 查找所有SLS域名
         $sls_domains   = Domain::where('channel_id', '>', 0)->select()->toArray();
@@ -76,13 +76,11 @@ class Active extends Base
                     $domain['domain'], $domain['app_id'], $domain['id'], $row['attribute.country_id'], $date
                 ));
                 // 记录
-                $map = [
-                    'domain_id'    => $domain['id'],
-                    'country_code' => $row['attribute.country_id'],
-                    'date'         => $date,
-                ];
+                $new_users = $this->clickhouse->select(
+                    "select count(*) as total from ba_sls_user where domain_id = {$domain['id']} and country_code = '{$row['attribute.country_id']}' and date = '{$date}'"
+                )->fetchOne();
                 $this->update_active_row($row['attribute.page.host'], $row['attribute.country_id'], $date, [
-                    'new_users'    => SLSUser::where($map)->count(),
+                    'new_users'    => $new_users['total'] ?? 0,
                     'active_users' => count($user_list)
                 ]);
             }
