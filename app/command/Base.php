@@ -2,6 +2,7 @@
 
 namespace app\command;
 
+use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
@@ -10,16 +11,19 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use app\admin\model\spend\Data as SpendData;
+use sdk\FeishuBot;
 use think\console\Command;
 use think\console\Output;
 use DateTime;
 use ClickHouseDB\Client as ClickHouseDB;
 use think\facade\Config;
+use think\facade\Env;
 
 class Base extends Command
 {
 
     protected array        $domains     = [];
+    protected array        $apps        = [];
     protected array        $dateRate    = [];
     protected int          $days        = 3;
     protected array        $prefix      = ['cy-'];
@@ -37,7 +41,7 @@ class Base extends Command
      * @throws GuzzleException
      * @throws Exception
      */
-    protected function http(string $method, string $url, array $options = []): array
+    protected function http(string $method, string $url, array $options = [], bool $raw = false): array|string
     {
         $client = new Client([
             'verify' => false
@@ -50,7 +54,8 @@ class Base extends Command
         if ($result->getStatusCode() != 200) {
             throw new Exception('请求失败: ' . $result->getBody()->getContents());
         }
-        return json_decode($result->getBody()->getContents(), true);
+        $result = $result->getBody()->getContents();
+        return $raw ? $result : json_decode($result, true);
     }
 
     protected function log(string $text, $time = true): void
@@ -83,6 +88,7 @@ class Base extends Command
 
     protected function csv2json($csv_string): array
     {
+        $csv_string = str_replace(["\xEF\xBB\xBF", '/\x{FE FF}/u'], '', $csv_string);
         // 将CSV字符串按行分割
         $lines = explode("\n", $csv_string);
 
@@ -138,7 +144,7 @@ class Base extends Command
         $insertData = [];
         foreach ($data as $v) {
             // 地区
-            if (in_array(strtolower($v['country_code']), ['n/a', 'none'])) $v['country_code'] = '';
+            if (in_array(strtolower($v['country_code']), ['n / a', 'none'])) $v['country_code'] = '';
             $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
             $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
             $v['country_code']  = substr($v['country_code'], 0, 2);
@@ -181,7 +187,7 @@ class Base extends Command
         $insertData = [];
         foreach ($data as $v) {
             // 地区
-            if (in_array(strtolower($v['country_code']), ['n/a', 'none'])) $v['country_code'] = '';
+            if (in_array(strtolower($v['country_code']), ['n / a', 'none'])) $v['country_code'] = '';
             $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
             $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
             $v['country_code']  = substr($v['country_code'], 0, 2);
@@ -235,7 +241,7 @@ class Base extends Command
             $formattedDates = [];
             foreach ($dates as $date) {
                 $dateTime         = DateTime::createFromFormat('M d, Y', $date);
-                $formattedDates[] = $dateTime->format('Y-m-d');
+                $formattedDates[] = $dateTime->format('Y - m - d');
             }
             return $formattedDates;
         }
@@ -278,6 +284,15 @@ class Base extends Command
      */
     protected function getSpendTable(string $platform = ''): array
     {
+        if (empty($this->domains)) {
+            $this->domains = Domain::where('channel_id', '>', 0)->select()->toArray();
+            $this->domains = array_column($this->domains, null, 'domain');
+        }
+        if (empty($this->apps)) {
+            $this->apps = Apps::where('pkg_name', '<>', '')->select()->toArray();
+            $this->apps = array_column($this->apps, null, 'pkg_name');
+        }
+
 //        $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
 //        $token        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_TOKEN');
 //        $table        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_ID');
@@ -292,7 +307,7 @@ class Base extends Command
 //
 //        $result = array_map(fn($item) => $item['fields'], $result['data']['items']);
 
-        $result = json_decode('[{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.minitool.app","campaign_name":"toapp_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.minitool.app","campaign_name":"toapp_spark2"},{"ad_platform":"tiktok","advertiser_id":"7450035687132381200","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"tiktok","advertiser_id":"7447376617032237057","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"unity","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"unity","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"facebook","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios"},{"ad_platform":"facebook","advertiser_id":"903977011846146","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark3.minitool.app","campaign_name":"toapp_spark3"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark4.minitool.app","campaign_name":"toapp_spark4"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark5.minitool.app","campaign_name":"toapp_spark5"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark6.minitool.app","campaign_name":"toapp_spark6"},{"ad_platform":"facebook","advertiser_id":"384771248026058","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.infitools.cc","campaign_name":"tocc_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.infitools.cc","campaign_name":"tocc_spark2"},{"ad_platform":"unity","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"applovin","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"},{"ad_platform":"tiktok","advertiser_id":"7447376649525788689","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios"}]', true);
+        $result = json_decode('[{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.minitool.app","campaign_name":"toapp_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.minitool.app","campaign_name":"toapp_spark2"},{"ad_platform":"tiktok","advertiser_id":"7450035687132381200","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7447376617032237057","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"unity","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"unity","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"facebook","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"facebook","advertiser_id":"903977011846146","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark3.minitool.app","campaign_name":"toapp_spark3"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark4.minitool.app","campaign_name":"toapp_spark4","is_app":false},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark5.minitool.app","campaign_name":"toapp_spark5"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark6.minitool.app","campaign_name":"toapp_spark6"},{"ad_platform":"facebook","advertiser_id":"384771248026058","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.infitools.cc","campaign_name":"tocc_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.infitools.cc","campaign_name":"tocc_spark2"},{"ad_platform":"unity","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7447376649525788689","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true}]', true);
 
         // 原始数据
         if ($platform) $result = array_values(array_filter($result, fn($item) => $item['ad_platform'] == $platform));
@@ -305,25 +320,32 @@ class Base extends Command
         }
         $advertiser_ids = array_filter(array_unique($advertiser_ids));
 
-        $campaigns = [];
-        // campaign_name to domain
-        foreach ($result as $v) {
-            $campaigns[$v['campaign_name']] = $v['app_package_name_or_url'];
-        }
-
-        return [$advertiser_ids, $campaigns, $result];
+        return [$result, $advertiser_ids];
     }
 
-    protected function campaignToDomain(string $campaign_full_name, array $list): string
+    protected function campaignToDomain(string $campaign_full_name, array $table): array|bool
     {
-        $domain_name = '';
-        foreach ($list as $campaign_name => $domain) {
-            if (str_starts_with($campaign_full_name, $campaign_name)) {
-                $domain_name = $domain;
+        $item = false;
+        foreach ($table as $row) {
+            if (str_starts_with(strtolower($campaign_full_name), strtolower($row['campaign_name']))) {
+                $row['is_app'] = isset($row['is_app']) && $row['is_app'] == true;
+                if ($row['is_app']) {
+                    if (!isset($this->apps[$row['app_package_name_or_url']])) continue;
+                    $row['app_id']        = $this->apps[$row['app_package_name_or_url']]['id'];
+                    $row['domain_id']     = 0;
+                    $row['domain_or_app'] = 1;
+                } else {
+                    if (!isset($this->domains[$row['app_package_name_or_url']])) continue;
+                    $domain               = $this->domains[$row['app_package_name_or_url']];
+                    $row['app_id']        = $domain['app_id'];
+                    $row['domain_id']     = $domain['id'];
+                    $row['domain_or_app'] = $domain['is_app'];
+                }
+                $item = $row;
                 break;
             }
         }
-        return $domain_name;
+        return $item;
     }
 
 

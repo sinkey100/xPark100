@@ -3,7 +3,6 @@
 namespace app\command\Spend;
 
 use app\admin\model\spend\Data as SpendData;
-use app\admin\model\xpark\Domain;
 use app\command\Base;
 use think\console\Input;
 use think\console\Output;
@@ -20,10 +19,9 @@ class Tiktok extends Base
 
     protected function execute(Input $input, Output $output): void
     {
-        [$advertiser_ids, $campaigns, $spend_table] = $this->getSpendTable('tiktok');
-        $this->days    = 2;
-        $this->domains = Domain::where('channel_id', '>', 0)->select()->toArray();
-        $this->domains = array_column($this->domains, null, 'domain');
+        $this->days = 2;
+        [$spend_table, $advertiser_ids] = $this->getSpendTable('tiktok');
+
         SpendData::where('channel_name', 'tiktok')->where('status', 1)->delete();
 
         // 拉数据
@@ -36,7 +34,7 @@ class Tiktok extends Base
                 'adgroup_id', 'stat_time_day', 'country_code'
             ]),
             'metrics'       => json_encode([
-                'campaign_name', 'spend', 'impressions', 'clicks', 'timezone'
+                'campaign_name', 'spend', 'impressions', 'clicks', 'timezone',
             ]),
             'start_date'    => '',
             'end_date'      => '',
@@ -57,30 +55,32 @@ class Tiktok extends Base
                 $query['end_date']      = $date;
 
 
-                $result                 = $this->http('GET', $url, [
+                $result = $this->http('GET', $url, [
                     'query'   => $query,
                     'headers' => $headers
                 ]);
                 if ($result['code'] != 0) continue;
 
                 foreach ($result['data']['list'] as $item) {
-                    $domain_name = $this->campaignToDomain($item['metrics']['campaign_name'], $campaigns);
-                    if (!isset($this->domains[$domain_name])) continue;
-                    $domain = $this->domains[$domain_name];
+                    $table_row = $this->campaignToDomain($item['metrics']['campaign_name'], $spend_table);
+                    if (!$table_row) continue;
 
-                    $clicks      = $item['metrics']['clicks'];
-                    $impressions = $item['metrics']['impressions'];
-                    $spend       = $item['metrics']['spend'];
-                    $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
-                    $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
+                    $clicks       = $item['metrics']['clicks'];
+                    $impressions  = $item['metrics']['impressions'];
+                    $spend        = $item['metrics']['spend'];
+                    $country_code = $item['dimensions']['country_code'];
+                    $cpc          = empty($impressions) ? 0 : $clicks / $impressions;
+                    $cpm          = empty($impressions) ? 0 : $spend / $impressions * 1000;
+
+                    if (empty($impressions) && (empty($country_code) || 'None' == $country_code)) continue;
 
                     $insert_list[] = [
-                        'app_id'        => $domain['app_id'],
+                        'app_id'        => $table_row['app_id'],
                         'channel_name'  => 'tiktok',
-                        'domain_id'     => $domain['id'],
-                        'is_app'        => $domain['is_app'],
+                        'domain_id'     => $table_row['domain_id'],
+                        'is_app'        => $table_row['domain_or_app'],
                         'date'          => $item['dimensions']['stat_time_day'],
-                        'country_code'  => $item['dimensions']['country_code'],
+                        'country_code'  => $country_code,
                         'spend'         => $spend,
                         'clicks'        => $clicks,
                         'impressions'   => $impressions,
