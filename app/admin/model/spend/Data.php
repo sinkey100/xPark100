@@ -15,4 +15,11 @@ class Data extends Model
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;
 
+    protected function getCountryCodeAttr($value, $data): string
+    {
+        return isset($data['country_name'])
+            ? $value . '-' . $data['country_name']
+            : $value;
+    }
+
 }
