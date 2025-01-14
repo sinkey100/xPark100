@@ -293,21 +293,19 @@ class Base extends Command
             $this->apps = array_column($this->apps, null, 'pkg_name');
         }
 
-//        $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
-//        $token        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_TOKEN');
-//        $table        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_ID');
-//        $result       = $this->http('GET', "https://open.feishu.cn/open-apis/bitable/v1/apps/$token/tables/$table/records", [
-//            'query'   => [
-//                'page_size' => 500
-//            ],
-//            'headers' => [
-//                'Authorization' => 'Bearer ' . $access_token,
-//            ],
-//        ]);
-//
-//        $result = array_map(fn($item) => $item['fields'], $result['data']['items']);
+        $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
+        $token        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_TOKEN');
+        $table        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_ID');
+        $result       = $this->http('GET', "https://open.feishu.cn/open-apis/bitable/v1/apps/$token/tables/$table/records", [
+            'query'   => [
+                'page_size' => 500
+            ],
+            'headers' => [
+                'Authorization' => 'Bearer ' . $access_token,
+            ],
+        ]);
 
-        $result = json_decode('[{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.minitool.app","campaign_name":"toapp_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.minitool.app","campaign_name":"toapp_spark2"},{"ad_platform":"tiktok","advertiser_id":"7450035687132381200","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7447376617032237057","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"unity","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"unity","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"facebook","app_package_name_or_url":"com.guanguannb.flowergame","campaign_name":"bdh_ios","is_app":true},{"ad_platform":"facebook","advertiser_id":"903977011846146","app_package_name_or_url":"com.minigame.perfectneat","campaign_name":"tq_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark3.minitool.app","campaign_name":"toapp_spark3"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark4.minitool.app","campaign_name":"toapp_spark4","is_app":false},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark5.minitool.app","campaign_name":"toapp_spark5"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark6.minitool.app","campaign_name":"toapp_spark6"},{"ad_platform":"facebook","advertiser_id":"384771248026058","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark1.infitools.cc","campaign_name":"tocc_spark1"},{"ad_platform":"tiktok","advertiser_id":"7446607465292218385","app_package_name_or_url":"spark2.infitools.cc","campaign_name":"tocc_spark2"},{"ad_platform":"unity","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"applovin","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true},{"ad_platform":"tiktok","advertiser_id":"7447376649525788689","app_package_name_or_url":"com.sortgame.cocktailsort","campaign_name":"mm_ios","is_app":true}]', true);
+        $result = array_map(fn($item) => $item['fields'], $result['data']['items']);
 
         // 原始数据
         if ($platform) $result = array_values(array_filter($result, fn($item) => $item['ad_platform'] == $platform));
@@ -333,12 +331,14 @@ class Base extends Command
                     if (!isset($this->apps[$row['app_package_name_or_url']])) continue;
                     $row['app_id']        = $this->apps[$row['app_package_name_or_url']]['id'];
                     $row['domain_id']     = 0;
+                    $row['channel_id']    = 0;
                     $row['domain_or_app'] = 1;
                 } else {
                     if (!isset($this->domains[$row['app_package_name_or_url']])) continue;
                     $domain               = $this->domains[$row['app_package_name_or_url']];
                     $row['app_id']        = $domain['app_id'];
                     $row['domain_id']     = $domain['id'];
+                    $row['channel_id']    = $domain['channel_id'];
                     $row['domain_or_app'] = $domain['is_app'];
                 }
                 $item = $row;

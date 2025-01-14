@@ -78,6 +78,7 @@ class Tiktok extends Base
                         'app_id'        => $table_row['app_id'],
                         'channel_name'  => 'tiktok',
                         'domain_id'     => $table_row['domain_id'],
+                        'channel_id'    => $table_row['channel_id'],
                         'is_app'        => $table_row['domain_or_app'],
                         'date'          => $item['dimensions']['stat_time_day'],
                         'country_code'  => $country_code,

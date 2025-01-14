@@ -72,6 +72,7 @@ class Unity extends Base
                     'app_id'        => $table_row['app_id'],
                     'channel_name'  => 'unity',
                     'domain_id'     => $table_row['domain_id'],
+                    'channel_id'    => $table_row['channel_id'],
                     'is_app'        => $table_row['domain_or_app'],
                     'date'          => $item['timestamp'],
                     'country_code'  => $item['country'],
