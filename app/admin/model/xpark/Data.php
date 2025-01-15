@@ -19,12 +19,7 @@ class Data extends Model
     protected $autoWriteTimestamp = false;
 
 
-    protected $append = [
-        'click_rate',
-        'fill_rate',
-        'unit_price',
-        'ecpm',
-    ];
+    protected $append = [];
 
 
     public function domain(): \think\model\relation\BelongsTo

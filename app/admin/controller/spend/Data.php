@@ -115,7 +115,7 @@ class Data extends Backend
 
             $v['cpc']      = round(empty($impressions) ? 0 : $clicks / $impressions, 3);
             $v['cpm']      = round(empty($impressions) ? 0 : $spend / $impressions * 1000, 3);
-            $v['spend']    = round($v['spend'], 2);
+            $v['spend']    = round($v['spend'], 3);
             $v['app_name'] = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
 
             if (in_array('data.domain_id', $dimension)) {

@@ -194,12 +194,14 @@ class AdSense extends Base
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
-
+                $channel_full = 'AdSense-' . $account->flag;
                 if ($app_id == 23 && time() > 1733932800) {
                     [$domain_id_5b, $app_id_5b] = $this->getDomainRow('5b-' . $insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
+
                     $data[] = [
                         'channel'         => 'AdSense',
-                        'channel_full'    => 'AdSense-' . $account->flag,
+                        'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                        'channel_full'    => $channel_full,
                         'sub_channel'     => '5b-' . $insert['DOMAIN_NAME'],
                         'domain_id'       => $domain_id_5b,
                         'app_id'          => $app_id_5b,
@@ -221,7 +223,8 @@ class AdSense extends Base
 
                 $data[] = [
                     'channel'         => 'AdSense',
-                    'channel_full'    => 'AdSense-' . $account->flag,
+                    'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
+                    'channel_full'    => $channel_full,
                     'sub_channel'     => $insert['DOMAIN_NAME'],
                     'domain_id'       => $domain_id,
                     'app_id'          => $app_id,

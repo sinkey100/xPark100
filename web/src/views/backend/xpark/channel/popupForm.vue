@@ -34,6 +34,30 @@
                     <FormItem :label="t('xpark.channel.channel_type')" type="string" v-model="baTable.form.items!.channel_type" prop="channel_type" :placeholder="t('Please input field', { field: t('xpark.channel.channel_type') })" />
                     <FormItem :label="t('xpark.channel.channel_account')" type="string" v-model="baTable.form.items!.channel_account" prop="channel_account" :placeholder="t('Please input field', { field: t('xpark.channel.channel_account') })" />
                     <FormItem :label="t('xpark.channel.channel_alias')" type="string" v-model="baTable.form.items!.channel_alias" prop="channel_alias" :placeholder="t('Please input field', { field: t('xpark.channel.channel_alias') })" />
+
+                    <el-form-item label="模型配置">
+                        <el-row>
+                            <el-col :span="8">
+                                <el-input v-model="baTable.form.items!.spend_model">
+                                    <template #prepend>{{ t('xpark.channel.spend_model') }}</template>
+                                </el-input>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-input v-model="baTable.form.items!.revenue_model">
+                                    <template #prepend>{{ t('xpark.channel.revenue_model') }}</template>
+                                </el-input>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-input v-model="baTable.form.items!.user_model">
+                                    <template #prepend>{{ t('xpark.channel.user_model') }}</template>
+                                </el-input>
+                            </el-col>
+                        </el-row>
+                    </el-form-item>
+
+
+
+
                 </el-form>
             </div>
         </el-scrollbar>

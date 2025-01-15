@@ -51,6 +51,30 @@ const baTable = new baTableClass(
             { label: t('xpark.channel.channel_type'), prop: 'channel_type', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.channel.channel_account'), prop: 'channel_account', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.channel.channel_alias'), prop: 'channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            {
+                label: t('xpark.channel.spend_model'),
+                prop: 'spend_model',
+                width: 120,
+                align: 'center',
+                operator: false,
+                sortable: false
+            },
+            {
+                label: t('xpark.channel.revenue_model'),
+                prop: 'revenue_model',
+                width: 120,
+                align: 'center',
+                operator: false,
+                sortable: false
+            },
+            {
+                label: t('xpark.channel.user_model'),
+                prop: 'user_model',
+                width: 120,
+                align: 'center',
+                operator: false,
+                sortable: false
+            },
             { label: t('xpark.channel.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('xpark.channel.update_time'), prop: 'update_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },

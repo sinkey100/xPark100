@@ -8,5 +8,8 @@ export default {
     channel_alias: '通道别名',
     create_time: '创建时间',
     update_time: '修改时间',
+    spend_model: '支出标准模型',
+    revenue_model: '收入标准模型',
+    user_model: '用户标准模型',
     'quick Search Fields': 'ID',
 }

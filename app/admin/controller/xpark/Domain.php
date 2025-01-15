@@ -202,9 +202,9 @@ class Domain extends Backend
                 }
 
                 $channel = Channel::where('id', $data['channel_id'])->find();
-                if(!$channel) $this->error('通道不存在');
+                if (!$channel) $this->error('通道不存在');
                 $data['channel'] = $channel->channel_type;
-                $data['flag'] = $channel->channel_account;
+                $data['flag']    = $channel->channel_account;
 
                 $result = $this->model->save($data);
                 $this->model->commit();
@@ -261,10 +261,13 @@ class Domain extends Backend
                     }
                 }
 
-                $channel = Channel::where('id', $data['channel_id'])->find();
-                if(!$channel) $this->error('通道不存在');
-                $data['channel'] = $channel->channel_type;
-                $data['flag'] = $channel->channel_account;
+                if (isset($data['channel_id'])) {
+                    $channel = Channel::where('id', $data['channel_id'])->find();
+                    if (!$channel) $this->error('通道不存在');
+                    $data['channel'] = $channel->channel_type;
+                    $data['flag']    = $channel->channel_account;
+
+                }
 
                 $result = $row->save($data);
                 $this->model->commit();
