@@ -30,7 +30,7 @@ class Risk extends Backend
     public function initialize(): void
     {
         parent::initialize();
-        $this->model   = new \app\admin\model\xpark\Analysis();
+        $this->model   = new \app\admin\model\xpark\Data;
         $apps          = Apps::alias('apps')->field(['apps.*'])->select()->toArray();
         $this->apps    = array_column($apps, null, 'id');
         $channel       = Channel::select()->toArray();
@@ -68,21 +68,20 @@ class Risk extends Backend
     public function index(): void
     {
         list($where, $alias, $limit, $order) = $this->queryBuilder();
-
         /*
          * 主查询语句
          */
         $fields  = [
-            'xpark.*',
+            'data.*',
             'domain.is_hide as domain_is_hide',
             'apps.app_name',
-            'sum(xpark.ad_revenue) as xpark_ad_revenue',
+            'sum(data.ad_revenue) as xpark_ad_revenue',
             'COALESCE(activity.active_users, 0) AS xpark_active_users'
         ];
         $groupBy = [
-            'xpark.a_date',
-            'xpark.domain_id',
-            'xpark.channel_id',
+            'data.a_date',
+            'data.domain_id',
+            'data.channel_id',
         ];
 
         $active_sql = Activity::alias('activity')
@@ -95,15 +94,16 @@ class Risk extends Backend
             ->group('activity.date, activity.domain_id')
             ->buildSql();
 
-        $result = XparkData::alias('xpark')
+        $result = XparkData::alias('data')
             ->field($fields)
-            ->join('xpark_domain domain', 'domain.id = xpark.domain_id', 'left')
-            ->join('xpark_apps apps', 'apps.id = xpark.app_id', 'left')
-            ->leftJoin([$active_sql => 'activity'], 'xpark.domain_id = activity.domain_id AND xpark.a_date = activity.date')
+            ->join('xpark_domain domain', 'domain.id = data.domain_id', 'left')
+            ->join('xpark_apps apps', 'apps.id = data.app_id', 'left')
+            ->leftJoin([$active_sql => 'activity'], 'data.domain_id = activity.domain_id AND data.a_date = activity.date')
             ->where('domain.is_hide', 1)
-            ->where('xpark.status', 0)
+            ->where('data.status', 0)
+            ->where($where)
             ->group(implode(',', $groupBy))
-            ->order('xpark.a_date', 'desc');
+            ->order('data.a_date', 'desc');
 
         $sql    = $result->fetchSql(true)->select();
         $result = $result->paginate($limit);

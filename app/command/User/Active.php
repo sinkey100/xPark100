@@ -115,6 +115,7 @@ class Active extends Base
 
         $item = SLSActive::where($map)->find();
         if (!$item) {
+            $map['channel_id']  = $domain['channel_id'];
             $map['app_id']      = $domain['app_id'];
             $map['domain_name'] = $domain['domain'];
             $item               = SLSActive::create($map);

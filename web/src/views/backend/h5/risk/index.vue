@@ -85,7 +85,19 @@ const baTable = new baTableClass(
                     multiple: true
                 }
             },
-
+            {
+                label: '账号通道',
+                prop: 'channel_id',
+                align: 'center',
+                operator: 'IN',
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Channel/select',
+                    field: 'channel_alias',
+                    multiple: true
+                }
+            },
         ],
         dblClickNotEditColumn: [undefined],
     },
