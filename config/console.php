@@ -25,6 +25,7 @@ return [
         'SpendTikTok'   => \app\command\Spend\Tiktok::class,
         'SpendUnity'    => \app\command\Spend\Unity::class,
         'SpendAppLovin' => \app\command\Spend\AppLovin::class,
+        'SpendFacebook' => \app\command\Spend\Facebook::class,
 
 
         // 小米工具
