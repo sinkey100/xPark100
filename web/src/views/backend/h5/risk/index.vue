@@ -36,6 +36,7 @@ import {baTableApi} from '/@/api/common'
 import TableHeader from '/src/components/table/header/index.vue'
 import baTableClass from '/@/utils/baTable'
 import {TableProps} from "tdesign-vue-next";
+import {columns_app_id, columns_date, columns_domain_id, default_columns} from "/@/views/backend/h5/risk/columns";
 
 defineOptions({
     name: 'h5/risk',
@@ -50,13 +51,14 @@ const dimensions = reactive({
 })
 
 const tableData = ref([]);
-const columns = ref([]);
+const columns = ref();
 const isLoading = ref(false);
 const pagination = reactive({
     defaultCurrent: 1,
     defaultPageSize: 20,
     total: 0,
 });
+
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
  */
@@ -109,9 +111,22 @@ const baTable = new baTableClass(
     }, {
         getIndex: ({res}) => {
             tableData.value = res.data.list;
-            columns.value = res.data.columns;
             pagination.total = res.data.total;
             isLoading.value = false;
+
+            // 动态修改表格列
+            columns.value = [...default_columns];
+            if (dimensions.a_date) {
+                columns.value.unshift({...columns_date});
+            }
+            if (dimensions.app_id) {
+                const index = columns.value.findIndex((item: any) => item.colKey === 'channel_flag');
+                columns.value.splice(index + 1, 0, {...columns_app_id});
+            }
+            if (dimensions.domain_id) {
+                const index = columns.value.findIndex((item: any) => item.colKey === 'h5_advertise_spend');
+                columns.value.splice(index, 0, {...columns_domain_id});
+            }
         },
     }
 )
