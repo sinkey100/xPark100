@@ -23,9 +23,12 @@ class Risk extends Backend
 
     protected string|array $quickSearchField = ['id'];
 
-    protected float $cpc_cost_show = 0.04;
-    protected array $apps          = [];
-    protected array $channel       = [];
+    protected float $cpc_cost_show    = 0.04;
+    protected array $apps             = [];
+    protected array $channel          = [];
+    protected array $dimensions_input = [];
+    protected array $pageDates        = [];
+    protected array $use_Adate        = ['data', 'xpark'];
 
     public function initialize(): void
     {
@@ -68,41 +71,42 @@ class Risk extends Backend
     public function index(): void
     {
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $this->dimensions_input = $this->request->get('dimensions/a', []);
+        $this->dimensions_input = array_keys(array_filter($this->dimensions_input, fn($value) => $value === "true"));
+        $this->updateColumns();
+
         /*
          * 主查询语句
          */
-        $fields  = [
-            'data.*',
-            'domain.is_hide as domain_is_hide',
+        $_main_dimensions   = $this->getDimensionsFields('data');
+        $_main_dimensions[] = 'data.channel_id';
+
+        $_active_dimensions = $this->getDimensionsFields('activity');
+        $_active_dimensions[] = 'activity.channel_id';
+        $_active_join_on    = $this->getJoinOn('data', 'activity', $_active_dimensions);
+
+        $fields = array_merge($_main_dimensions, [
+            'data.channel_full', 'sum(data.ad_revenue) as xpark_ad_revenue',
             'apps.app_name',
-            'sum(data.ad_revenue) as xpark_ad_revenue',
+            'domain.domain', 'domain.is_hide as domain_is_hide',
             'COALESCE(activity.active_users, 0) AS xpark_active_users'
-        ];
-        $groupBy = [
-            'data.a_date',
-            'data.domain_id',
-            'data.channel_id',
-        ];
+        ]);
 
         $active_sql = Activity::alias('activity')
-            ->field([
-                'activity.date',
-                'activity.domain_id',
-                'SUM(activity.active_users) as active_users',
-            ])
+            ->field(array_merge($_active_dimensions, ['SUM(activity.active_users) as active_users']))
             ->where('activity.status', 0)
-            ->group('activity.date, activity.domain_id')
+            ->group(implode(',', $_active_dimensions))
             ->buildSql();
 
         $result = XparkData::alias('data')
             ->field($fields)
             ->join('xpark_domain domain', 'domain.id = data.domain_id', 'left')
             ->join('xpark_apps apps', 'apps.id = data.app_id', 'left')
-            ->leftJoin([$active_sql => 'activity'], 'data.domain_id = activity.domain_id AND data.a_date = activity.date')
+            ->leftJoin([$active_sql => 'activity'], $_active_join_on)
             ->where('domain.is_hide', 1)
             ->where('data.status', 0)
             ->where($where)
-            ->group(implode(',', $groupBy))
+            ->group(implode(',', $_main_dimensions))
             ->order('data.a_date', 'desc');
 
         $sql    = $result->fetchSql(true)->select();
@@ -111,59 +115,76 @@ class Risk extends Backend
         /*
          * 过滤信息
          */
-        $channel_ids = array_values(array_unique(array_filter(array_column($result->items(), 'channel_id'))));
-        $dates       = array_column($result->items(), 'a_date');
-        $start_date  = substr(min($dates), 0, 10);
-        $end_date    = substr(max($dates), 0, 10);
+        $channel_ids     = array_values(array_unique(array_filter(array_column($result->items(), 'channel_id'))));
+        $this->pageDates = array_column($result->items(), 'a_date');
 
         /*
          * 附带信息查询
          */
         # H5投放支出、活跃
-        $active_sql      = SLSActive::field(['channel_id', 'date', 'sum(active_users) as active_users'])->group('channel_id, date')->buildSql();
+        $_spend_dimensions    = $this->getDimensionsFields('spend', ['app_id', 'domain_id']);
+        $_spend_dimensions[]  = 'spend.channel_id';
+        $_active_dimensions   = $this->getDimensionsFields('active', ['app_id', 'domain_id']);
+        $_active_dimensions[] = 'active.channel_id';
+        $_active_join_on      = $this->getJoinOn('spend', 'active', $_active_dimensions);
+
+        $active_sql      = SLSActive::alias('active')
+            ->field(array_merge($_active_dimensions, ['sum(active_users) as active_users']))
+            ->group(implode(',', $_active_dimensions))->buildSql();
         $advertise_spend = SpendData::alias('spend')
-            ->field([
-                "CONCAT(DATE(spend.date), '|', spend.channel_id) as spend_key",
-                'spend.date', 'spend.channel_id', 'sum(spend.spend) as spend',
+            ->field(array_merge($_spend_dimensions, [
+                "CONCAT(" . (in_array('spend.date', $_spend_dimensions) ? 'DATE(spend.date),' : '') . " '|', spend.channel_id) as spend_key",
+                'sum(spend.spend) as spend',
                 'COALESCE(active.active_users, 0) AS active_users'
-            ])
-            ->leftJoin([$active_sql => 'active'], 'spend.channel_id = active.channel_id AND spend.date = active.date')
+            ]))
+            ->leftJoin([$active_sql => 'active'], $_active_join_on)
             ->where('spend.channel_id', 'in', $channel_ids)
             ->where('spend.status', 0)
-            ->whereBetweenTime('spend.date', $start_date, $end_date)
-            ->group('spend.channel_id, spend.date')
+            ->where($this->getBetweenTime('spend.date'))
+            ->group(implode(',', $_spend_dimensions))
             ->select()->toArray();
         $advertise_spend = array_column($advertise_spend, null, 'spend_key');
+
         # H5投放收入
+        $_revenue_dimensions   = $this->getDimensionsFields('xpark', ['app_id', 'domain_id']);
+        $_revenue_dimensions[] = 'xpark.channel_id';
+
         $advertise_revenue = XparkData::alias('xpark')
-            ->field([
-                "CONCAT(DATE(xpark.a_date), '|', xpark.channel_id) as revenue_key",
-                'xpark.a_date', 'xpark.channel_id', 'sum(xpark.ad_revenue) as ad_revenue'
-            ])
+            ->field(array_merge($_revenue_dimensions, [
+                "CONCAT(" . (in_array('xpark.a_date', $_spend_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id) as revenue_key",
+                'sum(xpark.ad_revenue) as ad_revenue'
+            ]))
             ->where('xpark.channel_id', 'in', $channel_ids)
             ->where('xpark.status', 0)
             ->where('xpark.app_id', 29)
-            ->whereBetweenTime('xpark.a_date', $start_date, $end_date)
-            ->group('xpark.channel_id, xpark.a_date')
+            ->where($this->getBetweenTime('xpark.a_date'))
+            ->group(implode(',', $_revenue_dimensions))
             ->select()->toArray();
         $advertise_revenue = array_column($advertise_revenue, null, 'revenue_key');
+
         # 游戏中心 显示层
-        $active_sql = SLSActive::field([
-            'channel_id', 'date', 'app_id', 'sum(new_users) as new_users', 'sum(active_users) as active_users'
-        ])->group('channel_id, app_id, date')->buildSql();
+        $_show_dimensions     = $this->getDimensionsFields('xpark', ['domain_id']);
+        $_show_dimensions[]   = 'xpark.channel_id';
+        $_active_dimensions   = $this->getDimensionsFields('active', ['domain_id']);
+        $_active_dimensions[] = 'active.channel_id';
+        $_active_join_on      = $this->getJoinOn('xpark', 'active', $_active_dimensions);
+
+        $active_sql = SLSActive::alias('active')->field(array_merge($_active_dimensions, [
+            'sum(active.new_users) as new_users', 'sum(active.active_users) as active_users'
+        ]))->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
-            ->field([
-                "CONCAT(DATE(xpark.a_date), '|', xpark.channel_id, '|', xpark.app_id) as revenue_key",
-                'xpark.a_date', 'xpark.channel_id', 'xpark.app_id', 'sum(xpark.ad_revenue) as ad_revenue',
+            ->field(array_merge($_show_dimensions, [
+                "CONCAT(" . (in_array('xpark.a_date', $_spend_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|', xpark.app_id) as revenue_key",
+                'sum(xpark.ad_revenue) as ad_revenue',
                 'COALESCE(active.active_users, 0) AS active_users',
                 'COALESCE(active.new_users, 0) AS new_users'
-            ])
+            ]))
             ->join('xpark_domain domain', 'domain.id = xpark.domain_id', 'left')
-            ->leftJoin([$active_sql => 'active'], 'xpark.channel_id = active.channel_id AND xpark.a_date = active.date AND xpark.app_id = active.app_id')
+            ->leftJoin([$active_sql => 'active'], $_active_join_on)
             ->where('domain.is_hide', 0)
             ->where('xpark.status', 0)
-            ->whereBetweenTime('xpark.a_date', $start_date, $end_date)
-            ->group('xpark.channel_id, xpark.a_date, xpark.app_id')
+            ->where($this->getBetweenTime('xpark.a_date'))
+            ->group(implode(',', $_show_dimensions))
             ->order('xpark.a_date', 'desc')
             ->select()->toArray();
         $show_data  = array_column($show_data, null, 'revenue_key');
@@ -174,7 +195,7 @@ class Risk extends Backend
          */
         $data = [];
         foreach ($result->items() as $row) {
-            $date                     = substr($row['a_date'], 0, 10);
+            $date                     = empty($row['a_date']) ? '' : substr($row['a_date'], 0, 10);
             $channel_id               = $row['channel_id'];
             $hb_hide_revenue          = $row['xpark_ad_revenue'];
             $h5_advertise_spend       = $advertise_spend[$date . '|' . $channel_id]['spend'] ?? 0;
@@ -209,7 +230,7 @@ class Risk extends Backend
                 "date"                     => $date,
                 "channel_flag"             => $row['channel_full'],
                 "app_name"                 => $row['app_name'],
-                "hb_domain_name"           => $row['sub_channel'],
+                "hb_domain_name"           => $row['domain'],
                 "h5_advertise_spend"       => round($h5_advertise_spend, 2),
                 "h5_advertise_revenue"     => round($h5_advertise_revenue, 2),
                 "h5_advertise_roi"         => $h5_advertise_spend == 0 ? '-' : round($h5_advertise_roi, 2) . '%',
@@ -240,6 +261,55 @@ class Risk extends Backend
             'total'   => $result->total(),
             'columns' => array_values($this->columns),
         ]);
+    }
+
+    protected function getDimensionsFields(string $prefix, array $exclude = []): array
+    {
+        $arr = [];
+        foreach ($this->dimensions_input as $field) {
+            if (in_array($field, $exclude)) continue;
+            if (!in_array($prefix, $this->use_Adate) && $field == 'a_date') $field = 'date';
+            $arr[] = $prefix . '.' . $field;
+        }
+        return $arr;
+    }
+
+    protected function getJoinOn(string $prefix_1, string $prefix_2, array $dimensions): string
+    {
+        $arr = [];
+        foreach ($dimensions as $field) {
+            $field   = str_replace($prefix_2 . '.', '', $field);
+            $field_1 = (in_array($prefix_1, $this->use_Adate) && $field == 'date') ? 'a_date' : $field;
+            $field_2 = (in_array($prefix_2, $this->use_Adate) && $field == 'date') ? 'a_date' : $field;
+            $arr[]   = $prefix_1 . '.' . $field_1 . ' = ' . $prefix_2 . '.' . $field_2;
+        }
+        return implode(' AND ', $arr);
+    }
+
+    protected function getBetweenTime(string $field): array
+    {
+        if (empty($this->pageDates)) return [];
+        $start_date = substr(min($this->pageDates), 0, 10);
+        $end_date   = substr(max($this->pageDates), 0, 10);
+        return [[$field, 'between', [$start_date, $end_date]]];
+    }
+
+    protected function updateColumns(): void
+    {
+        // a_date app_id domain_id
+        if (!in_array('a_date', $this->dimensions_input)) {
+            $key = key(array_filter($this->columns, fn($item) => $item['colKey'] === 'date'));
+            unset($this->columns[$key]);
+        }
+        if (!in_array('app_id', $this->dimensions_input)) {
+            $key = key(array_filter($this->columns, fn($item) => $item['colKey'] === 'app_name'));
+            unset($this->columns[$key]);
+        }
+        if (!in_array('domain_id', $this->dimensions_input)) {
+            $key = key(array_filter($this->columns, fn($item) => $item['colKey'] === 'hb_domain_name'));
+            unset($this->columns[$key]);
+        }
+        $this->columns = array_values($this->columns);
     }
 
 

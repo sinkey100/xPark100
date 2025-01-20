@@ -99,6 +99,7 @@ class GA extends Base
                 foreach ($response['rows'] as $row) {
                     $insert = [
                         'app_id'       => $domain->app_id,
+                        'channel_id'   => $domain->channel_id,
                         'domain_id'    => $domain->id,
                         'channel'      => 'GA',
                         'date'         => date("Y-m-d", strtotime($row['dimensionValues'][0]['value'])),
