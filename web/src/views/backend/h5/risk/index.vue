@@ -200,11 +200,20 @@ onMounted(() => {
     th[data-colkey="hb_show_revenue"] {
         color: #2ba471;
     }
+    .td-red{
+        color:#fff;
+        background: var(--td-error-color-5);
+    }
+    .td-green{
+        color:#fff;
+        background: var(--td-success-color-5);
+    }
 }
 
 :deep(.table-search) {
     display: none;
 }
+
 
 
 </style>

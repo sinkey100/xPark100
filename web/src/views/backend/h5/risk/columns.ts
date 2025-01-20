@@ -11,7 +11,17 @@ export const default_columns = [
     {
         colKey: "dimensions_spend", title: "支出维度", align: "center", width: "auto", children: [
             {colKey: "dimensions_spend_model", title: "支出维度标准模型", align: "center", ellipsis: true, width: 150},
-            {colKey: "dimensions_spend_gap", title: "支出维度差值", align: "center", ellipsis: true, width: 150}
+            {
+                colKey: "dimensions_spend_gap",
+                title: "支出维度差值",
+                align: "center",
+                ellipsis: true,
+                width: 150,
+                className: ({row}: { row: any }) => {
+                    if (row.dimensions_spend_gap > 0) return 'td-green';
+                    else if (row.dimensions_spend_gap < 0) return 'td-red';
+                },
+            }
         ]
     },
     {
@@ -23,14 +33,26 @@ export const default_columns = [
                 ellipsis: true,
                 width: 150
             },
-            {colKey: "dimensions_revenue_gap", title: "收入维度差值", align: "center", ellipsis: true, width: 150}
+            {
+                colKey: "dimensions_revenue_gap", title: "收入维度差值", align: "center", ellipsis: true, width: 150,
+                className: ({row}: { row: any }) => {
+                    if (row.dimensions_revenue_gap > 0) return 'td-green';
+                    else if (row.dimensions_revenue_gap < 0) return 'td-red';
+                },
+            }
         ]
     },
     {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 180},
     {
         colKey: "dimensions_user", title: "用户维度", align: "center", width: "auto", children: [
             {colKey: "dimensions_user_model", title: "用户维度标准模型", align: "center", ellipsis: true, width: 150},
-            {colKey: "dimensions_user_gap", title: "用户维度差值", align: "center", ellipsis: true, width: 150}
+            {
+                colKey: "dimensions_user_gap", title: "用户维度差值", align: "center", ellipsis: true, width: 150,
+                className: ({row}: { row: any }) => {
+                    if (row.dimensions_user_gap > 0) return 'td-green';
+                    else if (row.dimensions_user_gap < 0) return 'td-red';
+                },
+            }
         ]
     }
 ]
