@@ -51,6 +51,8 @@ const baTable = new baTableClass(
             { label: t('xpark.channel.channel_type'), prop: 'channel_type', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.channel.channel_account'), prop: 'channel_account', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.channel.channel_alias'), prop: 'channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            { label: t('xpark.channel.is_own'), prop: 'is_own', align: 'center', width: 110, render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1') } },
+
             {
                 label: t('xpark.channel.spend_model'),
                 prop: 'spend_model',

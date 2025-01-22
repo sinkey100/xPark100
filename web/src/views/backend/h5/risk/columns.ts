@@ -42,9 +42,9 @@ export const default_columns = [
             }
         ]
     },
-    {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 180},
     {
         colKey: "dimensions_user", title: "用户维度", align: "center", width: "auto", children: [
+            {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 180},
             {colKey: "dimensions_user_model", title: "用户维度标准模型", align: "center", ellipsis: true, width: 150},
             {
                 colKey: "dimensions_user_gap", title: "用户维度差值", align: "center", ellipsis: true, width: 150,

@@ -7,5 +7,6 @@ export default {
     admin_id: '用户',
     app_id: '所属应用',
     rate: '分成比例',
+    is_hide: '隐藏层',
     'quick Search Fields': 'ID',
 }

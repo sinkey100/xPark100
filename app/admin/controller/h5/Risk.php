@@ -3,9 +3,6 @@
 namespace app\admin\controller\h5;
 
 use app\admin\model\xpark\Activity;
-use think\facade\Db;
-use Throwable;
-use DateTime;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Apps;
@@ -34,7 +31,7 @@ class Risk extends Backend
         $this->model   = new \app\admin\model\xpark\Data;
         $apps          = Apps::alias('apps')->field(['apps.*'])->select()->toArray();
         $this->apps    = array_column($apps, null, 'id');
-        $channel       = Channel::select()->toArray();
+        $channel       = Channel::where('is_own', 1)->select()->toArray();
         $this->channel = array_column($channel, null, 'id');
     }
 
@@ -50,9 +47,9 @@ class Risk extends Backend
         $_main_dimensions   = $this->getDimensionsFields('data');
         $_main_dimensions[] = 'data.channel_id';
 
-        $_active_dimensions = $this->getDimensionsFields('activity');
+        $_active_dimensions   = $this->getDimensionsFields('activity');
         $_active_dimensions[] = 'activity.channel_id';
-        $_active_join_on    = $this->getJoinOn('data', 'activity', $_active_dimensions);
+        $_active_join_on      = $this->getJoinOn('data', 'activity', $_active_dimensions);
 
         $fields = array_merge($_main_dimensions, [
             'data.channel_full', 'sum(data.ad_revenue) as xpark_ad_revenue',
@@ -74,9 +71,11 @@ class Risk extends Backend
             ->leftJoin([$active_sql => 'activity'], $_active_join_on)
             ->where('domain.is_hide', 1)
             ->where('data.status', 0)
+            ->where('data.channel_id', 'in', array_keys($this->channel))
             ->where($where)
             ->group(implode(',', $_main_dimensions))
-            ->order('data.a_date', 'desc');
+            ->order('data.a_date', 'desc')
+            ->order('xpark_ad_revenue', 'desc');
 
         $sql    = $result->fetchSql(true)->select();
         $result = $result->paginate($limit);
@@ -143,7 +142,7 @@ class Risk extends Backend
         ]))->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
-                "CONCAT(" . (in_array('xpark.a_date', $_spend_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|', xpark.app_id) as revenue_key",
+                "CONCAT(" . (in_array('xpark.a_date', $_show_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|' " . (in_array('xpark.app_id', $_show_dimensions) ? ',DATE(xpark.app_id),' : '') . ") as revenue_key",
                 'sum(xpark.ad_revenue) as ad_revenue',
                 'COALESCE(active.active_users, 0) AS active_users',
                 'COALESCE(active.new_users, 0) AS new_users'
@@ -171,9 +170,9 @@ class Risk extends Backend
             $h5_advertise_revenue     = $advertise_revenue[$date . '|' . $channel_id]['ad_revenue'] ?? 0;
             $h5_advertise_roi         = $h5_advertise_spend ? $h5_advertise_revenue / $h5_advertise_spend * 100 : 0;
             $h5_advertise_active      = $advertise_spend[$date . '|' . $channel_id]['active_users'] ?? 0;
-            $hb_show_revenue          = $show_data[$date . '|' . $channel_id . '|' . $row['app_id']]['ad_revenue'] ?? 0;
-            $hb_show_active           = $show_data[$date . '|' . $channel_id . '|' . $row['app_id']]['active_users'] ?? 0;
-            $hb_show_new              = $show_data[$date . '|' . $channel_id . '|' . $row['app_id']]['new_users'] ?? 0;
+            $hb_show_revenue          = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['ad_revenue'] ?? 0;
+            $hb_show_active           = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['active_users'] ?? 0;
+            $hb_show_new              = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['new_users'] ?? 0;
             $dimensions_spend_model   = $this->channel[$channel_id]['spend_model'] ?? 0;
             $dimensions_revenue_model = $this->channel[$channel_id]['revenue_model'] ?? 0;
             $dimensions_user_model    = $this->channel[$channel_id]['user_model'] ?? 0;
@@ -196,27 +195,49 @@ class Risk extends Backend
 
 
             $item = [
+                // 日期
                 "date"                     => $date,
+                // 账号
                 "channel_flag"             => $row['channel_full'],
+                // 应用
                 "app_name"                 => $row['app_name'],
+                // HB链接
                 "hb_domain_name"           => $row['domain'],
+                // H5投放支出
                 "h5_advertise_spend"       => round($h5_advertise_spend, 2),
+                // H5投放收入
                 "h5_advertise_revenue"     => round($h5_advertise_revenue, 2),
+                // h5_advertise_roi
                 "h5_advertise_roi"         => $h5_advertise_spend == 0 ? '-' : round($h5_advertise_roi, 2) . '%',
+                // H5投放活跃
                 "h5_advertise_active"      => $h5_advertise_active,
+                // 游戏中心活跃
                 "hb_show_active"           => $hb_show_active,
+                // 游戏中心新增
                 "hb_show_new"              => $hb_show_new,
+                // 游戏中心收入
                 "hb_show_revenue"          => round($hb_show_revenue, 2),
+                // HB收入
                 "hb_hide_revenue"          => round($hb_hide_revenue, 2),
+                // 支出维度
                 "dimensions_spend"         => $dimensions_spend,
+                // 支出维度标准模型
                 "dimensions_spend_model"   => $dimensions_spend_model,
+                // 支出维度差值
                 "dimensions_spend_gap"     => round($dimensions_spend_gap, 2),
+                // 收入维度
                 "dimensions_revenue"       => $dimensions_revenue,
+                // 收入维度标准模型
                 "dimensions_revenue_model" => $dimensions_revenue_model,
+                // 收入维度差值
                 "dimensions_revenue_gap"   => round($dimensions_revenue_gap, 2),
+                // 用户维度
                 "hb_hide_active"           => $hb_hide_active,
+                // HB活跃
                 "dimensions_user"          => $dimensions_user,
+                // 用户维度标准模型
                 "dimensions_user_model"    => $dimensions_user_model,
+                // 用户维度差值
                 "dimensions_user_gap"      => round($dimensions_user_gap, 2),
             ];
 
@@ -225,9 +246,9 @@ class Risk extends Backend
 
 
         $this->success('', [
-            'sql'     => $sql,
-            'list'    => $data,
-            'total'   => $result->total(),
+            'sql'   => $sql,
+            'list'  => $data,
+            'total' => $result->total(),
         ]);
     }
 

@@ -179,15 +179,16 @@ onMounted(() => {
         --td-comp-paddingTB-m: 8px;
     }
 
-    .t-table__th-col-revenue, th[data-colkey^="dimensions_spend"] {
+    th[data-colkey^="dimensions_spend"] {
         background-color: var(--el-color-primary-light-9);
     }
 
-    .t-table__th-col-clear, th[data-colkey^="dimensions_revenue"] {
+    th[data-colkey^="dimensions_revenue"] {
         background-color: var(--el-color-success-light-9);
     }
 
-    .t-table__th-col-hold, th[data-colkey^="dimensions_user"] {
+    th[data-colkey^="dimensions_user"],
+    th[data-colkey="hb_hide_active"] {
         background-color: var(--el-color-warning-light-8);
     }
 
@@ -200,12 +201,14 @@ onMounted(() => {
     th[data-colkey="hb_show_revenue"] {
         color: #2ba471;
     }
-    .td-red{
-        color:#fff;
+
+    .td-red {
+        color: #fff;
         background: var(--td-error-color-5);
     }
-    .td-green{
-        color:#fff;
+
+    .td-green {
+        color: #fff;
         background: var(--td-success-color-5);
     }
 }
@@ -213,7 +216,6 @@ onMounted(() => {
 :deep(.table-search) {
     display: none;
 }
-
 
 
 </style>

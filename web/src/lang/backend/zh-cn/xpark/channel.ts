@@ -11,5 +11,6 @@ export default {
     spend_model: '支出标准模型',
     revenue_model: '收入标准模型',
     user_model: '用户标准模型',
+    is_own: '自有',
     'quick Search Fields': 'ID',
 }
