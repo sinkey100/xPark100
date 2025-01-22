@@ -45,7 +45,7 @@ defineOptions({
 const {t} = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
-    a_date: true,
+    a_date: false,
     domain_id: false,
     app_id: false,
 })
@@ -131,10 +131,19 @@ const baTable = new baTableClass(
     }
 )
 
+const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
     baTable.table.filter!.page = pageInfo.current;
     baTable.table.filter!.limit = pageInfo.pageSize;
-    baTable.getIndex();
+    baTable.getIndex()?.then(() => {
+        console.log(baTable.table.filter!.search);
+    });
 };
 
 provide('baTable', baTable)
@@ -145,6 +154,18 @@ onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.table.filter!.limit = 20;
     baTable.mount()
+    // 默认查询当月
+    const date = new Date();
+    const firstDay = formatDate(new Date(date.getFullYear(), date.getMonth(), 1)); // 当月第一天
+    const lastDay = formatDate(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+    baTable.comSearch.form['a_date'] = [firstDay, lastDay];
+    baTable.table.filter!.search?.push({
+        field: 'a_date',
+        val: `${firstDay} 00:00:00,${lastDay} 23:59:59`,
+        operator: 'RANGE',
+        render: 'datetime',
+    });
+
     baTable.getIndex()?.then(() => {
         baTable.initSort()
         baTable.dragSort()
@@ -187,8 +208,7 @@ onMounted(() => {
         background-color: var(--el-color-success-light-9);
     }
 
-    th[data-colkey^="dimensions_user"],
-    th[data-colkey="hb_hide_active"] {
+    th[data-colkey^="dimensions_user"] {
         background-color: var(--el-color-warning-light-8);
     }
 

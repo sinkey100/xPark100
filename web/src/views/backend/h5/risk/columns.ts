@@ -7,7 +7,8 @@ export const default_columns = [
     {colKey: "hb_show_active", title: "游戏中心活跃", align: "center", width: 120},
     {colKey: "hb_show_new", title: "游戏中心新增", align: "center", width: 120},
     {colKey: "hb_show_revenue", title: "游戏中心收入", align: "center", width: 120},
-    {colKey: "hb_hide_revenue", title: "HB收入", align: "center", width: 100},
+    {colKey: "hb_hide_revenue", title: "HB收入", align: "center", width: 120},
+    {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 120},
     {
         colKey: "dimensions_spend", title: "支出维度", align: "center", width: "auto", children: [
             {colKey: "dimensions_spend_model", title: "支出维度标准模型", align: "center", ellipsis: true, width: 150},
@@ -44,7 +45,6 @@ export const default_columns = [
     },
     {
         colKey: "dimensions_user", title: "用户维度", align: "center", width: "auto", children: [
-            {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 180},
             {colKey: "dimensions_user_model", title: "用户维度标准模型", align: "center", ellipsis: true, width: 150},
             {
                 colKey: "dimensions_user_gap", title: "用户维度差值", align: "center", ellipsis: true, width: 150,
