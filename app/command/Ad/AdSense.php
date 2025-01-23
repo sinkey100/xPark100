@@ -14,6 +14,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\DbException;
 use think\db\exception\ModelNotFoundException;
 use Exception;
+use app\admin\model\h5\ChannelRevenue;
 
 class AdSense extends Base
 {
@@ -48,6 +49,8 @@ class AdSense extends Base
         }
 
         $this->log('历史数据已删除');
+
+        $this->revenue();
 
         $this->log('======== AdSense 拉取数据完成 ========', false);
     }
@@ -246,6 +249,53 @@ class AdSense extends Base
             unset($insert, $result, $adsense);
             $this->saveData($data);
             unset($data);
+        }
+    }
+
+    protected function revenue(): void
+    {
+        $arr = [4 => 7, 5 => 4];
+        foreach ($arr as $channel_id => $account_id) {
+            $account = Account::where('id', $account_id)->find();
+            if (!$account) throw new Exception('AdSense 账号标记不存在');
+            $client = (new GoogleSDK())->init($account);
+            $client->setAccessToken($account->auth);
+            $adsense = new GoogleAdSense($client);
+
+            // 拉取数据参数
+            $startTime = strtotime("-3 days");
+            $params    = [
+                'startDate.year'  => date("Y", $startTime),
+                'startDate.month' => date("m", $startTime),
+                'startDate.day'   => date("d", $startTime),
+                'endDate.year'    => date("Y"),
+                'endDate.month'   => date("m"),
+                'endDate.day'     => date("d"),
+                'metrics'         => ['ESTIMATED_EARNINGS'],
+                'dimensions'      => ['DATE'],
+                'orderBy'         => '+DATE',
+            ];
+
+            $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            if (!$result['rows'] || count($result['rows']) == 0) continue;
+            $headers = array_column($result['headers'], 'name');
+            foreach ($result['rows'] as $row) {
+                $insert = [];
+                foreach ($headers as $k => $header) {
+                    $insert[$header] = $row['cells'][$k]['value'];
+                }
+                $row = ChannelRevenue::where('date', $insert['DATE'])->where('channel_id', $channel_id)->find();
+                if ($row) {
+                    $row->revenue = $insert['ESTIMATED_EARNINGS'];
+                    $row->save();
+                } else {
+                    ChannelRevenue::create([
+                        'date'       => $insert['DATE'],
+                        'channel_id' => $channel_id,
+                        'revenue'    => $insert['ESTIMATED_EARNINGS']
+                    ]);
+                }
+            }
         }
     }
 

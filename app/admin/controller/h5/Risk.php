@@ -2,6 +2,7 @@
 
 namespace app\admin\controller\h5;
 
+use app\admin\model\h5\ChannelRevenue;
 use app\admin\model\xpark\Activity;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Channel;
@@ -24,6 +25,8 @@ class Risk extends Backend
     protected array $dimensions_input = [];
     protected array $pageDates        = [];
     protected array $use_Adate        = ['data', 'xpark'];
+    protected array $special_channel  = [4, 5];
+    protected array $date_range       = [];
 
     public function initialize(): void
     {
@@ -41,6 +44,15 @@ class Risk extends Backend
         $this->dimensions_input = $this->request->get('dimensions/a', []);
         $this->dimensions_input = array_keys(array_filter($this->dimensions_input, fn($value) => $value === "true"));
 
+        // CY LL
+        $channel_where_raw = array_column($where, null, 0);
+        $channel_where     = [];
+        if (isset($channel_where_raw['data.a_date'])) {
+            $this->date_range = $channel_where_raw['data.a_date'][2];
+            $channel_where[]  = ['date', 'between', $channel_where_raw['data.a_date'][2]];
+        }
+        $channel_revenue = ChannelRevenue::field(['channel_id', 'sum(revenue) as revenue'])->where($channel_where)->group('channel_id')->select();
+        $channel_revenue = array_column($channel_revenue->toArray(), null, 'channel_id');
         /*
          * 主查询语句
          */
@@ -50,6 +62,9 @@ class Risk extends Backend
         $_active_dimensions   = $this->getDimensionsFields('activity');
         $_active_dimensions[] = 'activity.channel_id';
         $_active_join_on      = $this->getJoinOn('data', 'activity', $_active_dimensions);
+
+        $order_by = ['xpark_ad_revenue desc'];
+        if (in_array('data.a_date', $_main_dimensions)) array_unshift($order_by, 'data.a_date desc');
 
         $fields = array_merge($_main_dimensions, [
             'data.channel_full', 'sum(data.ad_revenue) as xpark_ad_revenue',
@@ -74,8 +89,7 @@ class Risk extends Backend
             ->where('data.channel_id', 'in', array_keys($this->channel))
             ->where($where)
             ->group(implode(',', $_main_dimensions))
-            ->order('data.a_date', 'desc')
-            ->order('xpark_ad_revenue', 'desc');
+            ->order($order_by);
 
         $sql    = $result->fetchSql(true)->select();
         $result = $result->paginate($limit);
@@ -176,23 +190,33 @@ class Risk extends Backend
             $dimensions_spend_model   = $this->channel[$channel_id]['spend_model'] ?? 0;
             $dimensions_revenue_model = $this->channel[$channel_id]['revenue_model'] ?? 0;
             $dimensions_user_model    = $this->channel[$channel_id]['user_model'] ?? 0;
-            // 支出维度 = 【HB收入】/（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】）
-            $DENOMINATOR      = $h5_advertise_spend + $hb_show_new * $this->cpc_cost_show;
+            // 支出维度 = 【HB收入】/（【HB收入】+（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】））
+            $DENOMINATOR      = $hb_hide_revenue + ($h5_advertise_spend + $hb_show_new * $this->cpc_cost_show);
             $dimensions_spend = $DENOMINATOR == 0 ? 0 : $hb_hide_revenue / $DENOMINATOR;
-            // 支出维度差值 = （【支出维度标准模型】-【支出维度】）*（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】）
+            // 支出维度差值 = （【支出维度标准模型】-【支出维度】）*（【HB收入】+（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】））
             $dimensions_spend_gap = ($dimensions_spend_model - $dimensions_spend) * $DENOMINATOR;
-            // 收入维度 = 【HB收入】/（【H5投放收入】+【游戏中心收入】）
-            $DENOMINATOR        = $h5_advertise_revenue + $hb_show_revenue;
+            // 收入维度 = 【HB收入】/（【H5投放收入】+【游戏中心收入】+【HB收入】）
+            $DENOMINATOR        = $h5_advertise_revenue + $hb_show_revenue + $hb_hide_revenue;
             $dimensions_revenue = $DENOMINATOR == 0 ? 0 : $hb_hide_revenue / $DENOMINATOR;
-            // 收入维度差值 = （【收入维度标准模型】-【收入维度】）*（【H5投放收入】+【游戏中心收入】）
+            if (in_array($channel_id, $this->special_channel)) {
+                // CY LL 收入维度 = （【HB收入】/ 【账号流水】）
+                $flow               = $channel_revenue[$channel_id]['revenue'];
+                $dimensions_revenue = $flow == 0 ? 0 : $hb_hide_revenue / $flow;
+            }
+            // 收入维度差值 = （【收入维度标准模型】-【收入维度】）*（【H5投放收入】+【游戏中心收入】+【HB收入】）
             $dimensions_revenue_gap = ($dimensions_revenue_model - $dimensions_revenue) * $DENOMINATOR;
-            // 用户维度 = 【HB活跃】/（【H5投放活跃】+【游戏中心活跃】）
+            // 用户维度 = 【HB活跃】/（【HB活跃】+【H5投放活跃】+【游戏中心活跃】）
             $hb_hide_active  = $row['xpark_active_users'];
-            $DENOMINATOR     = $h5_advertise_active + $hb_show_active;
+            $DENOMINATOR     = $h5_advertise_active + $hb_show_active + $hb_hide_active;
             $dimensions_user = $DENOMINATOR == 0 ? 0 : $hb_hide_active / $DENOMINATOR;
-            // 用户维度差值 = （【用户维度标准模型】-【用户维度】）*（【H5投放活跃】+【游戏中心活跃】）
+            // 用户维度差值 =（【用户维度标准模型】-【用户维度】）*（【HB活跃】+【H5投放活跃】+【游戏中心活跃】）
             $dimensions_user_gap = ($dimensions_user_model * $dimensions_user) * $DENOMINATOR;
 
+            // CY LL
+            if (in_array($channel_id, $this->special_channel)) {
+                $dimensions_user_model    = $dimensions_spend_model = $dimensions_user_gap = $dimensions_spend_gap = '-';
+                $dimensions_revenue_model = 0.1;
+            }
 
             $item = [
                 // 日期
@@ -224,21 +248,21 @@ class Risk extends Backend
                 // 支出维度标准模型
                 "dimensions_spend_model"   => $dimensions_spend_model,
                 // 支出维度差值
-                "dimensions_spend_gap"     => round($dimensions_spend_gap, 2),
+                "dimensions_spend_gap"     => $dimensions_spend_gap == '-' ? '-' : round($dimensions_spend_gap, 2),
                 // 收入维度
                 "dimensions_revenue"       => $dimensions_revenue,
                 // 收入维度标准模型
                 "dimensions_revenue_model" => $dimensions_revenue_model,
                 // 收入维度差值
-                "dimensions_revenue_gap"   => round($dimensions_revenue_gap, 2),
+                "dimensions_revenue_gap"   => $dimensions_revenue_gap == '-' ? '-' : round($dimensions_revenue_gap, 2),
                 // 用户维度
-                "hb_hide_active"           => $hb_hide_active,
-                // HB活跃
                 "dimensions_user"          => $dimensions_user,
+                // HB活跃
+                "hb_hide_active"           => $hb_hide_active,
                 // 用户维度标准模型
                 "dimensions_user_model"    => $dimensions_user_model,
                 // 用户维度差值
-                "dimensions_user_gap"      => round($dimensions_user_gap, 2),
+                "dimensions_user_gap"      => $dimensions_user_gap == '-' ? '-' : round($dimensions_user_gap, 2),
             ];
 
             $data[] = $item;
@@ -277,6 +301,7 @@ class Risk extends Backend
 
     protected function getBetweenTime(string $field): array
     {
+        if (!empty($this->date_range)) return [[$field, 'between', $this->date_range]];
         if (empty($this->pageDates)) return [];
         $start_date = substr(min($this->pageDates), 0, 10);
         $end_date   = substr(max($this->pageDates), 0, 10);
