@@ -156,7 +156,7 @@ class Risk extends Backend
         ]))->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
-                "CONCAT(" . (in_array('xpark.a_date', $_show_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|' " . (in_array('xpark.app_id', $_show_dimensions) ? ',DATE(xpark.app_id),' : '') . ") as revenue_key",
+                "CONCAT(" . (in_array('xpark.a_date', $_show_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|' " . (in_array('xpark.app_id', $_show_dimensions) ? ',DATE(xpark.app_id)' : '') . ") as revenue_key",
                 'sum(xpark.ad_revenue) as ad_revenue',
                 'COALESCE(active.active_users, 0) AS active_users',
                 'COALESCE(active.new_users, 0) AS new_users'
