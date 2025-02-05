@@ -151,9 +151,10 @@ class Risk extends Backend
         $_active_dimensions[] = 'active.channel_id';
         $_active_join_on      = $this->getJoinOn('xpark', 'active', $_active_dimensions);
 
-        $active_sql = SLSActive::alias('active')->field(array_merge($_active_dimensions, [
-            'sum(active.new_users) as new_users', 'sum(active.active_users) as active_users'
-        ]))->group(implode(',', $_active_dimensions))->buildSql();
+        $active_sql = SLSActive::alias('active')
+            ->field(array_merge($_active_dimensions, ['sum(active.new_users) as new_users', 'sum(active.active_users) as active_users']))
+            ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_hide = 0', 'inner')
+            ->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
                 "CONCAT(" . (in_array('xpark.a_date', $_show_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|' " . (in_array('xpark.app_id', $_show_dimensions) ? ',DATE(xpark.app_id)' : '') . ") as revenue_key",
