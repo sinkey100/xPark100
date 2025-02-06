@@ -25,11 +25,12 @@ class Facebook extends Base
         SpendData::where('channel_name', 'facebook')->where('status', 1)->delete();
 
         // 拉数据
-        $url   = 'https://graph.facebook.com/v21.0/act_903977011846146/insights';
-        $query = [
+        $start_date = date("Y-m-d", strtotime("-{$this->days} days"));
+        $end_date   = date("Y-m-d");
+        $query      = [
             'access_token'   => Env::get('SPEND.FACEBOOK_TOKEN'),
             'fields'         => 'campaign_id,campaign_name,spend,impressions,clicks',
-            'time_range'     => '',
+            'time_range'     => '{"since":"' . $start_date . '","until":"' . $end_date . '"}',
             'level'          => 'campaign',
             'time_increment' => '1',
             'breakdowns'     => 'country',
@@ -38,10 +39,8 @@ class Facebook extends Base
 
         $insert_list = [];
 
-        for ($i = $this->days - 1; $i >= 0; $i--) {
-            $date                = date("Y-m-d", strtotime("-{$i} days"));
-            $query['time_range'] = '{"since":"' . $date . '","until":"' . $date . '"}';
-
+        foreach ($advertiser_ids as $advertiser_id) {
+            $url    = "https://graph.facebook.com/v21.0/act_{$advertiser_id}/insights";
             $result = $this->http('GET', $url, [
                 'query' => $query,
             ]);
@@ -80,10 +79,7 @@ class Facebook extends Base
 
         $this->saveSpendData($insert_list);
 
-        for ($i = $this->days - 1; $i >= 0; $i--) {
-            $date = date("Y-m-d", strtotime("-{$i} days"));
-            SpendData::where('channel_name', 'facebook')->where('status', 0)->where('date', $date)->delete();
-        }
+        SpendData::where('channel_name', 'facebook')->where('status', 0)->whereTime('date', '>=', date("Y-m-d", strtotime("-{$this->days} days")))->delete();
         SpendData::where('channel_name', 'facebook')->where('status', 1)->update(['status' => 0]);
     }
 
