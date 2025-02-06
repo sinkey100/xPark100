@@ -321,31 +321,11 @@ class Base extends Command
         return [$result, $advertiser_ids];
     }
 
-    protected function campaignToDomain(string $campaign_full_name, array $table): array|bool
+    protected function appName2App(string $appstore_name): array|bool
     {
-        $item = false;
-        foreach ($table as $row) {
-            if (str_starts_with(strtolower($campaign_full_name), strtolower($row['campaign_name']))) {
-                $row['is_app'] = isset($row['is_app']) && $row['is_app'] == true;
-                if ($row['is_app']) {
-                    if (!isset($this->apps[$row['app_package_name_or_url']])) continue;
-                    $row['app_id']        = $this->apps[$row['app_package_name_or_url']]['id'];
-                    $row['domain_id']     = 0;
-                    $row['channel_id']    = 0;
-                    $row['domain_or_app'] = 1;
-                } else {
-                    if (!isset($this->domains[$row['app_package_name_or_url']])) continue;
-                    $domain               = $this->domains[$row['app_package_name_or_url']];
-                    $row['app_id']        = $domain['app_id'];
-                    $row['domain_id']     = $domain['id'];
-                    $row['channel_id']    = $domain['channel_id'];
-                    $row['domain_or_app'] = $domain['is_app'];
-                }
-                $item = $row;
-                break;
-            }
-        }
-        return $item;
+        $result = array_filter($this->apps, fn($item) => $item['appstore_name'] == $appstore_name);
+        if (!$result) return false;
+        return reset($result);
     }
 
 

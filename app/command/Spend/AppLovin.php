@@ -28,8 +28,8 @@ class AppLovin extends Base
         $url   = 'https://r.applovin.com/report';
         $query = [
             'api_key'     => Env::get('SPEND.APPLOVIN_API_KEY'),
-            'start'       => '',
-            'end'         => '',
+            'start'       => date("Y-m-d", strtotime("-{$this->days} days")),
+            'end'         => date("Y-m-d"),
             'format'      => 'json',
             'columns'     => 'ad_id,day,campaign,country,impressions,clicks,campaign_package_name,cost',
             'report_type' => 'advertiser'
@@ -37,54 +37,48 @@ class AppLovin extends Base
 
         $insert_list = [];
 
-        for ($i = $this->days - 1; $i >= 0; $i--) {
-            $date           = date("Y-m-d", strtotime("-{$i} days"));
-            $query['start'] = $date;
-            $query['end']   = $date;
 
+        $result = $this->http('GET', $url, [
+            'query' => $query,
+        ]);
+        if ($result['code'] != 200) {
+            $this->log('请求失败');
+            $this->log(json_encode($result));
+        };
 
-            $result = $this->http('GET', $url, [
-                'query' => $query,
-            ]);
-            if ($result['code'] != 200) continue;
+        foreach ($result['results'] as $item) {
+            if (!isset($this->apps[$item['campaign_package_name']])) continue;
 
-            foreach ($result['results'] as $item) {
-                $table_row = $this->campaignToDomain($item['campaign'], $spend_table);
-                if (!$table_row) continue;
+            $clicks      = $item['clicks'];
+            $impressions = $item['impressions'];
+            $spend       = $item['cost'];
+            $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
+            $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
 
-                $clicks      = $item['clicks'];
-                $impressions = $item['impressions'];
-                $spend       = $item['cost'];
-                $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
-                $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
+            if (empty($impressions) && (empty($country_code))) continue;
 
-                if (empty($impressions) && (empty($country_code))) continue;
-
-                $insert_list[] = [
-                    'app_id'        => $table_row['app_id'],
-                    'channel_name'  => 'applovin',
-                    'domain_id'     => $table_row['domain_id'],
-                    'channel_id'    => $table_row['channel_id'],
-                    'is_app'        => $table_row['domain_or_app'],
-                    'date'          => $item['day'],
-                    'country_code'  => strtoupper($item['country']),
-                    'spend'         => $spend,
-                    'clicks'        => $clicks,
-                    'impressions'   => $impressions,
-                    'install'       => 0,
-                    'campaign_name' => $item['campaign'],
-                    'cpc'           => $cpc,
-                    'cpm'           => $cpm,
-                ];
-            }
+            $insert_list[] = [
+                'app_id'        => $this->apps[$item['campaign_package_name']]['id'],
+                'channel_name'  => 'applovin',
+                'domain_id'     => 0,
+                'channel_id'    => 0,
+                'is_app'        => 1,
+                'date'          => $item['day'],
+                'country_code'  => strtoupper($item['country']),
+                'spend'         => $spend,
+                'clicks'        => $clicks,
+                'impressions'   => $impressions,
+                'install'       => 0,
+                'campaign_name' => $item['campaign'],
+                'cpc'           => $cpc,
+                'cpm'           => $cpm,
+            ];
         }
+
 
         $this->saveSpendData($insert_list);
 
-        for ($i = $this->days - 1; $i >= 0; $i--) {
-            $date = date("Y-m-d", strtotime("-{$i} days"));
-            SpendData::where('channel_name', 'applovin')->where('status', 0)->where('date', $date)->delete();
-        }
+        SpendData::where('channel_name', 'applovin')->where('status', 0)->whereTime('date', '>=', date("Y-m-d", strtotime("-{$this->days} days")))->delete();
         SpendData::where('channel_name', 'applovin')->where('status', 1)->update(['status' => 0]);
     }
 
