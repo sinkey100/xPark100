@@ -133,7 +133,7 @@ class Risk extends Backend
 
         $advertise_revenue = XparkData::alias('xpark')
             ->field(array_merge($_revenue_dimensions, [
-                "CONCAT(" . (in_array('xpark.a_date', $_spend_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id) as revenue_key",
+                "CONCAT(" . (in_array('a_date', $this->dimensions_input) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id) as revenue_key",
                 'sum(xpark.ad_revenue) as ad_revenue'
             ]))
             ->where('xpark.channel_id', 'in', $channel_ids)

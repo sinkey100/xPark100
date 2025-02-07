@@ -4,6 +4,7 @@ namespace app\command\User;
 
 use app\admin\model\xpark\Data;
 use app\admin\model\sls\Hour as SLSHour;
+use app\admin\model\xpark\DataHour;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Utc;
 use app\command\Base;
@@ -30,7 +31,6 @@ class Hour extends Base
         // 确认参数
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
         $this->sls        = new SLS();
-        $this->clickhouse = $this->init_clickhouse();
         $this->days       = 2;
         $this->start_time = strtotime(date('Y-m-d 00:00:00', strtotime("-" . ($this->days - 1) . " day"))) - 8 * 3600;
         $this->end_time   = strtotime('-1 hour', strtotime(date('Y-m-d H:00:00')));
@@ -40,7 +40,7 @@ class Hour extends Base
         $this->domains = array_column($sls_domains, null, 'domain');
 
         // 重置数据
-        $this->clickhouse->write('truncate table ba_xpark_data_hour;');
+        Db::execute('truncate table ba_xpark_data_hour;');
         Db::execute('truncate table ba_sls_hour;');
         Utc::where('status', 1)->delete();
 
@@ -128,35 +128,29 @@ class Hour extends Base
                         $rate          = $hour['rate'];
                         $money         = $money + $daily['ad_revenue'] * $rate;
                         $insert_list[] = [
-                            $daily['app_id'],
-                            $daily['domain_id'],
-                            $daily['channel'],
-                            $daily['channel_id'],
-                            $daily['channel_full'],
-                            $daily['country_level'],
-                            $daily->getData('country_code'),
-                            $daily['country_name'],
-                            $daily['sub_channel'],
-                            $daily['ad_placement_id'],
-                            $daily['requests'] * $rate,
-                            $daily['fills'] * $rate,
-                            $daily['impressions'] * $rate,
-                            $daily['clicks'] * $rate,
-                            $daily['ad_revenue'] * $rate,
-                            $daily['gross_revenue'] * $rate,
-                            $daily['channel_type'],
-                            $hour['time_utc_0'],
-                            $hour['time_utc_8'],
-                            0
+                            'app_id'          => $daily['app_id'],
+                            'domain_id'       => $daily['domain_id'],
+                            'channel'         => $daily['channel'],
+                            'channel_id'      => $daily['channel_id'],
+                            'channel_full'    => $daily['channel_full'],
+                            'country_level'   => $daily['country_level'],
+                            'country_code'    => $daily->getData('country_code'),
+                            'country_name'    => $daily['country_name'],
+                            'sub_channel'     => $daily['sub_channel'],
+                            'ad_placement_id' => $daily['ad_placement_id'],
+                            'requests'        => $daily['requests'] * $rate,
+                            'fills'           => $daily['fills'] * $rate,
+                            'impressions'     => $daily['impressions'] * $rate,
+                            'clicks'          => $daily['clicks'] * $rate,
+                            'ad_revenue'      => $daily['ad_revenue'] * $rate,
+                            'gross_revenue'   => $daily['gross_revenue'] * $rate,
+                            'channel_type'    => $daily['channel_type'],
+                            'time_utc_0'      => $hour['time_utc_0'],
+                            'time_utc_8'      => $hour['time_utc_8'],
+                            'status'          => 0
                         ];
                     }
-                    $this->clickhouse->insert('ba_xpark_data_hour', $insert_list,
-                        [
-                            'app_id', 'domain_id', 'channel', 'channel_id', 'channel_full', 'country_level', 'country_code',
-                            'country_name', 'sub_channel', 'ad_placement_id', 'requests', 'fills', 'impressions',
-                            'clicks', 'ad_revenue', 'gross_revenue', 'channel_type', 'time_utc_0', 'time_utc_8', 'status'
-                        ]
-                    );
+                    DataHour::insertAll($insert_list);
                 }
 
                 $this->log("保存完成\n");
@@ -170,8 +164,19 @@ class Hour extends Base
     {
         $this->log("\n\n======== 合并UTC收入开始 ========", false);
         for ($i = $this->days - 1; $i >= 0; $i--) {
-            $date   = date("Y-m-d", strtotime("-$i days"));
-            $list   = $this->clickhouse->select(SLSHour::SQL_HOUR_TO_UTC($date))->rows();
+            $date = date("Y-m-d", strtotime("-$i days"));
+
+            $list = DataHour::whereDay('time_utc_0', $date)
+                ->field([
+                    'DATE(time_utc_0) as a_date', 'app_id', 'domain_id', 'country_code', 'ad_placement_id', 'channel',
+                    'channel_id', 'channel_full', 'country_level', 'country_name', 'sub_channel', 'channel_type',
+                    'SUM(requests)as requests', 'SUM(fills) as fills', 'SUM(impressions) as impressions',
+                    'SUM(clicks) as clicks', 'SUM(ad_revenue) as ad_revenue', 'SUM(gross_revenue) as gross_revenue',
+                    '1 as status'
+                ])
+                ->group('DATE(time_utc_0), app_id, domain_id, country_code, ad_placement_id, channel, channel_id, channel_full, country_level, country_name, sub_channel, channel_type')
+                ->select()->toArray();
+
             $chunks = array_chunk($list, 1000);
             foreach ($chunks as $chunk) {
                 Utc::insertAll($chunk);

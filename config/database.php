@@ -34,12 +34,14 @@ return [
             // 端口
             'hostport'        => env('database.hostport', ''),
             // 数据库连接参数
-            'params'          => [],
+            'params'          => [
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ],
+            'force_values' => true,
             // 数据库编码默认采用utf8mb4
             'charset'         => env('database.charset', 'utf8mb4'),
             // 数据库表前缀
             'prefix'          => env('database.prefix', 'i_'),
-
             // 数据库部署方式:0 集中式(单一服务器),1 分布式(主从服务器)
             'deploy'          => 0,
             // 数据库读写是否分离 主从式有效
@@ -95,17 +97,6 @@ return [
             'trigger_sql'     => env('app_debug', false),
             // 开启字段缓存
             'fields_cache'    => false,
-        ],
-        'clickhouse' => [
-            'type'     => 'clickhouse',
-            'hostname' => env('clickhouse.hostname', ''),
-            'database' => env('clickhouse.database', ''),
-            'username' => env('clickhouse.username', ''),
-            'password' => env('clickhouse.password', ''),
-            'port'     => env('clickhouse.hostport', 8123),
-            'prefix'   => env('clickhouse.prefix', ''),
-            'options'  => [],
-            'deploy'   => 0,
-        ],
+        ]
     ],
 ];

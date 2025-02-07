@@ -2,13 +2,15 @@
 
 namespace app\command\User;
 
-use app\admin\model\sls\User as SLSUser;
 use app\admin\model\sls\Active as SLSActive;
+use app\admin\model\sls\User as SLSUser;
+use app\admin\model\UserStaging;
 use app\admin\model\xpark\Domain;
 use app\command\Base;
 use sdk\SLS;
 use think\console\Input;
 use think\console\Output;
+use think\facade\Db;
 
 class Active extends Base
 {
@@ -27,9 +29,8 @@ class Active extends Base
     {
         // 确认参数
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
-        $this->sls        = new SLS();
-        $this->days       = 2;
-        $this->clickhouse = $this->init_clickhouse();
+        $this->sls  = new SLS();
+        $this->days = 2;
         // 查找所有SLS域名
         $sls_domains   = Domain::where('channel_id', '>', 0)->select()->toArray();
         $this->domains = array_column($sls_domains, null, 'domain');
@@ -44,6 +45,7 @@ class Active extends Base
         $this->log("\n\n======== SLS 开始拉取活跃数据 ========", false);
 
         for ($i = $this->days - 1; $i >= 0; $i--) {
+            Db::execute('truncate table ba_sls_user_staging;');
             $date           = date("Y-m-d", strtotime("-{$i} days"));
             $utc_start_time = strtotime($date . ' 00:00:00') - 8 * 3600;
             $utc_end_time   = strtotime($date . ' 23:59:59') - 8 * 3600;
@@ -61,26 +63,31 @@ class Active extends Base
 
             // 计算新增活跃
             $result = $this->sls->getLogsWithPowerSql($utc_start_time, $utc_end_time, SLSActive::$SQL_DAILY_ACTIVE_USER);
+            $this->log('准备遍历数据量：' . count($result));
             foreach ($result as $row) {
                 $row = $row->getContents();
                 if (!isset($this->domains[$row['attribute.page.host']])) continue;
+                $this->log('开始处理：' . $row['attribute.page.host']);
+                $domain = $this->domains[$row['attribute.page.host']];
 
-                $domain    = $this->domains[$row['attribute.page.host']];
                 $user_list = json_decode($row['user_list'], true);
-                $user_list = array_map(fn($item) => [$item], $user_list);
+                $user_list = array_map(fn($item) => ['uid' => $item], $user_list);
 
-                $this->clickhouse->write('truncate table ba_sls_user_staging;');
-                $this->clickhouse->insert('ba_sls_user_staging', $user_list, ['uid']);
+                UserStaging::insertAll($user_list);
+
                 // 批量去重插入
-                $this->clickhouse->write(SLSActive::SQL_MERGE_NEW_USERS(
+                Db::execute(SLSActive::SQL_MERGE_NEW_USERS_MYSQL(
                     $domain['domain'], $domain['app_id'], $domain['id'], $row['attribute.country_id'], $date
                 ));
+
                 // 记录
-                $new_users = $this->clickhouse->select(
-                    "select count(*) as total from ba_sls_user where domain_id = {$domain['id']} and country_code = '{$row['attribute.country_id']}' and date = '{$date}'"
-                )->fetchOne();
+                $new_users = SLSUser::where('domain_id', $domain['id'])
+                    ->where('country_code', $row['attribute.country_id'])
+                    ->where('date', $date)
+                    ->count();
+
                 $this->update_active_row($row['attribute.page.host'], $row['attribute.country_id'], $date, [
-                    'new_users'    => $new_users['total'] ?? 0,
+                    'new_users'    => $new_users,
                     'active_users' => count($user_list)
                 ]);
             }

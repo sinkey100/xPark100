@@ -128,7 +128,7 @@ class Analysis extends Backend
         }
 
         // 筛选通道
-        $filter_channel_ids = array_column(DataModel::where('app_id', 'in', $filter_apps)->group('channel_id')->select()->toArray(), 'channel_id');
+        $filter_channel_ids = array_column(DataModel::field('channel_id')->where('app_id', 'in', $filter_apps)->group('channel_id')->select()->toArray(), 'channel_id');
         $filter_channel     = Channel::where('id', 'in', $filter_channel_ids)->select()->toArray();
         $filter_channel_ids = array_column($filter_channel, 'id');
 

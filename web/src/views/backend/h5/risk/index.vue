@@ -9,8 +9,8 @@
         >
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>
+<!--                <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>-->
+<!--                <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>-->
             </el-form-item>
         </TableHeader>
 
@@ -75,32 +75,32 @@ const baTable = new baTableClass(
                 comSearchRender: 'date',
                 operator: 'RANGE',
             },
-            {
-                label: '应用',
-                prop: 'app_id',
-                align: 'center',
-                operator: 'IN',
-                comSearchRender: 'remoteSelect',
-                remote: {
-                    pk: 'id',
-                    remoteUrl: 'admin/xpark.Apps/select',
-                    field: 'app_name',
-                    multiple: true
-                }
-            },
-            {
-                label: '账号通道',
-                prop: 'channel_id',
-                align: 'center',
-                operator: 'IN',
-                comSearchRender: 'remoteSelect',
-                remote: {
-                    pk: 'id',
-                    remoteUrl: 'admin/xpark.Channel/select',
-                    field: 'channel_alias',
-                    multiple: true
-                }
-            },
+            // {
+            //     label: '应用',
+            //     prop: 'app_id',
+            //     align: 'center',
+            //     operator: 'IN',
+            //     comSearchRender: 'remoteSelect',
+            //     remote: {
+            //         pk: 'id',
+            //         remoteUrl: 'admin/xpark.Apps/select',
+            //         field: 'app_name',
+            //         multiple: true
+            //     }
+            // },
+            // {
+            //     label: '账号通道',
+            //     prop: 'channel_id',
+            //     align: 'center',
+            //     operator: 'IN',
+            //     comSearchRender: 'remoteSelect',
+            //     remote: {
+            //         pk: 'id',
+            //         remoteUrl: 'admin/xpark.Channel/select',
+            //         field: 'channel_alias',
+            //         multiple: true
+            //     }
+            // },
         ],
         dblClickNotEditColumn: [undefined],
     },

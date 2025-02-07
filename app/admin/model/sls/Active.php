@@ -64,5 +64,23 @@ WHERE uid NOT IN (
 EOT;
     }
 
+    public static function SQL_MERGE_NEW_USERS_MYSQL($domain_name, $appid, $domain_id, $country_code, $date): string
+    {
+        $country_code = substr(trim($country_code), 0, 2);
+        return <<<EOT
+INSERT INTO ba_sls_user (`domain_name`, `app_id`, `domain_id`, `uid`, `country_code`, `date`)
+SELECT 
+    '$domain_name' AS domain_name, 
+    $appid AS app_id, 
+    $domain_id AS domain_id, 
+    s.uid, 
+    '$country_code' AS country_code, 
+    '$date' AS date
+FROM ba_sls_user_staging s
+LEFT JOIN ba_sls_user u ON s.uid = u.uid
+WHERE u.uid IS NULL;
+EOT;
+    }
+
 
 }
