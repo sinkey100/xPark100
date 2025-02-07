@@ -13,9 +13,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use app\admin\model\spend\Data as SpendData;
 use sdk\FeishuBot;
 use think\console\Command;
-use think\console\Output;
 use DateTime;
-use ClickHouseDB\Client as ClickHouseDB;
 use think\facade\Config;
 use think\facade\Env;
 
@@ -28,7 +26,6 @@ class Base extends Command
     protected int          $days        = 3;
     protected array        $prefix      = ['cy-'];
     protected array        $channelList = [];
-    protected ClickHouseDB $clickhouse;
 
     public function __construct()
     {
@@ -264,19 +261,6 @@ class Base extends Command
         }
         [$fields, $csvData] = $this->csv2json(implode("\n", $rows));
         return [$dateRange, $fields, $csvData];
-    }
-
-    protected function init_clickhouse(string $database = ''): ClickHouseDB
-    {
-        $config     = Config::get('database.connections.clickhouse');
-        $clickhouse = new ClickHouseDB([
-            'host'     => $config['hostname'],
-            'port'     => $config['port'],
-            'username' => $config['username'],
-            'password' => $config['password'],
-        ]);
-        $clickhouse->database($database ?: $config['database']);
-        return $clickhouse;
     }
 
     /*

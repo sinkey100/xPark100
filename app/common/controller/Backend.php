@@ -240,7 +240,7 @@ class Backend extends Api
                         continue;
                     }
 //                    $datetimeArr = array_filter(array_map("strtotime", $datetimeArr));
-                    $where[]     = [$fieldName, str_replace('RANGE', 'BETWEEN', $field['operator']), $datetimeArr];
+                    $where[] = [$fieldName, str_replace('RANGE', 'BETWEEN', $field['operator']), $datetimeArr];
                     continue;
                 }
                 $where[] = [$fieldName, '=', $field['val']];
@@ -303,6 +303,17 @@ class Backend extends Api
         $dataLimitAdminIds = $this->getDataLimitAdminIds();
         if ($dataLimitAdminIds) {
             $where[] = [$mainTableAlias . $this->dataLimitField, 'in', $dataLimitAdminIds];
+        }
+
+        // 兼容adb mysql
+        if (count($order) == 1) {
+            $key   = array_keys($order)[0];
+            $value = array_values($order)[0];
+            if (!str_contains($key, '.')) {
+                $new_key         = reset($alias) . '.' . $key;
+                $order[$new_key] = $value;
+                unset($order[$key]);
+            }
         }
 
         return [$where, $alias, $limit, $order];
