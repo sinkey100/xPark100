@@ -3,6 +3,7 @@
 namespace app\admin\controller\spend;
 
 use app\admin\model\xpark\Domain;
+use sdk\QueryTimeStamp;
 use Throwable;
 use app\admin\model\xpark\Activity;
 use app\admin\model\xpark\Apps;
@@ -90,6 +91,7 @@ class Data extends Backend
      */
     public function index(): void
     {
+        QueryTimeStamp::start();
         [$res, $limit, $dimension] = $this->calcData();
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
@@ -102,6 +104,7 @@ class Data extends Backend
             'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
+            'ts'     => QueryTimeStamp::end()
         ]);
     }
 

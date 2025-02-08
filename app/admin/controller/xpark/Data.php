@@ -5,6 +5,7 @@ namespace app\admin\controller\xpark;
 use app\admin\model\xpark\Activity;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use sdk\QueryTimeStamp;
 use Throwable;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
@@ -153,6 +154,7 @@ class Data extends Backend
      */
     public function index(): void
     {
+        QueryTimeStamp::start();
 
         [$res, $limit, $dimension] = $this->calcData();
         $sql = $res->fetchSql(true)->select();
@@ -200,6 +202,7 @@ class Data extends Backend
             'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
+            'ts'     => QueryTimeStamp::end()
         ]);
     }
 
@@ -228,7 +231,7 @@ class Data extends Backend
             'unit_price'      => '单价(cpc)',
             'ecpm'            => 'eCPM',
         ];
-        if($this->auth->id == 1){
+        if ($this->auth->id == 1) {
             $cell['channel_full'] = '广告通道';
         }
 

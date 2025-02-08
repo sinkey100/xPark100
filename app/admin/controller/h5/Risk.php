@@ -10,6 +10,7 @@ use app\admin\model\xpark\Apps;
 use app\admin\model\sls\Active as SLSActive;
 use app\admin\model\xpark\Data as XparkData;
 use app\admin\model\spend\Data as SpendData;
+use sdk\QueryTimeStamp;
 
 class Risk extends Backend
 {
@@ -40,6 +41,7 @@ class Risk extends Backend
 
     public function index(): void
     {
+        QueryTimeStamp::start();
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $this->dimensions_input = $this->request->get('dimensions/a', []);
         $this->dimensions_input = array_keys(array_filter($this->dimensions_input, fn($value) => $value === "true"));
@@ -274,6 +276,7 @@ class Risk extends Backend
             'sql'   => $sql,
             'list'  => $data,
             'total' => $result->total(),
+            'ts'    => QueryTimeStamp::end()
         ]);
     }
 

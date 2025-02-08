@@ -4,6 +4,7 @@ namespace app\admin\controller\xpark;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use sdk\QueryTimeStamp;
 use Throwable;
 use app\admin\model\sls\Active as SLSActive;
 use app\common\controller\Backend;
@@ -122,6 +123,7 @@ class Utc extends Backend
      */
     public function index(): void
     {
+        QueryTimeStamp::start();
 
         [$res, $limit, $dimension] = $this->calcData();
         $sql = $res->fetchSql(true)->select();
@@ -129,15 +131,15 @@ class Utc extends Backend
         $res->visible(['domain' => ['domain']]);
 
         $total = [
-            'id'            => 10000,
-            'ad_revenue'    => 0,
-            'gross_revenue' => 0,
-            'requests'      => 0,
-            'activity_per_display'      => 0,
-            'fills'         => 0,
-            'impressions'   => 0,
-            'clicks'        => 0,
-            'a_date'        => '',
+            'id'                   => 10000,
+            'ad_revenue'           => 0,
+            'gross_revenue'        => 0,
+            'requests'             => 0,
+            'activity_per_display' => 0,
+            'fills'                => 0,
+            'impressions'          => 0,
+            'clicks'               => 0,
+            'a_date'               => '',
         ];
         foreach ($res->items() as $v) {
             $total['ad_revenue']    += $v['ad_revenue'];
@@ -156,6 +158,7 @@ class Utc extends Backend
             'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
+            'ts'     => QueryTimeStamp::end()
         ]);
     }
 
@@ -185,7 +188,7 @@ class Utc extends Backend
             'ecpm'            => 'eCPM',
         ];
 
-        foreach (['utc.a_date', 'utc.domain_id','utc.sub_channel', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
+        foreach (['utc.a_date', 'utc.domain_id', 'utc.sub_channel', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
             $field = explode('.', $v);
             $field = $field[count($field) - 1];
             if (!in_array($v, $dimension)) unset($cell[$field]);
@@ -281,8 +284,8 @@ class Utc extends Backend
                 if ($active) {
                     $v['activity_new_users']    = $active->new_users;
                     $v['activity_active_users'] = $active->active_users;
-                    $v['activity_page_views'] = $active->page_views;
-                    $v['total_time'] = format_milliseconds((int)$active->total_time);
+                    $v['activity_page_views']   = $active->page_views;
+                    $v['total_time']            = format_milliseconds((int)$active->total_time);
                 }
 //                // PV
 //                $pv = SLSHour::where('status', 0)->whereDay('time_utc_0', date("Y-m-d", strtotime($v['a_date'])));

@@ -234,4 +234,13 @@ defineExpose({
     background-color: var(--ba-bg-color-overlay);
     padding: 13px 15px;
 }
+:deep(.el-table){
+    td.el-table__cell{
+        .cell{
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}
 </style>

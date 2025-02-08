@@ -21,6 +21,7 @@
         "esno": "4.7.0",
         "font-awesome": "4.7.0",
         "js-file-download": "^0.4.12",
+        "json-bigint": "^1.0.0",
         "lodash-es": "4.17.21",
         "mitt": "3.0.1",
         "nprogress": "0.2.0",
@@ -36,6 +37,7 @@
         "vue-router": "4.3.2"
     },
     "devDependencies": {
+        "@types/json-bigint": "^1.0.4",
         "@types/lodash-es": "4.17.12",
         "@types/node": "20.14.0",
         "@types/nprogress": "0.2.3",

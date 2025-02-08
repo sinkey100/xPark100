@@ -10,6 +10,7 @@ import { useAdminInfo } from '/@/stores/adminInfo'
 import { useConfig } from '/@/stores/config'
 import { useUserInfo } from '/@/stores/userInfo'
 import { isAdminApp } from '/@/utils/common'
+import JSONbig from 'json-bigint';
 
 window.requests = []
 window.tokenRefreshing = false
@@ -53,6 +54,16 @@ function createAxios<Data = any, T = ApiPromise<Data>>(axiosConfig: AxiosRequest
             server: true,
         },
         responseType: 'json',
+        transformResponse: [
+            function (data) {
+                try {
+                    // 使用 json-bigint 解析大整数为字符串
+                    return JSONbig({ storeAsString: true }).parse(data);
+                } catch (error) {
+                    return data;
+                }
+            },
+        ],
     })
 
     // 自定义后台入口
@@ -109,6 +120,15 @@ function createAxios<Data = any, T = ApiPromise<Data>>(axiosConfig: AxiosRequest
             options.loading && closeLoading(options) // 关闭loading
 
             if (response.config.responseType == 'json') {
+                if(response.data.code === 1 && response.data?.data?.ts){
+                    ElNotification({
+                        message: '本次查询耗时：' + response.data?.data?.ts + 'ms',
+                        type: 'success',
+                        zIndex: 9999,
+                    })
+                }
+
+
                 if (response.data && response.data.code !== 1) {
                     if (response.data.code == 409) {
                         if (!window.tokenRefreshing) {
