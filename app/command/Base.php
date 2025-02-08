@@ -171,7 +171,7 @@ class Base extends Command
             $v['status']  = 1;
             $insertData[] = $v;
         }
-        $chunks = array_chunk($insertData, 100);
+        $chunks = array_chunk($insertData, 1000);
         foreach ($chunks as $chunk) {
             Data::insertAll($chunk);
         }

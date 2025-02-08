@@ -93,6 +93,7 @@ class AppLovin extends Base
                 $this->log(json_encode($result));
                 return;
             }
+            $this->log('拉取数据完成，长度' . count($result['results']));
             $saveData = [];
             foreach ($result['results'] as $v) {
                 if (!in_array($v['package_name'], $ad_domains)) continue;
@@ -122,6 +123,8 @@ class AppLovin extends Base
                     'raw_ecpm'        => $v['ecpm']
                 ];
             }
+
+            $this->log('准备存储数据，长度' . count($saveData));
 
             $this->saveData($saveData);
         }

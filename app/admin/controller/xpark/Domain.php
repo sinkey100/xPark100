@@ -28,7 +28,7 @@ class Domain extends Backend
 
     protected string|array $quickSearchField = ['id', 'domain'];
 
-    protected array $withJoinTable = ['admin', 'app'];
+    protected array $withJoinTable = [];
 
 
     public function initialize(): void
@@ -50,17 +50,17 @@ class Domain extends Backend
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
-        $res = $this->model
-            ->field($this->indexField)
-            ->withJoin($this->withJoinTable, $this->withJoinType)
-            ->alias($alias)
+        $res = $this->model->alias($alias)
+            ->field(['*', 'domain.id', 'apps.app_name', 'admin.nickname as admin_nickname'])
+            ->join('xpark_apps apps', 'apps.id = domain.app_id', 'left')
+            ->join('admin admin', 'admin.id = domain.admin_id', 'left')
             ->where($where);
 
         if ($domain_filter) {
             $res = $res->where('domain.id', 'in', $domain_filter);
         }
 
-        $res = $res->order($order)
+        $res = $res->order('domain.id', 'desc')
             ->paginate($limit);
 
         $res->visible(['admin' => ['nickname']]);

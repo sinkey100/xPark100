@@ -228,6 +228,9 @@ class Data extends Backend
             'unit_price'      => '单价(cpc)',
             'ecpm'            => 'eCPM',
         ];
+        if($this->auth->id == 1){
+            $cell['channel_full'] = '广告通道';
+        }
 
         foreach (['data.a_date', 'data.domain_id', 'data.country_code', 'data.ad_placement_id'] as $v) {
             $field = explode('.', $v);

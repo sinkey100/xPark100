@@ -37,7 +37,6 @@
         "googleads/googleads-php-lib": "66.0.0",
         "ext-zlib": "*",
         "alibabacloud/aliyun-log-php-sdk": "^0.6.7",
-        "smi2/phpclickhouse": "^1.5",
         "ext-pdo": "*"
     },
     "require-dev": {

@@ -17,14 +17,14 @@ class Domain extends Model
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;
 
-    public function admin(): BelongsTo
-    {
-        return $this->belongsTo(Admin::class, 'admin_id');
-    }
-
-    public function app(): BelongsTo
-    {
-        return $this->belongsTo(Apps::class, 'app_id');
-    }
+//    public function admin(): BelongsTo
+//    {
+//        return $this->belongsTo(Admin::class, 'admin_id');
+//    }
+//
+//    public function app(): BelongsTo
+//    {
+//        return $this->belongsTo(Apps::class, 'app_id');
+//    }
 
 }
