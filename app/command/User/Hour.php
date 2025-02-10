@@ -121,8 +121,8 @@ class Hour extends Base
                 $this->log('计算UTC数据并保存');
 
                 // 均分出每小时的数据
+                $insert_list = [];
                 foreach ($daily_revenue as $daily) {
-                    $insert_list = [];
                     foreach ($hour_detail as $hour) {
                         // 比例
                         $rate          = $hour['rate'];
@@ -150,8 +150,10 @@ class Hour extends Base
                             'status'          => 0
                         ];
                     }
-                    DataHour::insertAll($insert_list);
                 }
+                $this->log('准备存储' . count($insert_list) . '条数据');
+
+                DataHour::insertAll($insert_list);
 
                 $this->log("保存完成\n");
             }

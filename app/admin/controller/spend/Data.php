@@ -77,7 +77,7 @@ class Data extends Backend
             ->where('status', 0)
             ->where($where);
 
-        unset($order['id']);
+        unset($order['data.id']);
 
         $res = $res->order($order)->order('date', 'desc')
             ->group(implode(',', $dimension));

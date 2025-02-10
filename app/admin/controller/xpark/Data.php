@@ -140,7 +140,7 @@ class Data extends Backend
         if ($app_filter) {
             $res = $res->where('data.app_id', 'in', $app_filter);
         }
-        unset($order['id']);
+        unset($order['data.id']);
 
         $res = $res->order($order)->order('a_date', 'desc')
             ->group(implode(',', $dimension));

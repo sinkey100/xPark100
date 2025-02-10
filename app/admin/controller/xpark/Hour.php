@@ -100,7 +100,7 @@ class Hour extends Backend
         if ($app_filter) {
             $res = $res->where('data_hour.app_id', 'in', $app_filter);
         }
-        unset($order['id']);
+        unset($order['data_hour.id']);
 
         $res = $res->order($order)->order('time_utc_0', 'desc')
             ->group(implode(',', $dimension));

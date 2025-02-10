@@ -109,7 +109,7 @@ class Utc extends Backend
         if ($app_filter) {
             $res = $res->where('utc.app_id', 'in', $app_filter);
         }
-        unset($order['id']);
+        unset($order['utc.id']);
 
         $res = $res->order($order)->order('a_date', 'desc')
             ->group(implode(',', $dimension));

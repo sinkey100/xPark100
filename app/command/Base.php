@@ -20,12 +20,13 @@ use think\facade\Env;
 class Base extends Command
 {
 
-    protected array        $domains     = [];
-    protected array        $apps        = [];
-    protected array        $dateRate    = [];
-    protected int          $days        = 3;
-    protected array        $prefix      = ['cy-'];
-    protected array        $channelList = [];
+    protected array $domains     = [];
+    protected array $domain_row  = [];
+    protected array $apps        = [];
+    protected array $dateRate    = [];
+    protected int   $days        = 3;
+    protected array $prefix      = ['cy-'];
+    protected array $channelList = [];
 
     public function __construct()
     {
@@ -111,19 +112,30 @@ class Base extends Command
     protected function getDomainRow($original_domain, $date, $channel = ''): array
     {
         //domain_id
-        $domain     = str_replace($this->prefix, '', $original_domain);
-        $domain_row = Domain::where('original_domain', $original_domain)->where('channel', $channel)->find();
-        if (!$domain_row) {
-            $domain_row = Domain::create([
-                'domain'          => $domain,
+        $domain_name = str_replace($this->prefix, '', $original_domain);
+        $domain_key  = $original_domain . '_' . $channel;
+
+        if (empty($this->domain_row)) {
+            $domains = Domain::where('id', '>', 0)->select()->toArray();
+            foreach ($domains as $domain) {
+                $this->domain_row[$domain['original_domain'] . '_' . $domain['channel']] = $domain;
+            }
+        }
+
+        if (!isset($this->domain_row[$domain_key])) {
+            $domain_row                    = Domain::create([
+                'domain'          => $domain_name,
                 'original_domain' => $original_domain,
                 'channel'         => $channel,
                 'app_id'          => null,
             ]);
+            $this->domain_row[$domain_key] = $domain_row;
         }
-        //app_id
-        $app_id = DomainRate::where('domain', $domain)->where('date', $date)->value('app_id', $domain_row->app_id);
-        return [$domain_row->id, $app_id];
+
+        $domain_row = $this->domain_row[$domain_key];
+
+//        $app_id = DomainRate::where('domain', $domain_name)->where('date', $date)->value('app_id', $domain_row->app_id);
+        return [$domain_row['id'], $domain_row['app_id']];
     }
 
     protected function saveData($data): void
