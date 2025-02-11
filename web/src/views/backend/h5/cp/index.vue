@@ -5,6 +5,8 @@
             :buttons="['comSearch', 'columnDisplay']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('spend.data.quick Search Fields') })"
         ></TableHeader>
+        <el-alert v-if="baTable.table.data!.length > 0" title="由于数据拉取存在延迟，当日数据仅供参考" type="warning"
+                  :closable="false"/>
 
         <Table ref="tableRef"></Table>
 
@@ -51,7 +53,7 @@ const baTable = new baTableClass(
                 prop: 'app_id',
                 align: 'center',
                 sortable: false,
-                show:false,
+                show: false,
                 operator: 'eq',
                 comSearchRender: 'remoteSelect',
                 remote: {
@@ -76,6 +78,10 @@ const baTable = new baTableClass(
     }
 )
 
+baTable.table.rowClass = ({row, rowIndex,}: { row: any, rowIndex: number }) => {
+    return row.date.substring(0, 10) == new Date().toISOString().split('T')[0] ? 'row-success' : '';
+}
+
 provide('baTable', baTable)
 
 
@@ -94,7 +100,7 @@ onMounted(() => {
 <style scoped lang="scss">
 
 
-:deep(.table-search) {
+:deep(.table-search), :deep(.table-header) {
     display: none;
 }
 
@@ -105,12 +111,23 @@ onMounted(() => {
         }
     }
 
+    .el-table__row--striped td {
+        background: transparent !important;
+    }
+
     .el-table__cell div {
         box-sizing: border-box;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .hover-row td {
+        background: transparent !important;
+    }
 }
 
+:deep(.row-success) {
+    background-color: #fff8ee !important;
+}
 </style>

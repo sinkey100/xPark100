@@ -9,6 +9,7 @@
             :data="baTable.table.data"
             :row-key="baTable.table.pk"
             :border="true"
+            :row-class-name="baTable.table.rowClass"
             v-loading="baTable.table.loading"
             stripe
             @select-all="onSelectAll"

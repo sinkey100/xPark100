@@ -71,7 +71,16 @@ class Cp extends Backend
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
 
-        $list = [];
+        $list  = [];
+        $total = [
+            'id'       => 10000,
+            'revenue'  => 0,
+            'spend'    => 0,
+            'profit'   => 0,
+            'share'    => 0,
+            'app_name' => '',
+            'date'     => '',
+        ];
         foreach ($res->items() as $v) {
             $v['date']     = $v['date'] . ' 00:00:00';
             $v['app_name'] = $this->apps[$v['app_id']]['app_name'] ?? '';
@@ -81,15 +90,26 @@ class Cp extends Backend
             $share       = $profit_real * 0.15;
             $profit_fake = $share / 0.3;
             $profit_gap  = $profit_real - $profit_fake;
+            $revenue     = $v['revenue'] - $profit_gap;
 
+            $total['revenue'] += $revenue;
+            $total['spend']   += $v['spend'];
+            $total['profit']  += $profit_fake;
+            $total['share']   += $share;
 
             $v['share']   = round($share, 2);
             $v['profit']  = round($profit_fake, 2);
-            $v['revenue'] = round($v['revenue'] - $profit_gap, 2);
+            $v['revenue'] = round($revenue, 2);
             $v['spend']   = round($v['spend'], 2);
 
             $list[] = $v;
         }
+
+        $total['share']   = round($total['share'], 2);
+        $total['profit']  = round($total['profit'], 2);
+        $total['revenue'] = round($total['revenue'], 2);
+        $total['spend']   = round($total['spend'], 2);
+        $list[]           = $total;
 
 
         $this->success('', [

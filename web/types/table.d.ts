@@ -48,6 +48,8 @@ declare global {
         routePath?: string
         // 表格扩展数据，随意定义，以便一些自定义数据可以随baTable实例传递
         extend?: anyObj
+        // 行样式
+        rowClass?: Function
     }
 
     interface TableRenderPublicInstance extends ComponentPublicInstance {
