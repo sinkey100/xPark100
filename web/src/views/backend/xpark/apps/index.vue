@@ -60,7 +60,8 @@ const baTable = new baTableClass(
             { label: t('xpark.apps.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
             { label: t('xpark.apps.app_name'), prop: 'app_name', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.apps.remarks'), prop: 'remarks', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('xpark.apps.admin__nickname'), prop: 'admin.nickname', align: 'center', operatorPlaceholder: t('Fuzzy query'), render: 'tags', operator: 'LIKE' },
+            { label: t('xpark.apps.admin__nickname'), prop: 'admin_nickname', align: 'center', operator: false },
+            { label: t('xpark.apps.cp_admin__nickname'), prop: 'cp_admin_nickname', align: 'center', operator: false },
             { label: t('xpark.apps.createtime'), prop: 'createtime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             // { label: t('xpark.apps.updatetime'), prop: 'updatetime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
@@ -68,7 +69,7 @@ const baTable = new baTableClass(
         dblClickNotEditColumn: [undefined],
     },
     {
-        defaultItems: { admin_id: null },
+        defaultItems: { admin_id: null, cp_admin_id: null },
     }
 )
 

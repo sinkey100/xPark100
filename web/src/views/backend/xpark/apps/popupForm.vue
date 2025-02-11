@@ -34,6 +34,7 @@
                     <FormItem :label="t('xpark.apps.pkg_name')" type="string" v-model="baTable.form.items!.pkg_name" prop="pkg_name" :placeholder="t('Please input field', { field: t('xpark.apps.pkg_name') })" />
                     <FormItem :label="t('xpark.apps.remarks')" type="string" v-model="baTable.form.items!.remarks" prop="remarks" :placeholder="t('Please input field', { field: t('xpark.apps.remarks') })" />
                     <FormItem :label="t('xpark.apps.admin_id')" type="remoteSelect" v-model="baTable.form.items!.admin_id" prop="admin_id" :input-attr="{ pk: 'ba_admin.id', field: 'nickname', remoteUrl: '/admin/auth.Admin/index' }" :placeholder="t('Please select field', { field: t('xpark.apps.admin_id') })" />
+                    <FormItem :label="t('xpark.apps.cp_admin_id')" type="remoteSelect" v-model="baTable.form.items!.cp_admin_id" prop="cp_admin_id" :input-attr="{ pk: 'ba_admin.id', field: 'nickname', remoteUrl: '/admin/auth.Admin/index' }" :placeholder="t('Please select field', { field: t('xpark.apps.cp_admin_id') })" />
 
 
                     <FormItem

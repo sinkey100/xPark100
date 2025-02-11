@@ -22,7 +22,7 @@ class Apps extends Backend
 
     protected array|string $preExcludeFields = ['id', 'createtime', 'updatetime'];
 
-    protected array $withJoinTable = ['admin'];
+    protected array $withJoinTable = [];
 
     protected string|array $quickSearchField = ['id'];
 
@@ -50,12 +50,13 @@ class Apps extends Backend
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $res = $this->model
-            ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
+            ->field(['apps.*', 'admin.nickname as admin_nickname', 'cp_admin.nickname as cp_admin_nickname'])
+            ->join('admin admin', 'admin.id = apps.admin_id', 'left')
+            ->join('admin cp_admin', 'cp_admin.id = apps.cp_admin_id', 'left')
             ->where($where)
             ->order($order)
             ->paginate($limit);
-        $res->visible(['admin' => ['nickname']]);
 
         $this->success('', [
             'list'   => $res->items(),
@@ -142,7 +143,7 @@ class Apps extends Backend
     {
         $map = [];
         if ($this->auth->id > 1) {
-            $map['admin_id'] = $this->auth->id;
+            $map['admin_id|cp_admin_id'] = $this->auth->id;
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();

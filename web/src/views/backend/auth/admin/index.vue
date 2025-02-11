@@ -89,7 +89,7 @@ const baTable = new baTableClass(
 )
 
 provide('baTable', baTable)
-
+baTable.table.filter!.limit = 50
 baTable.mount()
 baTable.getIndex()
 </script>
