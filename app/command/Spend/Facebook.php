@@ -66,17 +66,22 @@ class Facebook extends Base
                 ],
             ]);
             if (!isset($result['data'][0]['creative']['id'])) continue;
-
-            $url    = "https://graph.facebook.com/v21.0/{$result['data'][0]['creative']['id']}/";
-            $result = $this->http('GET', $url, [
-                'query' => [
-                    'access_token' => Env::get('SPEND.FACEBOOK_TOKEN'),
-                    'fields'       => 'object_story_spec'
-                ],
-            ]);
-            if (!isset($result['object_story_spec']['video_data']['call_to_action']['value']['link'])) continue;
-            $appstore_id = explode('/', parse_url($result['object_story_spec']['video_data']['call_to_action']['value']['link'])['path']);
-            $appstore_id = end($appstore_id);
+            $appstore_id = null;
+            foreach ($result['data'] as $v) {
+                $url    = "https://graph.facebook.com/v21.0/{$v['creative']['id']}/";
+                $result = $this->http('GET', $url, [
+                    'query' => [
+                        'access_token' => Env::get('SPEND.FACEBOOK_TOKEN'),
+                        'fields'       => 'object_story_spec'
+                    ],
+                ]);
+                if (isset($result['object_story_spec']['video_data']['call_to_action']['value']['link'])) {
+                    $appstore_id = explode('/', parse_url($result['object_story_spec']['video_data']['call_to_action']['value']['link'])['path']);
+                    $appstore_id = end($appstore_id);
+                    break;
+                }
+            }
+            if (empty($appstore_id)) continue;
             // 匹配包名
             $bundle_id = CYIosGame::where('appstore_url', 'like', "%$appstore_id%")->value('bundle_id');
             if (empty($bundle_id) || !isset($this->apps[$bundle_id])) continue;

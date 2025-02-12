@@ -8,6 +8,7 @@ use app\admin\model\sls\Active as SLSActive;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Utc;
+use think\facade\Db;
 use Throwable;
 use app\common\controller\Frontend;
 
@@ -121,22 +122,37 @@ class Report extends Frontend
         $apps    = array_column($apps, null, 'id');
         $app_ids = array_keys($apps);
 
-        $dimension = ['a_date', 'sub_channel', 'app_id', 'country_code', 'domain_id'];
-
-        $field = array_merge($dimension, [
+        $revenue_sql = Utc::field([
+            'DATE(a_date) as a_date', 'app_id', 'country_code', 'domain_id', 'sub_channel',
             'SUM(requests) AS requests',
             'SUM(fills) AS fills',
             'SUM(impressions) AS impressions',
             'SUM(clicks) AS clicks',
-            'SUM(ad_revenue) AS ad_revenue',
-        ]);
-
-        $res = Utc::field($field)
-            ->where('app_id', 'in', $app_ids)
+            'SUM(ad_revenue) AS ad_revenue'
+        ])
+            ->whereIn('app_id', $app_ids)
             ->where('status', 0)
             ->whereBetweenTime('a_date', $from_date, $to_date)
-            ->order('a_date', 'desc')
-            ->group(implode(',', $dimension))
+            ->group('a_date, app_id, country_code, domain_id')
+            ->buildSql();
+
+        $active_sql = SLSActive::field([
+            'date', 'app_id', 'country_code', 'domain_id',
+            'SUM(page_views) AS page_views',
+            'SUM(new_users) AS new_users',
+            'SUM(active_users) AS active_users'
+        ])
+            ->whereIn('app_id', $app_ids)
+            ->whereBetweenTime('date', $from_date, $to_date)
+            ->group('date, app_id, country_code, domain_id')
+            ->buildSql();
+
+        $res = Db::table($revenue_sql . ' a')
+            ->field('a.a_date, a.app_id, a.country_code, a.domain_id, a.sub_channel,
+             a.requests, a.fills, a.impressions, a.clicks, a.ad_revenue, 
+             b.page_views, b.new_users, b.active_users')
+            ->join($active_sql . ' b', "DATE(a.a_date) = b.date AND a.app_id = b.app_id AND a.country_code = b.country_code AND a.domain_id = b.domain_id", 'LEFT')
+            ->order('a.a_date DESC')
             ->select()->toArray();
 
         foreach ($res as &$v) {
@@ -155,26 +171,13 @@ class Report extends Frontend
             $v['cpc']        = round($v['ad_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
             $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
             $v['ad_revenue'] = floatval(number_format($v['ad_revenue'], 5));
-            // 计算活跃数据
-            $active = SLSActive::field([
-                'sum(new_users) as new_users',
-                'sum(active_users) as active_users',
-                'sum(page_views) as page_views',
-                //                'sum(total_time) as total_time',
-            ])
-                ->where('date', $v['a_date'])
-                ->where('domain_id', $v['domain_id'])
-                ->where('country_code', substr($v['country_code'], 0, 2))
-                ->find();
-
-            $v['new_users']    = $active ? (int)$active->new_users : 0;
-            $v['active_users'] = $active ? (int)$active->active_users : 0;
-            $v['page_views']   = $active ? (int)$active->page_views : 0;
             // 人均展示：展示次数/UV
+            $v['page_views']         = intval($v['page_views']);
+            $v['new_users']          = intval($v['new_users']);
+            $v['active_users']       = intval($v['active_users']);
             $v['per_capita_display'] = empty($v['active_users'])
                 ? ''
                 : round($v['impressions'] / $v['active_users'], 2);
-
 
             unset($v['a_date']);
             unset($v['sub_channel']);
