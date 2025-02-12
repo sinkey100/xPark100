@@ -7,6 +7,8 @@ export const default_columns = [
     {colKey: "hb_show_active", title: "游戏中心活跃", align: "center", width: 120},
     {colKey: "hb_show_new", title: "游戏中心新增", align: "center", width: 120},
     {colKey: "hb_show_revenue", title: "游戏中心收入", align: "center", width: 120},
+    {colKey: "oem_active", title: "OEM活跃", align: "center", width: 120},
+    {colKey: "oem_revenue", title: "OEM收入", align: "center", width: 120},
     {colKey: "hb_hide_revenue", title: "HB收入", align: "center", width: 120},
     {colKey: "hb_hide_active", title: "HB活跃", align: "center", width: 120},
     {

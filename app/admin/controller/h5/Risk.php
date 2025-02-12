@@ -28,6 +28,7 @@ class Risk extends Backend
     protected array $use_Adate        = ['data', 'xpark'];
     protected array $special_channel  = [4, 5];
     protected array $date_range       = [];
+    protected array $oem_appid        = [23, 27];
 
     public function initialize(): void
     {
@@ -78,6 +79,8 @@ class Risk extends Backend
         $active_sql = Activity::alias('activity')
             ->field(array_merge($_active_dimensions, ['SUM(activity.active_users) as active_users']))
             ->where('activity.status', 0)
+            ->where('activity.date', 'between', $this->date_range)
+            ->where('activity.app_id', 'not in', $this->oem_appid)
             ->group(implode(',', $_active_dimensions))
             ->buildSql();
 
@@ -88,6 +91,7 @@ class Risk extends Backend
             ->leftJoin([$active_sql => 'activity'], $_active_join_on)
             ->where('domain.is_hide', 1)
             ->where('data.status', 0)
+            ->where('data.app_id', 'not in', $this->oem_appid)
             ->where('data.channel_id', 'in', array_keys($this->channel))
             ->where($where)
             ->group(implode(',', $_main_dimensions))
@@ -114,6 +118,7 @@ class Risk extends Backend
 
         $active_sql      = SLSActive::alias('active')
             ->field(array_merge($_active_dimensions, ['sum(active_users) as active_users']))
+            ->where($this->getBetweenTime('active.date'))
             ->group(implode(',', $_active_dimensions))->buildSql();
         $advertise_spend = SpendData::alias('spend')
             ->field(array_merge($_spend_dimensions, [
@@ -156,6 +161,7 @@ class Risk extends Backend
         $active_sql = SLSActive::alias('active')
             ->field(array_merge($_active_dimensions, ['sum(active.new_users) as new_users', 'sum(active.active_users) as active_users']))
             ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_hide = 0', 'inner')
+            ->where($this->getBetweenTime('active.date'))
             ->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
@@ -174,6 +180,37 @@ class Risk extends Backend
             ->select()->toArray();
         $show_data  = array_column($show_data, null, 'revenue_key');
 
+        # OEM 数量
+        $_show_dimensions     = $this->getDimensionsFields('xpark', ['domain_id']);
+        $_show_dimensions[]   = 'xpark.channel_id';
+        $_active_dimensions   = $this->getDimensionsFields('activity', ['domain_id']);
+        $_active_dimensions[] = 'activity.channel_id';
+        $_active_join_on      = $this->getJoinOn('xpark', 'activity', $_active_dimensions);
+
+        $active_sql = Activity::alias('activity')
+            ->field(array_merge($_active_dimensions, ['SUM(activity.active_users) as active_users']))
+            ->where('activity.status', 0)
+            ->where($this->getBetweenTime('activity.date'))
+            ->where('activity.app_id', 'in', $this->oem_appid)
+            ->group(implode(',', $_active_dimensions))
+            ->buildSql();
+
+        $oem_data = XparkData::alias('xpark')
+            ->field(array_merge($_show_dimensions, [
+                "CONCAT(" . (in_array('xpark.a_date', $_show_dimensions) ? 'DATE(xpark.a_date),' : '') . " '|', xpark.channel_id, '|' " . (in_array('xpark.app_id', $_show_dimensions) ? ',DATE(xpark.app_id)' : '') . ") as revenue_key",
+                'sum(xpark.ad_revenue) as ad_revenue',
+                'COALESCE(activity.active_users, 0) AS active_users',
+            ]))
+            ->join('xpark_domain domain', 'domain.id = xpark.domain_id', 'left')
+            ->leftJoin([$active_sql => 'activity'], $_active_join_on)
+            ->where('xpark.status', 0)
+            ->where('xpark.app_id', 'in', $this->oem_appid)
+            ->where($this->getBetweenTime('xpark.a_date'))
+            ->group(implode(',', $_show_dimensions))
+            ->order('xpark.a_date', 'desc')
+            ->select()->toArray();
+        $oem_data = array_column($oem_data, null, 'revenue_key');
+
 
         /*
          * 数据加工
@@ -190,16 +227,18 @@ class Risk extends Backend
             $hb_show_revenue          = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['ad_revenue'] ?? 0;
             $hb_show_active           = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['active_users'] ?? 0;
             $hb_show_new              = $show_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['new_users'] ?? 0;
+            $oem_revenue              = $oem_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['ad_revenue'] ?? 0;
+            $oem_active               = $oem_data[$date . '|' . $channel_id . '|' . ($row['app_id'] ?? '')]['active_users'] ?? 0;
             $dimensions_spend_model   = $this->channel[$channel_id]['spend_model'] ?? 0;
             $dimensions_revenue_model = $this->channel[$channel_id]['revenue_model'] ?? 0;
             $dimensions_user_model    = $this->channel[$channel_id]['user_model'] ?? 0;
-            // 支出维度 = 【HB收入】/（【HB收入】+（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】））
-            $DENOMINATOR      = $hb_hide_revenue + ($h5_advertise_spend + $hb_show_new * $this->cpc_cost_show);
+            // 支出维度 = 【HB收入】/（【HB收入】+（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】+ 【OEM收入】）
+            $DENOMINATOR      = $hb_hide_revenue + ($h5_advertise_spend + $hb_show_new * $this->cpc_cost_show + $oem_revenue);
             $dimensions_spend = $DENOMINATOR == 0 ? 0 : $hb_hide_revenue / $DENOMINATOR;
-            // 支出维度差值 = （【支出维度标准模型】-【支出维度】）*（【HB收入】+（【H5投放支出】+【游戏中心新增】*【显示层CPC成本】））
+            // 支出维度差值 = （【支出维度标准模型】-【支出维度】）*（【HB收入】+【H5投放支出】+【游戏中心新增】*【显示层CPC成本】+【OEM收入】）
             $dimensions_spend_gap = ($dimensions_spend_model - $dimensions_spend) * $DENOMINATOR;
-            // 收入维度 = 【HB收入】/（【H5投放收入】+【游戏中心收入】+【HB收入】）
-            $DENOMINATOR        = $h5_advertise_revenue + $hb_show_revenue + $hb_hide_revenue;
+            // 收入维度 = 【HB收入】/（【H5投放收入】+【游戏中心收入】+【HB收入】+【OEM收入】）
+            $DENOMINATOR        = $h5_advertise_revenue + $hb_show_revenue + $hb_hide_revenue + $oem_revenue;
             $dimensions_revenue = $DENOMINATOR == 0 ? 0 : $hb_hide_revenue / $DENOMINATOR;
             if (in_array($channel_id, $this->special_channel)) {
                 // CY LL 收入维度 = （【HB收入】/ 【账号流水】）
@@ -210,7 +249,7 @@ class Risk extends Backend
             $dimensions_revenue_gap = ($dimensions_revenue_model - $dimensions_revenue) * $DENOMINATOR;
             // 用户维度 = 【HB活跃】/（【HB活跃】+【H5投放活跃】+【游戏中心活跃】）
             $hb_hide_active  = $row['xpark_active_users'];
-            $DENOMINATOR     = $h5_advertise_active + $hb_show_active + $hb_hide_active;
+            $DENOMINATOR     = $h5_advertise_active + $hb_show_active + $hb_hide_active + $oem_active;
             $dimensions_user = $DENOMINATOR == 0 ? 0 : $hb_hide_active / $DENOMINATOR;
             // 用户维度差值 =（【用户维度标准模型】-【用户维度】）*（【HB活跃】+【H5投放活跃】+【游戏中心活跃】）
             $dimensions_user_gap = ($dimensions_user_model * $dimensions_user) * $DENOMINATOR;
@@ -244,6 +283,10 @@ class Risk extends Backend
                 "hb_show_new"              => $hb_show_new,
                 // 游戏中心收入
                 "hb_show_revenue"          => round($hb_show_revenue, 2),
+                // OEM活跃
+                "oem_active"               => $oem_active,
+                // OEM收入
+                "oem_revenue"              => round($oem_revenue, 2),
                 // HB收入
                 "hb_hide_revenue"          => round($hb_hide_revenue, 2),
                 // 支出维度
