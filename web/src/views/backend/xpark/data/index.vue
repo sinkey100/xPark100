@@ -110,6 +110,22 @@ const baTable = new baTableClass(
             },
             {
                 label: t('xpark.data.channel'),
+                prop: 'channel_id',
+                align: 'center',
+                sortable: false,
+                show: false,
+                minWidth: 120,
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                // operator: false,
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Channel/index',
+                    field: 'channel_alias',
+                }
+            },
+            {
+                label: t('xpark.data.channel'),
                 prop: 'channel_full',
                 align: 'center',
                 operatorPlaceholder: t('Click select'),
@@ -117,7 +133,7 @@ const baTable = new baTableClass(
                 show: false,
                 minWidth: 135,
                 // render: 'tag',
-                operator: adminInfo.id == 1 ? 'eq' : false,
+                operator: false,
                 // custom: {'xPark365': 'primary', 'BeesAds': 'warning', 'AdSense': 'danger'},
                 // replaceValue: {'xPark365': t('xPark365'), 'BeesAds': t('BeesAds'), 'AdSense': t('AdSense')},
             },
@@ -145,6 +161,7 @@ const baTable = new baTableClass(
                     pk: 'id',
                     remoteUrl: 'admin/auth.Admin/index',
                     field: 'nickname',
+                    params : {user : 1}
                 }
             },
             {

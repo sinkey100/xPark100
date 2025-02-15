@@ -89,6 +89,7 @@ class Data extends Backend
             if ($v[0] == 'data.admin') {
                 $app_filter       = Apps::field(['id'])->where('admin_id', $v[2])->select();
                 $app_filter       = array_column($app_filter->toArray(), 'id');
+                if(empty($app_filter)) $app_filter = [1];
                 $activity_where[] = ['activity.app_id', 'in', $app_filter];
                 unset($where[$k]);
             }

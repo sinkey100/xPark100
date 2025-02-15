@@ -2,6 +2,7 @@
 
 namespace app\admin\controller\auth;
 
+use app\admin\model\xpark\Apps;
 use ba\Random;
 use Throwable;
 use think\facade\Db;
@@ -43,6 +44,12 @@ class Admin extends Backend
         if ($this->request->param('select')) {
             $this->select();
         }
+        $map = [];
+        if ($this->request->get('user/d', 0) == 1) {
+            $ids = array_column(Apps::field('admin_id')->where('admin_id', '>', 0)->group('admin_id')->select()->toArray(), 'admin_id');
+            $ids = array_unique($ids);
+            $map[] = ['id', 'in', $ids];
+        }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $res = $this->model
@@ -50,6 +57,7 @@ class Admin extends Backend
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
+            ->where($map)
             ->order($order)
             ->paginate($limit);
 

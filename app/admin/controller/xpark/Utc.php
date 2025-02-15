@@ -70,18 +70,13 @@ class Utc extends Backend
 
         }
 
-
-        /**
-         * 1. withJoin 不可使用 alias 方法设置表别名，别名将自动使用关联模型名称（小写下划线命名规则）
-         * 2. 以下的别名设置了主表别名，同时便于拼接查询参数等
-         * 3. paginate 数据集可使用链式操作 each(function($item, $key) {}) 遍历处理
-         */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
         foreach ($where as $k => $v) {
             if ($v[0] == 'utc.admin') {
                 $app_filter = Apps::field(['id'])->where('admin_id', $v[2])->select();
                 $app_filter = array_column($app_filter->toArray(), 'id');
+                if(empty($app_filter)) $app_filter = [1];
                 unset($where[$k]);
             }
         }
@@ -267,7 +262,7 @@ class Utc extends Backend
             // 计算活跃数据
             if (
                 !in_array('utc.ad_placement_id', $dimension)
-                && in_array('utc.a_date', $dimension)
+//                && in_array('utc.a_date', $dimension)
                 && in_array('utc.domain_id', $dimension)
                 && $v['id'] != 10000
             ) {
@@ -277,7 +272,9 @@ class Utc extends Backend
                     'sum(active_users) as active_users',
                     'sum(page_views) as page_views',
                     'avg(total_time) as total_time',
-                ])->where('date', $v['a_date']);
+                ]);
+
+                if (in_array('a_date', $this->active_dimension)) $active = $active->where('date', $v['a_date']);
                 if (in_array('domain_id', $this->active_dimension)) $active = $active->where('domain_id', $v['domain_id']);
                 if (in_array('country_code', $this->active_dimension)) $active = $active->where('country_code', $v->getData('country_code'));
                 $active = $active->find();

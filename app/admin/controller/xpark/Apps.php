@@ -104,18 +104,20 @@ class Apps extends Backend
                     }
                 }
 
-                Domain::where('app_id', $row['id'])->update([
-                    'app_id'   => null,
-                    'admin_id' => null
-                ]);
-                DomainRate::where('app_id',$row['id'])->where('date', date("Y-m-d"))->delete();
+                if(isset($data['app_name'])){
+                    Domain::where('app_id', $row['id'])->update([
+                        'app_id'   => null,
+                        'admin_id' => null
+                    ]);
+                    DomainRate::where('app_id',$row['id'])->where('date', date("Y-m-d"))->delete();
 
-                $domains = Domain::where('id', 'in', $data['domain_arr'])->select();
-                foreach($domains as $domain){
-                    $domain->app_id = $row['id'];
-                    $domain->admin_id = $row['admin_id'];
-                    $domain->save();
-                    DomainRate::where('domain', $domain->domain)->where('date', date("Y-m-d"))->delete();
+                    $domains = Domain::where('id', 'in', $data['domain_arr'])->select();
+                    foreach($domains as $domain){
+                        $domain->app_id = $row['id'];
+                        $domain->admin_id = $row['admin_id'];
+                        $domain->save();
+                        DomainRate::where('domain', $domain->domain)->where('date', date("Y-m-d"))->delete();
+                    }
                 }
 
                 $result = $row->save($data);
@@ -151,6 +153,7 @@ class Apps extends Backend
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
+            ->where('status', 0)
             ->where($map)
             ->order($order)
             ->paginate($limit);

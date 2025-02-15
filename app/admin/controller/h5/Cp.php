@@ -2,14 +2,9 @@
 
 namespace app\admin\controller\h5;
 
-use app\admin\model\h5\ChannelRevenue;
-use app\admin\model\xpark\Activity;
-use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Utc as UtcData;
 use app\common\controller\Backend;
-use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Apps;
-use app\admin\model\sls\Active as SLSActive;
-use app\admin\model\xpark\Data as XparkData;
 use app\admin\model\spend\Data as SpendData;
 use sdk\QueryTimeStamp;
 use think\facade\Db;
@@ -60,7 +55,7 @@ class Cp extends Backend
         }
         $map = array_values($map);
 
-        $revenue_sql = XparkData::field("DATE(a_date) AS date, app_id, ad_revenue, 0 AS spend")->where($map)->where($revenue_map)->fetchSql(true)->select();
+        $revenue_sql = UtcData::field("DATE(a_date) AS date, app_id, ad_revenue, 0 AS spend")->where($map)->where($revenue_map)->fetchSql(true)->select();
         $spend_sql   = SpendData::field("date, app_id, 0 AS ad_revenue, spend")->where($map)->where($spend_map)->fetchSql(true)->select();
 
         $res = Db::table('(' . implode(' UNION ALL ', [$revenue_sql, $spend_sql]) . ') t')
