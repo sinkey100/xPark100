@@ -313,8 +313,16 @@ class Base extends Command
             $advertiser_ids = array_merge($advertiser_ids, explode(',', $v));
         }
         $advertiser_ids = array_filter(array_unique($advertiser_ids));
+        // account_key
+        $account_keys = [];
+        foreach (array_column($result, 'account_key') as $v) {
+            if (empty($v)) continue;
+            $account_keys = array_merge($account_keys, explode(',', $v));
+        }
+        $account_keys = array_filter(array_unique($account_keys));
 
-        return [$result, $advertiser_ids];
+
+        return [$result, $advertiser_ids, $account_keys];
     }
 
     protected function appName2App(string $appstore_name): array|bool

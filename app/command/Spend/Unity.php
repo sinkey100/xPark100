@@ -11,7 +11,7 @@ use think\facade\Env;
 
 class Unity extends Base
 {
-    
+
     protected function configure(): void
     {
         $this->setName('Unity');
@@ -20,36 +20,41 @@ class Unity extends Base
     protected function execute(Input $input, Output $output): void
     {
         $this->days = 2;
-        [$spend_table, $advertiser_ids] = $this->getSpendTable('unity');
+        [$spend_table, $advertiser_ids, $account_keys] = $this->getSpendTable('unity');
+
         SpendData::where('channel_name', 'unity')->where('status', 1)->delete();
 
         // 拉数据
-        $organization = Env::get('SPEND.UNITY_ORGANIZATION_ID');
-        $key_id       = Env::get('SPEND.UNITY_KEY_ID');
-        $secret_key   = Env::get('SPEND.UNITY_SECRET_KEY');
+        $resultData = [];
+        foreach ($advertiser_ids as $k => $advertiser_id) {
+            sleep(5);
+            $organization = $advertiser_id;
+            $account_key  = $account_keys[$k];
 
-        $url     = "https://services.api.unity.com/advertise/stats/v2/organizations/$organization/reports/acquisitions";
-        $query   = [
-            'start'      => date("Y-m-d", strtotime("-{$this->days} days")) . 'T00:00:00.000Z',
-            'end'        => date("Y-m-d") . 'T23:59:59.000Z',
-            'scale'      => 'day',
-            'metrics'    => 'starts,views,clicks,installs,cpi,spend',
-            'breakdowns' => 'campaign,country,app'
-        ];
-        $headers = [
-            'Authorization' => "Basic $key_id:$secret_key"
-        ];
+            $url     = "https://services.api.unity.com/advertise/stats/v2/organizations/$organization/reports/acquisitions";
+            $query   = [
+                'start'      => date("Y-m-d", strtotime("-{$this->days} days")) . 'T00:00:00.000Z',
+                'end'        => date("Y-m-d") . 'T23:59:59.000Z',
+                'scale'      => 'day',
+                'metrics'    => 'starts,views,clicks,installs,cpi,spend',
+                'breakdowns' => 'campaign,country,app'
+            ];
+            $headers = [
+                'Authorization' => "Basic $account_key"
+            ];
+
+            $result = $this->http('GET', $url, [
+                'query'   => $query,
+                'headers' => $headers
+            ], true);
+
+            [$fields, $csvData] = $this->csv2json($result);
+            $resultData = array_merge($resultData, $csvData);
+        }
 
         $insert_list = [];
 
-        $result = $this->http('GET', $url, [
-            'query'   => $query,
-            'headers' => $headers
-        ], true);
-
-        [$fields, $csvData] = $this->csv2json($result);
-
-        foreach ($csvData as $item) {
+        foreach ($resultData as $item) {
             $app = $this->appName2App($item['app name']);
             if (!$app) continue;
 

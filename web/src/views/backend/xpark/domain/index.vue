@@ -69,7 +69,7 @@ const baTable = new baTableClass(
             },
             {
                 label: t('xpark.domain.app_id'),
-                prop: 'app.id',
+                prop: 'app_id',
                 align: 'center',
                 sortable: false,
                 show:false,
