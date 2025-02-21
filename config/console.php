@@ -20,7 +20,8 @@ return [
         'GA'            => \app\command\User\GA::class,
         'Hour'          => \app\command\User\Hour::class,
         'Active'        => \app\command\User\Active::class,
-        'Dau'          => \app\command\User\Dau::class,
+        'Dau'           => \app\command\User\Dau::class,
+        'Adjust'        => \app\command\User\Adjust::class,
         'Bot'           => \app\command\Bot::class,
 
         // 投放
