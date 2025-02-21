@@ -7,6 +7,7 @@ use app\admin\model\xpark\Apps;
 use app\command\Base;
 use think\console\Input;
 use think\console\Output;
+use think\facade\Env;
 
 class Adjust extends Base
 {
@@ -39,7 +40,7 @@ class Adjust extends Base
                 "sort"          => "day"
             ],
             'headers' => [
-                'Authorization' => 'Bearer hVkncy58V1WT2F2Qrktz'
+                'Authorization' => 'Bearer '.  Env::get('SPEND.ADJUST_TOKEN')
             ]
         ]);
 

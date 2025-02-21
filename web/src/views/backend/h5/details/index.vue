@@ -66,22 +66,19 @@ const baTable = new baTableClass(
             {label: 'App活跃', prop: 'app_active_users', align: 'center', operator: false, sortable: false},
             {label: 'H5新增', prop: 'h5_new_users', align: 'center', operator: false, sortable: false},
             {label: 'H5活跃', prop: 'h5_active_users', align: 'center', operator: false, sortable: false},
-            {label: '安装渠道', prop: 'install_channel', align: 'center', operator: false, sortable: false},
             {label: '总收入', prop: 'total_revenue', align: 'center', operator: false, sortable: false},
             {label: '总支出', prop: 'total_spend', align: 'center', operator: false, sortable: false},
             {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, sortable: false},
             {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false},
             {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false},
-            {label: 'H5 DAU ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false},
-            {label: 'APP DAU ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false},
+            {label: 'H5 DAU ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 135},
+            {label: 'APP DAU ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 135}
         ],
         dblClickNotEditColumn: [undefined],
     }
 )
 
 provide('baTable', baTable)
-
-
 onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.mount()
