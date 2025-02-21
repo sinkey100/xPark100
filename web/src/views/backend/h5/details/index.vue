@@ -53,12 +53,13 @@ const baTable = new baTableClass(
                 sortable: false,
                 show: false,
                 minWidth: 120,
-                operator: 'eq',
+                operator: 'IN',
                 comSearchRender: 'remoteSelect',
                 remote: {
                     pk: 'id',
                     remoteUrl: 'admin/xpark.Apps/select',
                     field: 'app_name',
+                    multiple:true
                 }
             },
             {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false,},
@@ -71,8 +72,8 @@ const baTable = new baTableClass(
             {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, sortable: false},
             {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false},
             {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false},
-            {label: 'H5 DAU ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 135},
-            {label: 'APP DAU ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 135}
+            {label: 'H5 ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 120},
+            {label: 'APP ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115}
         ],
         dblClickNotEditColumn: [undefined],
     }

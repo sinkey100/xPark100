@@ -7,6 +7,7 @@ use app\admin\model\xpark\Domain;
 use sdk\QueryTimeStamp;
 use Throwable;
 use app\admin\model\sls\Active as SLSActive;
+use app\admin\model\app\Active as AppActive;
 use app\admin\model\xpark\Apps;
 use app\common\controller\Backend;
 
@@ -43,11 +44,16 @@ class Details extends Backend
             'SUM(utc.ad_revenue) AS total_revenue',
             'SUM(CASE WHEN channel_type = 0 THEN ad_revenue ELSE 0 END) AS h5_revenue',
             'SUM(CASE WHEN channel_type = 1 THEN ad_revenue ELSE 0 END) AS native_revenue',
-            'IFNULL(active.new_users, 0) AS h5_new_users',
-            'IFNULL(active.active_users, 0) AS h5_active_users',
+            'IFNULL(h5_active.new_users, 0) AS h5_new_users',
+            'IFNULL(h5_active.active_users, 0) AS h5_active_users',
+            'IFNULL(app_active.new_users, 0) AS app_new_users',
+            'IFNULL(app_active.active_users, 0) AS app_active_users',
             'IFNULL(spend.total_spend, 0) AS total_spend'
         ];
-        $active_sql = SLSActive::field([
+        $h5_active_sql = SLSActive::field([
+            'date', 'app_id', 'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users'
+        ])->group('date, app_id')->buildSql();
+        $app_active_sql = AppActive::field([
             'date', 'app_id', 'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users'
         ])->group('date, app_id')->buildSql();
         $spend_sql  = SpendData::field(['date', 'app_id', 'SUM(spend) AS total_spend'])->group('date, app_id')->buildSql();
@@ -55,7 +61,8 @@ class Details extends Backend
         $res = $this->model->field($field)
             ->alias($alias)
             ->where('utc.status', 0)
-            ->join($active_sql . ' active', 'utc.a_date = active.date AND utc.app_id = active.app_id', 'left')
+            ->join($h5_active_sql . ' h5_active', 'utc.a_date = h5_active.date AND utc.app_id = h5_active.app_id', 'left')
+            ->join($app_active_sql . ' app_active', 'utc.a_date = app_active.date AND utc.app_id = app_active.app_id', 'left')
             ->join($spend_sql . ' spend', 'utc.a_date = spend.date AND utc.app_id = spend.app_id', 'left')
             ->where($where)
             ->order('utc.a_date', 'desc')
@@ -84,6 +91,9 @@ class Details extends Backend
                 : '-';
             $v['h5_arpu']        = $v['h5_active_users'] > 0
                 ? number_format((float)$v['h5_revenue'] / $v['h5_active_users'], 2, '.', '')
+                : '-';
+            $v['app_arpu']        = $v['app_active_users'] > 0
+                ? number_format((float)$v['native_revenue'] / $v['app_active_users'], 2, '.', '')
                 : '-';
             $v['h5_revenue']     = number_format((float)$v['h5_revenue'], 2, '.', '');
             $v['native_revenue'] = number_format((float)$v['native_revenue'], 2, '.', '');

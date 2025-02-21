@@ -157,7 +157,10 @@ class Apps extends Backend
             ->where($map)
             ->order($order)
             ->paginate($limit);
-        $res->visible(['admin' => ['nickname']]);
+
+        foreach ($res->items() as &$v) {
+            $v['app_name'] = $v['app_name'] . '__' . $v['remarks'];
+        }
 
         $this->success('', [
             'list'   => $res->items(),
