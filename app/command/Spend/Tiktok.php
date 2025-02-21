@@ -118,15 +118,17 @@ class Tiktok extends Base
         // 获取smart广告数据
         $smart_data = [];
         foreach ($advertiser_ids as $advertiser_id) {
-            $smart_query['advertiser_id'] = $advertiser_id;
-            $smart_query['campaign_ids']  = $campaign_ids;
-
-            $result = $this->http('GET', $smart_url, [
-                'json'    => $smart_query,
-                'headers' => $headers
-            ]);
-            if ($result['code'] == 0 && $result['message'] == 'OK') {
-                $smart_data = array_merge($smart_data, $result['data']['list']);
+            $chunks = array_chunk($campaign_ids, 30);
+            foreach ($chunks as $chunk){
+                $smart_query['advertiser_id'] = $advertiser_id;
+                $smart_query['campaign_ids']  = $chunk;
+                $result = $this->http('GET', $smart_url, [
+                    'json'    => $smart_query,
+                    'headers' => $headers
+                ]);
+                if ($result['code'] == 0 && $result['message'] == 'OK') {
+                    $smart_data = array_merge($smart_data, $result['data']['list']);
+                }
             }
         }
         foreach ($smart_data as $row) {
@@ -204,10 +206,11 @@ class Tiktok extends Base
             ];
         }
 
-        $this->saveSpendData($insert_list);
-
-        SpendData::where('channel_name', 'tiktok')->where('status', 0)->whereTime('date', '>=', date("Y-m-d", strtotime("-{$this->days} days")))->delete();
-        SpendData::where('channel_name', 'tiktok')->where('status', 1)->update(['status' => 0]);
+        if (count($insert_list) > 0) {
+            $this->saveSpendData($insert_list);
+            SpendData::where('channel_name', 'tiktok')->where('status', 0)->whereTime('date', '>=', date("Y-m-d", strtotime("-{$this->days} days")))->delete();
+            SpendData::where('channel_name', 'tiktok')->where('status', 1)->update(['status' => 0]);
+        }
     }
 
 }

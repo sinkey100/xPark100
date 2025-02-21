@@ -19,6 +19,10 @@ class Cp extends Backend
 
     protected array $apps = [];
 
+    protected float $share_rate = 0.15;
+    protected float $fake_rate  = 0.3;
+
+    protected array $dis_rate_cp_ids = [1828995091155552256];
 
     public function initialize(): void
     {
@@ -81,11 +85,17 @@ class Cp extends Backend
             $v['app_name'] = $this->apps[$v['app_id']]['app_name'] ?? '';
 
             // 利润
-            $profit_real = $v['revenue'] - $v['spend'];
-            $share       = $profit_real * 0.15;
-            $profit_fake = $share / 0.3;
-            $profit_gap  = $profit_real - $profit_fake;
-            $revenue     = $v['revenue'] - $profit_gap;
+            if (in_array($this->auth->id, $this->dis_rate_cp_ids)) {
+                $profit_real = $profit_fake = $v['revenue'] - $v['spend'];
+                $share       = $profit_real * $this->share_rate;
+                $revenue     = $v['revenue'];
+            } else {
+                $profit_real = $v['revenue'] - $v['spend'];
+                $share       = $profit_real * $this->share_rate;
+                $profit_fake = $share / $this->fake_rate;
+                $profit_gap  = $profit_real - $profit_fake;
+                $revenue     = $v['revenue'] - $profit_gap;
+            }
 
             $total['revenue'] += $revenue;
             $total['spend']   += $v['spend'];
