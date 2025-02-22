@@ -72,8 +72,10 @@ const baTable = new baTableClass(
             {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, sortable: false},
             {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false},
             {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false},
-            {label: 'H5 ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 120},
-            {label: 'APP ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115}
+            {label: 'H5 ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 115},
+            {label: 'ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115},
+            {label: 'HB开启率', prop: 'hb_open_rate', align: 'center', operator: false, sortable: false, width: 115},
+            {label: 'Native收入比', prop: 'native_rate', align: 'center', operator: false, sortable: false, width: 115},
         ],
         dblClickNotEditColumn: [undefined],
     }
@@ -83,11 +85,21 @@ provide('baTable', baTable)
 onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.mount()
+    // 默认查询昨天
+    const date = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+    baTable.comSearch.form['a_date'] = [date, date];
+    baTable.table.filter!.search?.push({
+        field: 'a_date',
+        val: `${date} 00:00:00,${date} 23:59:59`,
+        operator: 'RANGE',
+        render: 'datetime',
+    });
     baTable.getIndex()?.then(() => {
         baTable.initSort()
         baTable.dragSort()
         baTable.table.showComSearch = true
     })
+
 })
 </script>
 

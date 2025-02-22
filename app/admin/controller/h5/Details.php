@@ -5,6 +5,7 @@ namespace app\admin\controller\h5;
 use app\admin\model\spend\Data as SpendData;
 use app\admin\model\xpark\Domain;
 use sdk\QueryTimeStamp;
+use think\facade\Db;
 use Throwable;
 use app\admin\model\sls\Active as SLSActive;
 use app\admin\model\app\Active as AppActive;
@@ -38,7 +39,7 @@ class Details extends Backend
         QueryTimeStamp::start();
         list($where, $alias, $limit, $order) = $this->queryBuilder();
 
-        $field      = [
+        $field          = [
             'utc.app_id',
             'utc.a_date',
             'SUM(utc.ad_revenue) AS total_revenue',
@@ -50,13 +51,13 @@ class Details extends Backend
             'IFNULL(app_active.active_users, 0) AS app_active_users',
             'IFNULL(spend.total_spend, 0) AS total_spend'
         ];
-        $h5_active_sql = SLSActive::field([
-            'date', 'app_id', 'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users'
-        ])->group('date, app_id')->buildSql();
+        $h5_active_sql  = Db::table(SLSActive::field([
+                'date', 'app_id', 'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users'
+            ])->group('date, app_id, domain_id')->buildSql() . ' t')->field(['date', 'app_id', 'MAX(new_users) AS new_users', 'MAX(active_users) AS active_users'])->group('date ,app_id')->buildSql();
         $app_active_sql = AppActive::field([
             'date', 'app_id', 'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users'
         ])->group('date, app_id')->buildSql();
-        $spend_sql  = SpendData::field(['date', 'app_id', 'SUM(spend) AS total_spend'])->group('date, app_id')->buildSql();
+        $spend_sql      = SpendData::field(['date', 'app_id', 'SUM(spend) AS total_spend'])->group('date, app_id')->buildSql();
 
         $res = $this->model->field($field)
             ->alias($alias)
@@ -66,7 +67,8 @@ class Details extends Backend
             ->join($spend_sql . ' spend', 'utc.a_date = spend.date AND utc.app_id = spend.app_id', 'left')
             ->where($where)
             ->order('utc.a_date', 'desc')
-            ->order($order)
+            ->order('a_date desc')
+            ->order('total_revenue desc')
             ->group('utc.a_date, utc.app_id');
 
         $sql  = $res->fetchSql(true)->select();
@@ -86,15 +88,23 @@ class Details extends Backend
     protected function rate($data)
     {
         foreach ($data as &$v) {
-            $v['roi']            = $v['total_spend'] > 0
+            $v['roi']      = $v['total_spend'] > 0
                 ? number_format((float)$v['total_revenue'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
                 : '-';
-            $v['h5_arpu']        = $v['h5_active_users'] > 0
+            $v['h5_arpu']  = $v['h5_active_users'] > 0
                 ? number_format((float)$v['h5_revenue'] / $v['h5_active_users'], 2, '.', '')
                 : '-';
-            $v['app_arpu']        = $v['app_active_users'] > 0
-                ? number_format((float)$v['native_revenue'] / $v['app_active_users'], 2, '.', '')
+            $v['app_arpu'] = $v['app_active_users'] > 0
+                ? number_format((float)$v['total_revenue'] / $v['app_active_users'], 2, '.', '')
                 : '-';
+
+            $v['hb_open_rate'] = $v['app_active_users'] > 0
+                ? number_format((float)$v['h5_active_users'] / $v['app_active_users'] * 100, 2, '.', ''). '%'
+                : '-';
+            $v['native_rate'] = $v['total_revenue'] > 0
+                ? number_format((float)$v['native_revenue'] / $v['total_revenue'] * 100, 2, '.', ''). '%'
+                : '-';
+
             $v['h5_revenue']     = number_format((float)$v['h5_revenue'], 2, '.', '');
             $v['native_revenue'] = number_format((float)$v['native_revenue'], 2, '.', '');
             $v['total_revenue']  = number_format((float)$v['total_revenue'], 2, '.', '');
