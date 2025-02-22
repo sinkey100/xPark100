@@ -26,7 +26,7 @@ export const useConfig = defineStore(
             // 侧边菜单激活项背景色
             menuActiveBackground: ['#ffffff', '#1d1e1f'],
             // 侧边菜单激活项文字色
-            menuActiveColor: ['#409eff', '#3375b9'],
+            menuActiveColor: ['#165dff', '#3375b9'],
             // 侧边菜单顶栏背景色
             menuTopBarBackground: ['#fcfcfc', '#1d1e1f'],
             // 侧边菜单宽度(展开时)，单位px

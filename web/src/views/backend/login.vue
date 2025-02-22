@@ -1,5 +1,6 @@
 <template>
     <div>
+
         <div @contextmenu.stop="" id="bubble" class="bubble">
             <canvas id="bubble-canvas" class="bubble-canvas"></canvas>
         </div>
@@ -76,6 +77,10 @@ import toggleDark from '/@/utils/useDark'
 import { fullUrl } from '/@/utils/common'
 import { adminBaseRoutePath } from '/@/router/static/adminBase'
 let timer: number
+
+localStorage.removeItem('storeConfig_v2');
+localStorage.removeItem('storeTabViewConfig');
+localStorage.removeItem('storeTerminal');
 
 const config = useConfig()
 const adminInfo = useAdminInfo()

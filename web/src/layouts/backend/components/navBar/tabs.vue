@@ -3,6 +3,7 @@
         <div
             v-for="(item, idx) in navTabs.state.tabsView"
             @click="onTab(item)"
+            @dblclick="closeTab(item)"
             @contextmenu.prevent="onContextmenu(item, $event)"
             class="ba-nav-tab"
             :class="navTabs.state.activeIndex == idx ? 'active' : ''"
@@ -11,33 +12,34 @@
         >
             {{ item.meta.title }}
             <transition @after-leave="selectNavTab(tabsRefs[navTabs.state.activeIndex])" name="el-fade-in">
-                <Icon v-show="navTabs.state.tabsView.length > 1" class="close-icon" @click.stop="closeTab(item)" size="15" name="el-icon-Close" />
+                <Icon class="close-icon" @click.stop="closeTab(item)" size="15" name="el-icon-Close"/>
             </transition>
         </div>
         <div :style="activeBoxStyle" class="nav-tabs-active-box"></div>
-        <Contextmenu ref="contextmenuRef" :items="state.contextmenuItems" @menuClick="onContextMenuClick" />
+        <Contextmenu ref="contextmenuRef" :items="state.contextmenuItems" @menuClick="onContextMenuClick"/>
     </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter, onBeforeRouteUpdate, type RouteLocationNormalized } from 'vue-router'
-import { useConfig } from '/@/stores/config'
-import { useNavTabs } from '/@/stores/navTabs'
-import { useTemplateRefsList } from '@vueuse/core'
-import type { ContextMenuItem, ContextMenuItemClickEmitArg } from '/@/components/contextmenu/interface'
+import {nextTick, onMounted, reactive, ref} from 'vue'
+import {useRoute, useRouter, onBeforeRouteUpdate, type RouteLocationNormalized} from 'vue-router'
+import {useConfig} from '/@/stores/config'
+import {useNavTabs} from '/@/stores/navTabs'
+import {useTemplateRefsList} from '@vueuse/core'
+import type {ContextMenuItem, ContextMenuItemClickEmitArg} from '/@/components/contextmenu/interface'
 import useCurrentInstance from '/@/utils/useCurrentInstance'
 import Contextmenu from '/@/components/contextmenu/index.vue'
 import horizontalScroll from '/@/utils/horizontalScroll'
-import { getFirstRoute, routePush } from '/@/utils/router'
-import { adminBaseRoutePath } from '/@/router/static/adminBase'
+import {getFirstRoute, routePush} from '/@/utils/router'
+import {adminBaseRoutePath} from '/@/router/static/adminBase'
+import {Back} from "@element-plus/icons-vue";
 
 const route = useRoute()
 const router = useRouter()
 const config = useConfig()
 const navTabs = useNavTabs()
 
-const { proxy } = useCurrentInstance()
+const {proxy} = useCurrentInstance()
 const tabScrollbarRef = ref()
 const tabsRefs = useTemplateRefsList<HTMLDivElement>()
 
@@ -47,11 +49,11 @@ const state: {
     contextmenuItems: ContextMenuItem[]
 } = reactive({
     contextmenuItems: [
-        { name: 'refresh', label: '重新加载', icon: 'fa fa-refresh' },
-        { name: 'close', label: '关闭标签', icon: 'fa fa-times' },
-        { name: 'fullScreen', label: '当前标签全屏', icon: 'el-icon-FullScreen' },
-        { name: 'closeOther', label: '关闭其他标签', icon: 'fa fa-minus' },
-        { name: 'closeAll', label: '关闭全部标签', icon: 'fa fa-stop' },
+        {name: 'refresh', label: '重新加载', icon: 'fa fa-refresh'},
+        {name: 'close', label: '关闭标签', icon: 'fa fa-times'},
+        {name: 'fullScreen', label: '当前标签全屏', icon: 'el-icon-FullScreen'},
+        {name: 'closeOther', label: '关闭其他标签', icon: 'fa fa-minus'},
+        {name: 'closeAll', label: '关闭全部标签', icon: 'fa fa-stop'},
     ],
 })
 
@@ -134,7 +136,7 @@ const onContextmenu = (menu: RouteLocationNormalized, el: MouseEvent) => {
     // 禁用关闭其他和关闭全部
     state.contextmenuItems[4].disabled = state.contextmenuItems[3].disabled = navTabs.state.tabsView.length == 1 ? true : false
 
-    const { clientX, clientY } = el
+    const {clientX, clientY} = el
     contextmenuRef.value.onShowContextmenu(menu, {
         x: clientX,
         y: clientY,
@@ -142,7 +144,7 @@ const onContextmenu = (menu: RouteLocationNormalized, el: MouseEvent) => {
 }
 
 const onContextMenuClick = (item: ContextMenuItemClickEmitArg<RouteLocationNormalized>) => {
-    const { name, sourceData } = item
+    const {name, sourceData} = item
     if (!sourceData) return
     switch (name) {
         case 'refresh':
@@ -223,38 +225,77 @@ defineExpose({
     .close-icon {
         color: v-bind('config.getColorVal("headerBarTabColor")') !important;
     }
+
     .ba-nav-tab.active {
         .close-icon {
             color: v-bind('config.getColorVal("headerBarTabActiveColor")') !important;
         }
     }
 }
+
 .nav-tabs {
     overflow-x: auto;
     overflow-y: hidden;
     margin-right: var(--ba-main-space);
     scrollbar-width: none;
+    background: #fff;
+    width: 100%;
+    padding: 6px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    display: flex;
 
     &::-webkit-scrollbar {
         height: 5px;
     }
+
     &::-webkit-scrollbar-thumb {
         background: #eaeaea;
         border-radius: var(--el-border-radius-base);
         box-shadow: none;
         -webkit-box-shadow: none;
     }
+
     &::-webkit-scrollbar-track {
         background: v-bind('config.layout.layoutMode == "Default" ? "none":config.getColorVal("headerBarBackground")');
     }
+
     &:hover {
         &::-webkit-scrollbar-thumb:hover {
             background: #c8c9cc;
         }
     }
 }
+
 .ba-nav-tab {
     white-space: nowrap;
-    height: 40px;
+    border: 1px solid #eee;
+    margin: 2px 5px 2px 0;
+    font-size: 13px;
+    padding: 3px 20px 4px 10px;
+    color: #495060;
+    position: relative;
+
+    .icon {
+        position: absolute;
+        top: 6.5px;
+        right: 3px;
+        cursor: pointer;
+
+        svg {
+            width: .5rem;
+            height: .5rem;
+        }
+    }
+
+    &.active {
+        background: var(--el-color-primary)!important;
+        color: #fff!important;
+        .icon {
+            color: #fff!important;
+        }
+
+    }
 }
 </style>

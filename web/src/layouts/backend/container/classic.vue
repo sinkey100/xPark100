@@ -1,8 +1,8 @@
 <template>
+    <Header />
     <el-container class="layout-container">
         <Aside />
         <el-container class="content-wrapper">
-            <Header />
             <Main />
         </el-container>
     </el-container>
@@ -10,12 +10,15 @@
 </template>
 
 <script setup lang="ts">
+import { useConfig } from '/@/stores/config'
 import Aside from '/@/layouts/backend/components/aside.vue'
 import Header from '/@/layouts/backend/components/header.vue'
 import Main from '/@/layouts/backend/router-view/main.vue'
 import CloseFullScreen from '/@/layouts/backend/components/closeFullScreen.vue'
 import { useNavTabs } from '/@/stores/navTabs'
+import NavTabs from "/@/layouts/backend/components/navBar/tabs.vue";
 const navTabs = useNavTabs()
+const config = useConfig()
 </script>
 
 <style scoped>

@@ -2,6 +2,18 @@
     <div class="nav-menus" :class="configStore.layout.layoutMode">
 
 
+        <div class="nav-menu-item pt2">
+
+            <Icon
+                v-if="configStore.layout.layoutMode != 'Streamline'"
+                @click="onMenuCollapse"
+                :name="configStore.layout.menuCollapse ? 'el-icon-DArrowRight' : 'el-icon-DArrowLeft'"
+                :class="configStore.layout.menuCollapse ? 'unfold' : ''"
+                size="18"
+                class="fold"
+            />
+        </div>
+
 
         <div v-if="adminInfo.super" @click="terminal.toggle()" class="nav-menu-item pt2">
             <el-badge :is-dot="terminal.state.showDot">
@@ -80,7 +92,7 @@ import Config from './config.vue'
 import { useAdminInfo } from '/@/stores/adminInfo'
 import { useTerminal } from '/@/stores/terminal'
 import { Local, Session } from '/@/utils/storage'
-import { ADMIN_INFO, BA_ACCOUNT } from '/@/stores/constant/cacheKey'
+import {ADMIN_INFO, BA_ACCOUNT, BEFORE_RESIZE_LAYOUT} from '/@/stores/constant/cacheKey'
 import router from '/@/router'
 import { routePush } from '/@/utils/router'
 import { logout } from '/@/api/backend/index'
@@ -88,6 +100,8 @@ import { postClearCache } from '/@/api/common'
 import TerminalVue from '/@/components/terminal/index.vue'
 import { fullUrl } from '/@/utils/common'
 import { useSiteConfig } from '/@/stores/siteConfig'
+import {closeShade} from "/@/utils/pageShade";
+import {setNavTabsWidth} from "/@/utils/layout";
 
 const { t } = useI18n()
 
@@ -141,6 +155,24 @@ const onClearCache = (type: string) => {
         if (type == 'storage') return
     }
     postClearCache(type).then(() => {})
+}
+
+const onMenuCollapse = function () {
+    if (configStore.layout.shrink && !configStore.layout.menuCollapse) {
+        closeShade()
+    }
+
+    configStore.setLayout('menuCollapse', !configStore.layout.menuCollapse)
+
+    Session.set(BEFORE_RESIZE_LAYOUT, {
+        layoutMode: configStore.layout.layoutMode,
+        menuCollapse: configStore.layout.menuCollapse,
+    })
+
+    // 等待侧边栏动画结束后重新计算导航栏宽度
+    setTimeout(() => {
+        setNavTabsWidth()
+    }, 350)
 }
 </script>
 

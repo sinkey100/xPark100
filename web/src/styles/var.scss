@@ -29,4 +29,36 @@ $border-color: map.merge(
     @include set-css-var-value('color-primary-light', $primary-light);
     @include set-component-css-var('bg-color', $bg-color);
     @include set-component-css-var('border-color', $border-color);
+
+
+    --el-color-primary: #165dff;
+    --el-color-danger: #f53f3f;
+    --el-color-success: #2ba471;
+    --el-color-warning: #ff7d00;
+    --el-border-radius-base: 2px;
+    --el-color-success-light-8: #2ba471;
+    --el-color-success-light-9: #e3f9e9;
+    --el-color-danger-light-8: #d54941;
+    --el-color-danger-light-9: #fff0ed;
+    --el-color-warning-light-8: #ec8c2f;
+    --el-color-primary-light-8: #0052d9;
+    --el-color-primary-light-9: #f2f3ff;
+    --el-menu-base-level-padding:10px;
+    --ba-bg-color:#f2f3f5;
+}
+.el-button--primary{
+    --el-button-hover-bg-color: #4080ff;
+    --el-button-hover-border-color:#4080ff;
+}
+.el-button--danger{
+    --el-button-hover-bg-color: #f76560;
+    --el-button-hover-border-color:#f76560;
+}
+.el-button--success{
+    --el-button-hover-bg-color: #23c343;
+    --el-button-hover-border-color:#23c343;
+}
+.el-button--warning{
+    --el-button-hover-bg-color: #ff9a2e;
+    --el-button-hover-border-color:#ff9a2e;
 }

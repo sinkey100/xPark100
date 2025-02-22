@@ -10,6 +10,7 @@ import DefaultNavBar from '/@/layouts/backend/components/navBar/default.vue'
 import ClassicNavBar from '/@/layouts/backend/components/navBar/classic.vue'
 import StreamlineNavBar from '/@/layouts/backend/components/menus/menuHorizontal.vue'
 import DoubleNavBar from '/@/layouts/backend/components/navBar/double.vue'
+import Logo from "/@/layouts/backend/components/logo.vue";
 
 defineOptions({
     name: 'layout/header',
@@ -24,5 +25,6 @@ const navTabs = useNavTabs()
 .layout-header {
     height: auto;
     padding: 0;
+    border-bottom: 1px solid #e5e6eb;
 }
 </style>
