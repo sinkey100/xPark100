@@ -38,7 +38,7 @@ const baTable = new baTableClass(
                 label: '日期',
                 prop: 'a_date',
                 align: 'center',
-                render: 'datetime',
+                render: 'datetimeAndTotal',
                 comSearchRender: 'date',
                 operator: 'RANGE',
                 sortable: false,

@@ -7,6 +7,7 @@ use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
 use app\command\Base;
 use Google\Service\Adsense as GoogleAdSense;
+use sdk\FeishuBot;
 use sdk\Google as GoogleSDK;
 use think\console\Input;
 use think\console\Output;
@@ -51,6 +52,7 @@ class AdSense extends Base
         $this->log('历史数据已删除');
 
         $this->revenue();
+        $this->account();
 
         $this->log('======== AdSense 拉取数据完成 ========', false);
     }
@@ -106,7 +108,12 @@ class AdSense extends Base
                 'filters'         => implode(',', $filter)
             ];
 
-            $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            try {
+                $result = $adsense->accounts_reports->generate($account->adsense_name, $params);
+            } catch (Exception $e) {
+                FeishuBot::text("AdSense[$flag]报告拉取错误:" . $e->getTraceAsString());
+                continue;
+            }
             if (!$result['rows'] || count($result['rows']) == 0) continue;
 
             $this->log("{$flag} 广告单元数据拉取完成");
@@ -122,34 +129,7 @@ class AdSense extends Base
                 $insert['FILLS'] = intval($insert['AD_REQUESTS_COVERAGE'] * $insert['AD_REQUESTS']);
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
-
                 $channel_full = 'AdSense-' . $account->flag;
-
-                if ($app_id == 23 && time() > 1733932800) {
-                    [$domain_id_5b, $app_id_5b] = $this->getDomainRow('5b-' . $insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
-                    $data[] = [
-                        'channel'         => 'AdSense',
-                        'channel_full'    => $channel_full,
-                        'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
-                        'channel_type'    => ($this->channelList[$channel_full]['ad_type'] ?? 'H5') == 'H5' ? 0 : 1,
-                        'sub_channel'     => '5b-' . $insert['DOMAIN_NAME'],
-                        'domain_id'       => $domain_id_5b,
-                        'app_id'          => $app_id_5b,
-                        'a_date'          => $insert['DATE'],
-                        'country_code'    => $insert['COUNTRY_CODE'],
-                        'ad_placement_id' => $insert['AD_UNIT_NAME'],
-                        'requests'        => $insert['AD_REQUESTS'],
-                        'fills'           => $insert['FILLS'],
-                        'impressions'     => $insert['IMPRESSIONS'],
-                        'clicks'          => $insert['CLICKS'],
-                        'ad_revenue'      => $insert['ESTIMATED_EARNINGS'],
-                        'gross_revenue'   => $insert['ESTIMATED_EARNINGS'],
-                        'net_revenue'     => $insert['ESTIMATED_EARNINGS'],
-                        'raw_cpc'         => $insert['COST_PER_CLICK'],
-                        'raw_ctr'         => $insert['IMPRESSIONS_CTR'],
-                        'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
-                    ];
-                }
 
                 $data[] = [
                     'channel'         => 'AdSense',
@@ -198,31 +178,6 @@ class AdSense extends Base
 
                 [$domain_id, $app_id] = $this->getDomainRow($insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
                 $channel_full = 'AdSense-' . $account->flag;
-                if ($app_id == 23 && time() > 1733932800) {
-                    [$domain_id_5b, $app_id_5b] = $this->getDomainRow('5b-' . $insert['DOMAIN_NAME'], $insert['DATE'], 'AdSense');
-
-                    $data[] = [
-                        'channel'         => 'AdSense',
-                        'channel_id'      => $this->channelList[$channel_full]['id'] ?? 0,
-                        'channel_full'    => $channel_full,
-                        'sub_channel'     => '5b-' . $insert['DOMAIN_NAME'],
-                        'domain_id'       => $domain_id_5b,
-                        'app_id'          => $app_id_5b,
-                        'a_date'          => $insert['DATE'],
-                        'country_code'    => $insert['COUNTRY_CODE'],
-                        'ad_placement_id' => strtolower('ADS_' . $insert['AD_FORMAT_CODE']),
-                        'requests'        => $insert['AD_REQUESTS'],
-                        'fills'           => $insert['FILLS'],
-                        'impressions'     => $insert['IMPRESSIONS'],
-                        'clicks'          => $insert['CLICKS'],
-                        'ad_revenue'      => $insert['ESTIMATED_EARNINGS'],
-                        'gross_revenue'   => $insert['ESTIMATED_EARNINGS'],
-                        'net_revenue'     => $insert['ESTIMATED_EARNINGS'],
-                        'raw_cpc'         => $insert['COST_PER_CLICK'],
-                        'raw_ctr'         => $insert['IMPRESSIONS_CTR'],
-                        'raw_ecpm'        => $insert['IMPRESSIONS_RPM']
-                    ];
-                }
 
                 $data[] = [
                     'channel'         => 'AdSense',
@@ -298,5 +253,19 @@ class AdSense extends Base
             }
         }
     }
+
+    protected function account(): void
+    {
+        if (date("H") != 12) return;
+        $accounts = Account::where('adsense_state', 'READY')->select();
+        $message  = [];
+        foreach ($accounts as $account) {
+            $expired_time = is_int($account['updated']) ? $account['updated'] : strtotime($account['updated']);
+            $day          = round(($expired_time - time()) / 86400, 2);
+            $message[]    = "{$account->flag} Google授权有效期还剩 $day 天";
+        }
+        FeishuBot::text(implode("\n", $message));
+    }
+
 
 }

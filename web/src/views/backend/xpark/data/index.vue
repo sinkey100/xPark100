@@ -11,8 +11,8 @@
         >
             <el-form-item :label-width="100" label="维度">
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
-                <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.country_code" label="地区" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.ad_placement_id" label="广告单元" border/>
                 <el-checkbox v-if="adminInfo.id == 1" v-model="original" label="Original" border/>
@@ -61,8 +61,8 @@ const {t} = useI18n()
 const tableRef = ref()
 const dimensions = reactive({
     a_date: true,
+    app_id: true,
     domain_id: false,
-    app_id: false,
     country_code: false,
     ad_placement_id: false
 })
@@ -465,6 +465,15 @@ baTable.table.filter!.dimensions = dimensions
 onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.mount()
+    // 默认查询昨天
+    const date = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+    baTable.comSearch.form['a_date'] = [date, date];
+    baTable.table.filter!.search?.push({
+        field: 'a_date',
+        val: `${date} 00:00:00,${date} 23:59:59`,
+        operator: 'RANGE',
+        render: 'datetime',
+    });
     baTable.getIndex()?.then(() => {
         baTable.initSort()
         baTable.dragSort()

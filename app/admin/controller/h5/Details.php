@@ -71,10 +71,33 @@ class Details extends Backend
             ->order('total_revenue desc')
             ->group('utc.a_date, utc.app_id');
 
-        $sql  = $res->fetchSql(true)->select();
-        $res  = $res->paginate($limit);
-        $list = $this->rate($res->items());
-
+        $sql   = $res->fetchSql(true)->select();
+        $res   = $res->paginate($limit);
+        $total = [
+            'id'               => 10000,
+            'a_date'           => '',
+            'app_id'           => '',
+            'app_name'         => '',
+            'app_new_users'    => 0,
+            'app_active_users' => 0,
+            'h5_new_users'     => 0,
+            'h5_active_users'  => 0,
+            'total_revenue'    => 0,
+            'total_spend'      => 0,
+            'native_revenue'   => 0,
+            'h5_revenue'       => 0,
+        ];
+        foreach ($res->items() as $v) {
+            $total['app_new_users']    += $v['app_new_users'];
+            $total['app_active_users'] += $v['app_active_users'];
+            $total['h5_new_users']     += $v['h5_new_users'];
+            $total['h5_active_users']  += $v['h5_active_users'];
+            $total['total_revenue']    += $v['total_revenue'];
+            $total['total_spend']      += $v['total_spend'];
+            $total['native_revenue']   += $v['native_revenue'];
+            $total['h5_revenue']       += $v['h5_revenue'];
+        }
+        $list = $this->rate(array_merge($res->items(), [$total]));
 
         $this->success('', [
             '_'      => $this->auth->id == 1 ? $sql : '',
@@ -88,21 +111,22 @@ class Details extends Backend
     protected function rate($data)
     {
         foreach ($data as &$v) {
-            $v['roi']      = $v['total_spend'] > 0
+            $v['roi']          = $v['total_spend'] > 0
                 ? number_format((float)$v['total_revenue'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
                 : '-';
-            $v['h5_arpu']  = $v['h5_active_users'] > 0
+            $v['h5_arpu']      = $v['h5_active_users'] > 0
                 ? number_format((float)$v['h5_revenue'] / $v['h5_active_users'], 2, '.', '')
                 : '-';
-            $v['app_arpu'] = $v['app_active_users'] > 0
+            $v['app_arpu']     = $v['app_active_users'] > 0
                 ? number_format((float)$v['total_revenue'] / $v['app_active_users'], 2, '.', '')
                 : '-';
-
-            $v['hb_open_rate'] = $v['app_active_users'] > 0
-                ? number_format((float)$v['h5_active_users'] / $v['app_active_users'] * 100, 2, '.', ''). '%'
-                : '-';
-            $v['native_rate'] = $v['total_revenue'] > 0
-                ? number_format((float)$v['native_revenue'] / $v['total_revenue'] * 100, 2, '.', ''). '%'
+            $v['hb_open_rate'] = ($this->apps[$v['app_id']]['hb_switch'] ?? 0) == 0
+                ? '-'
+                : ($v['app_active_users'] > 0
+                    ? number_format((float)$v['h5_active_users'] / $v['app_active_users'] * 100, 2, '.', '') . '%'
+                    : 0);
+            $v['native_rate']  = $v['total_revenue'] > 0
+                ? number_format((float)$v['native_revenue'] / $v['total_revenue'] * 100, 2, '.', '') . '%'
                 : '-';
 
             $v['h5_revenue']     = number_format((float)$v['h5_revenue'], 2, '.', '');

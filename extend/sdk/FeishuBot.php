@@ -47,6 +47,49 @@ class FeishuBot
         }
     }
 
+    public static function text(string $content): bool
+    {
+        $message = [
+            "msg_type" => "text",
+            "content"  => [
+                "text" => $content
+            ]
+        ];
+        return self::send($message);
+    }
+
+
+    protected static function send(array $params): bool
+    {
+        $http   = new Client(['verify' => false]);
+        [$timestamp, $sign] = self::sign(Env::get('BOT.BUILD_SECRET'));
+
+        $message = [
+            "timestamp" => $timestamp,
+            "sign"      => $sign
+        ];
+        $message = array_merge($params, $message);
+
+        try {
+            $response = $http->request('POST', Env::get('BOT.BUILD_API'), [
+                'json'    => $message,
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+            ]);
+            $response = json_decode($response->getBody()->getContents(), true);
+            return isset($response['StatusMessage']) && $response['StatusMessage'] == 'success';
+        } catch (GuzzleException $e) {
+            return false;
+        }
+    }
+
+    protected static function sign($secret): array
+    {
+        $timestamp = time();
+        $string    = $timestamp . "\n" . $secret;
+        return [$timestamp, base64_encode(hash_hmac('sha256', "", $string, true))];
+    }
 
     /**
      * @throws Exception

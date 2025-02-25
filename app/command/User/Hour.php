@@ -183,7 +183,7 @@ class Hour extends Base
             foreach ($chunks as $chunk) {
                 Utc::insertAll($chunk);
             }
-            Utc::where('status', 0)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
+            Utc::where('status', 0)->where('channel_type', 0)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             Utc::where('status', 1)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
             unset($list);
             $this->log('第' . ($this->days - $i) . '/' . $this->days . '天 完成');
