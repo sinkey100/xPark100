@@ -44,6 +44,9 @@
                               :input-attr="{ pk: 'ba_xpark_channel.id', field: 'channel_alias', remoteUrl: '/admin/xpark.Channel/index' }"
                               :placeholder="t('Please select field', { field: t('xpark.domain.channel') })"/>
 
+                    <FormItem :label="t('xpark.domain.sls_switch')" type="switch" v-model="baTable.form.items!.sls_switch" prop="sls_switch" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
+                    <FormItem :label="t('xpark.domain.is_hide')" type="switch" v-model="baTable.form.items!.is_hide" prop="is_hide" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
+
                 </el-form>
 
             </div>

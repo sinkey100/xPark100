@@ -6,7 +6,7 @@ use app\admin\model\xpark\DomainRate;
 use Throwable;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Utc;
 
 /**
  * 应用管理
@@ -177,7 +177,7 @@ class Apps extends Backend
         $app_ids = $this->request->post('app_ids/a', []);
         if (!$month || empty($app_ids)) $this->error('参数错误');
 
-        $domains = Data::whereMonth('a_date', $month)
+        $domains = Utc::whereMonth('a_date', $month)
             ->where('app_id', 'in', $app_ids)
             ->group('sub_channel')
             ->select()->toArray();

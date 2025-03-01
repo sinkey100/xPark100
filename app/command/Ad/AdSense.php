@@ -79,7 +79,10 @@ class AdSense extends Base
         // 获取数据
         foreach ($domains_group as $flag => $domains) {
             $account = Account::where('flag', $flag)->find();
-            if (!$account) throw new Exception('AdSense 账号标记不存在');
+            if (!$account) {
+                $this->log('AdSense 账号标记不存在' . $flag);
+                continue;
+            }
             $client = (new GoogleSDK())->init($account);
             $client->setAccessToken($account->auth);
             $adsense = new GoogleAdSense($client);

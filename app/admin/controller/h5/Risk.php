@@ -8,7 +8,7 @@ use app\common\controller\Backend;
 use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Apps;
 use app\admin\model\sls\Active as SLSActive;
-use app\admin\model\xpark\Data as XparkData;
+use app\admin\model\xpark\Utc as XparkData;
 use app\admin\model\spend\Data as SpendData;
 use sdk\QueryTimeStamp;
 

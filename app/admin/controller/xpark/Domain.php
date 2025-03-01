@@ -8,7 +8,7 @@ use app\common\controller\Backend;
 use app\admin\model\xpark\Domain as DomainModel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use app\admin\model\xpark\Data;
+use app\admin\model\xpark\Utc;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Channel;
 
@@ -120,7 +120,7 @@ class Domain extends Backend
         $first_row_index = 9;
         foreach ($domains as $index => $domain) {
             // 收入
-            $revenue          = Data::where('sub_channel', $domain)
+            $revenue          = Utc::where('sub_channel', $domain)
                 ->whereMonth('a_date', $month)
                 ->where('app_id', 'in', $app_ids)
                 ->sum('ad_revenue', 0);

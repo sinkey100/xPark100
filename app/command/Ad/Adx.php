@@ -172,7 +172,7 @@ class Adx extends Base
             $handle = gzopen($this->temp_file, 'r');
             if (!$handle) throw new Exception('打开报告失败');
             $content = stream_get_contents($handle);
-            [$fields, $csvData] = $this->csv2json($content);
+            [$fields, $csvData] = csv2json($content);
 
             $amountFields = [
                 'Column.AD_EXCHANGE_LINE_ITEM_LEVEL_REVENUE',

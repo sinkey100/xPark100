@@ -70,7 +70,7 @@ class PremiumAds extends Base
             $report_url = $matches[0][0];
 
             $csvRaw = file_get_contents($report_url);
-            [$fields, $csvData] = $this->csv2json($csvRaw);
+            [$fields, $csvData] = csv2json($csvRaw);
             $data = [];
             if (!isset($csvData[0]['country_code']) || !isset($csvData[0]['ad_unit_id'])) continue;
             foreach ($csvData as $v) {

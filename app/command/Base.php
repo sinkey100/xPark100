@@ -84,31 +84,6 @@ class Base extends Command
         return array_reverse($periods);
     }
 
-    protected function csv2json($csv_string): array
-    {
-        $csv_string = str_replace(["\xEF\xBB\xBF", '/\x{FE FF}/u'], '', $csv_string);
-        // 将CSV字符串按行分割
-        $lines = explode("\n", $csv_string);
-
-        // 使用第一行作为标题
-        $header = str_getcsv(array_shift($lines));
-
-        // 读取剩余行并转换为关联数组
-        $data = [];
-        foreach ($lines as $line) {
-            if (trim($line) == '') {
-                continue;
-            }
-            $row    = str_getcsv($line);
-            $data[] = array_combine($header, $row);
-        }
-
-        // 将数据转换为JSON对象
-        // $json_data = json_encode($data, JSON_PRETTY_PRINT);
-
-        return [$header, $data];
-    }
-
     protected function getDomainRow($original_domain, $date, $channel = ''): array
     {
         //domain_id
@@ -174,6 +149,10 @@ class Base extends Command
                 ]);
             } else {
                 $rate = floatval($this->dateRate[$_date][$_domain]['rate']);
+            }
+            if (strtotime($_date) >= 1740758400 && $v['app_id'] == 23) {
+                // 传音3月起 数据不处理
+                $rate = 1;
             }
 
             // 备份数据
@@ -271,7 +250,7 @@ class Base extends Command
 
             if ($flag) $rows[] = $line;
         }
-        [$fields, $csvData] = $this->csv2json(implode("\n", $rows));
+        [$fields, $csvData] = csv2json(implode("\n", $rows));
         return [$dateRange, $fields, $csvData];
     }
 

@@ -8,5 +8,6 @@ export default {
     app_id: '所属应用',
     rate: '分成比例',
     is_hide: '隐藏层',
+    sls_switch: 'SLS开关',
     'quick Search Fields': 'ID',
 }

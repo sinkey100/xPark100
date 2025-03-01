@@ -5,7 +5,6 @@ namespace app\command\Ad;
 use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Domain;
-use app\admin\model\xpark\Utc;
 use app\command\Base;
 use GuzzleHttp\Exception\GuzzleException;
 use think\console\Input;
@@ -34,7 +33,6 @@ class AppLovin extends Base
 
 
         Data::where('channel', 'AppLovin')->where('status', 1)->delete();
-        Utc::where('channel', 'AppLovin')->where('status', 1)->delete();
 
         $this->log("任务开始，拉取 {$this->days} 天");
         $this->log('开始拉取 AppLovin 数据');
@@ -50,11 +48,6 @@ class AppLovin extends Base
         for ($i = 0; $i < $this->days; $i++) {
             Data::where('channel', 'AppLovin')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
             Data::where('channel', 'AppLovin')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
-                'status' => 0
-            ]);
-
-            Utc::where('channel', 'AppLovin')->where('status', 0)->where('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-            Utc::where('channel', 'AppLovin')->where('status', 1)->where('a_date', date("Y-m-d", strtotime("-$i days")))->update([
                 'status' => 0
             ]);
         }
@@ -98,7 +91,6 @@ class AppLovin extends Base
                 return;
             }
 
-
             if (count($result['results']) == 0) {
                 $this->log('拉取数据完成，长度0');
                 $this->log(json_encode($result));
@@ -106,7 +98,6 @@ class AppLovin extends Base
             }
             $this->log('拉取数据完成，长度' . count($result['results']));
             $saveData    = [];
-            $saveDataUtc = [];
             foreach ($result['results'] as $v) {
                 if (!in_array($v['package_name'], $ad_domains)) continue;
 
@@ -135,43 +126,10 @@ class AppLovin extends Base
                     'raw_ecpm'        => $v['ecpm']
                 ];
 
-                // 记录UTC
-                if (in_array(strtolower($v['country']), ['n / a', 'none'])) $v['country'] = '';
-                $saveDataUtc[] = [
-                    'domain_id'       => $domain_id,
-                    'channel'         => 'AppLovin',
-                    'channel_full'    => $applovin_channel['channel_alias'],
-                    'a_date'          => $v['day'],
-                    'country_code'    => strtoupper($v['country']),
-                    'country_level'   => $this->country_data[$v['country']]['level'] ?? '',
-                    'country_name'    => $this->country_data[$v['country']]['name'] ?? '',
-                    'sub_channel'     => $v['package_name'],
-                    'ad_placement_id' => $v['max_ad_unit_id'],
-                    'requests'        => $v['attempts'],
-                    'fills'           => $v['responses'],
-                    'impressions'     => $v['impressions'],
-                    'clicks'          => 0,
-                    'ad_revenue'      => $v['estimated_revenue'],
-                    'raw_cpc'         => 0,
-                    'raw_ctr'         => 0,
-                    'raw_ecpm'        => $v['ecpm'],
-                    'gross_revenue'   => $v['estimated_revenue'],
-                    'net_revenue'     => $v['estimated_revenue'],
-                    'status'          => 1,
-                    'channel_type'    => 1,
-                    'app_id'          => $app_id,
-                    'channel_id'      => $applovin_channel['id'],
-                ];
             }
 
             $this->log('准备存储数据，长度' . count($saveData));
-
             $this->saveData($saveData);
-            // 保存UTC
-            $chunks = array_chunk($saveDataUtc, 1000);
-            foreach ($chunks as $chunk) {
-                Utc::insertAll($chunk);
-            }
         }
 
     }

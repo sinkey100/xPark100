@@ -9,6 +9,7 @@ use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Utc;
 use app\command\Base;
 use sdk\SLS;
+use Exception;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
@@ -179,12 +180,38 @@ class Hour extends Base
                 ->group('DATE(time_utc_0), app_id, domain_id, country_code, ad_placement_id, channel, channel_id, channel_full, country_level, country_name, sub_channel, channel_type')
                 ->select()->toArray();
 
-            $chunks = array_chunk($list, 1000);
+            $chunks = array_chunk($list, 100000);
             foreach ($chunks as $chunk) {
                 Utc::insertAll($chunk);
             }
-            Utc::where('status', 0)->where('channel_type', 0)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->delete();
-            Utc::where('status', 1)->whereDay('a_date', date("Y-m-d", strtotime("-$i days")))->update(['status' => 0]);
+
+//            // 插入无法计算的数据
+            $field          = 'domain_id';
+            $all_domains    = array_column(Data::field($field)->where('status', 0)->whereDay('a_date', $date)->group($field)->select()->toArray(), $field);
+            $utc_domains    = array_column(Utc::field($field)->where('status', 1)->whereDay('a_date', $date)->group($field)->select()->toArray(), $field);
+            $ext_domain_ids = array_values(array_diff($all_domains, $utc_domains));
+            if (count($ext_domain_ids) > 0) {
+                $ext_domain_ids = implode(',', $ext_domain_ids);
+                $sql            = "
+INSERT INTO ba_xpark_utc (
+    `app_id`, `channel_id`, `domain_id`, `channel`, `channel_full`, `a_date`, `country_code`, `country_level`, `country_name`, `sub_channel`,
+    `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`, `status`
+)
+SELECT `app_id`, `channel_id`, `domain_id`, `channel`, `channel_full`, `a_date`, `country_code`, `country_level`, `country_name`,
+    `sub_channel`, `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`, CAST(1 AS TINYINT) as status
+FROM ba_xpark_data
+WHERE domain_id in ( $ext_domain_ids ) and date(a_date) = '$date' and status = 0;";
+                try {
+                    Db::execute($sql);
+                } catch (Exception $e) {
+                    file_put_contents('error.log', date("Y-m-d H:i:s") . "\n", 8);
+                    file_put_contents('error.log', $e->getMessage() . "\n", 8);
+                    file_put_contents('error.log', $e->getTraceAsString() . "\n\n\n", 8);
+                }
+            }
+
+            Utc::where('status', 0)->whereDay('a_date', $date)->delete();
+            Utc::where('status', 1)->whereDay('a_date', $date)->update(['status' => 0]);
             unset($list);
             $this->log('第' . ($this->days - $i) . '/' . $this->days . '天 完成');
         }

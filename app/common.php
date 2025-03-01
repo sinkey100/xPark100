@@ -696,6 +696,33 @@ if (!function_exists('find_row_from_keyword')) {
         return $message;
     }
 }
+if (!function_exists('csv2json')) {
+
+    function csv2json($csv_string): array
+    {
+        $csv_string = str_replace(["\xEF\xBB\xBF", '/\x{FE FF}/u'], '', $csv_string);
+        // 将CSV字符串按行分割
+        $lines = explode("\n", $csv_string);
+
+        // 使用第一行作为标题
+        $header = str_getcsv(array_shift($lines));
+
+        // 读取剩余行并转换为关联数组
+        $data = [];
+        foreach ($lines as $line) {
+            if (trim($line) == '') {
+                continue;
+            }
+            $row    = str_getcsv($line);
+            $data[] = array_combine($header, $row);
+        }
+
+        // 将数据转换为JSON对象
+        // $json_data = json_encode($data, JSON_PRETTY_PRINT);
+
+        return [$header, $data];
+    }
+}
 
 if (!function_exists('convert_to_utc')) {
     function convert_to_utc($datetime, $returnTimestamp = false): int|string

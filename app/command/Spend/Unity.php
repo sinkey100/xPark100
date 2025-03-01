@@ -48,7 +48,7 @@ class Unity extends Base
                 'headers' => $headers
             ], true);
 
-            [$fields, $csvData] = $this->csv2json($result);
+            [$fields, $csvData] = csv2json($result);
             $resultData = array_merge($resultData, $csvData);
         }
 

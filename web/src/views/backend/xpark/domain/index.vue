@@ -1,6 +1,7 @@
 <template>
     <div class="default-main ba-table-box">
-        <el-alert class="ba-table-alert" v-if="baTable.table.remark" :title="baTable.table.remark" type="info" show-icon />
+        <el-alert class="ba-table-alert" v-if="baTable.table.remark" :title="baTable.table.remark" type="info"
+                  show-icon/>
 
         <!-- 表格顶部菜单 -->
         <!-- 自定义按钮请使用插槽，甚至公共搜索也可以使用具名插槽渲染，参见文档 -->
@@ -23,16 +24,16 @@
         </Table>
 
         <!-- 表单 -->
-        <PopupForm />
+        <PopupForm/>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, provide, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import {onMounted, provide, ref} from 'vue'
+import {useI18n} from 'vue-i18n'
 import PopupForm from './popupForm.vue'
-import { baTableApi } from '/@/api/common'
-import { defaultOptButtons } from '/@/components/table'
+import {baTableApi} from '/@/api/common'
+import {defaultOptButtons} from '/@/components/table'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
@@ -41,7 +42,7 @@ defineOptions({
     name: 'xpark/domain',
 })
 
-const { t } = useI18n()
+const {t} = useI18n()
 const tableRef = ref()
 const optButtons: OptButton[] = defaultOptButtons(['edit'])
 
@@ -56,12 +57,52 @@ const baTable = new baTableClass(
             limit: 1000
         },
         column: [
-            { type: 'selection', align: 'center', operator: false },
-            { label: t('xpark.domain.id'), prop: 'id', align: 'center', width: 70, operator: false, sortable: 'custom' },
-            { label: t('xpark.domain.domain'), prop: 'domain', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('xpark.domain.is_hide'), prop: 'is_hide', align: 'center', width: 110, render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1') } },
-            { label: t('xpark.domain.channel'), prop: 'channel', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('xpark.domain.flag'), prop: 'flag', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            {type: 'selection', align: 'center', operator: false},
+            {label: t('xpark.domain.id'), prop: 'id', align: 'center', width: 70, operator: false, sortable: 'custom'},
+            {
+                label: t('xpark.domain.domain'),
+                prop: 'domain',
+                align: 'center',
+                operatorPlaceholder: t('Fuzzy query'),
+                operator: 'LIKE',
+                sortable: false
+            },
+            {
+                label: t('xpark.domain.sls_switch'),
+                prop: 'sls_switch',
+                align: 'center',
+                width: 110,
+                render: 'switch',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
+            },
+            {
+                label: t('xpark.domain.is_hide'),
+                prop: 'is_hide',
+                align: 'center',
+                width: 110,
+                render: 'switch',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
+            },
+            {
+                label: t('xpark.domain.channel'),
+                prop: 'channel',
+                align: 'center',
+                operatorPlaceholder: t('Fuzzy query'),
+                operator: 'LIKE',
+                sortable: false
+            },
+            {
+                label: t('xpark.domain.flag'),
+                prop: 'flag',
+                align: 'center',
+                operatorPlaceholder: t('Fuzzy query'),
+                operator: 'LIKE',
+                sortable: false
+            },
             {
                 render: 'slot',
                 slotName: 'rate',
@@ -72,7 +113,7 @@ const baTable = new baTableClass(
                 prop: 'app_id',
                 align: 'center',
                 sortable: false,
-                show:false,
+                show: false,
                 operator: 'eq',
                 comSearchRender: 'remoteSelect',
                 remote: {
@@ -93,7 +134,7 @@ const baTable = new baTableClass(
                 prop: 'admin.id',
                 align: 'center',
                 sortable: false,
-                show:false,
+                show: false,
                 operator: 'eq',
                 comSearchRender: 'remoteSelect',
                 remote: {
@@ -109,12 +150,12 @@ const baTable = new baTableClass(
                 sortable: false,
                 operator: false,
             },
-            { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
+            {label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false},
         ],
         dblClickNotEditColumn: [undefined],
     },
     {
-        defaultItems: { domain: null },
+        defaultItems: {domain: null, sls_switch: 1, is_hide: 1},
     }
 )
 
@@ -131,7 +172,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.red{
-    color:red;
+.red {
+    color: red;
 }
 </style>
