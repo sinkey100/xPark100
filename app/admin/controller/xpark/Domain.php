@@ -286,4 +286,16 @@ class Domain extends Backend
             'row' => $row
         ]);
     }
+
+    public function append(): void
+    {
+        list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $res = $this->model->alias($alias)->whereNull('app_id')->order('domain.id', 'desc')->paginate($limit);
+
+        $this->success('', [
+            'list'   => $res->items(),
+            'total'  => $res->total(),
+            'remark' => '',
+        ]);
+    }
 }

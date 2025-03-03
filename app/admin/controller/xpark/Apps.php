@@ -191,4 +191,65 @@ class Apps extends Backend
         ]);
 
     }
+
+    public function append(): void
+    {
+        $pk  = $this->model->getPk();
+        $id  = $this->request->param($pk);
+        $row = $this->model->find($id);
+        if (!$row) {
+            $this->error(__('Record not found'));
+        }
+
+        $dataLimitAdminIds = $this->getDataLimitAdminIds();
+        if ($dataLimitAdminIds && !in_array($row[$this->dataLimitField], $dataLimitAdminIds)) {
+            $this->error(__('You have no permission'));
+        }
+
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            if (!$data) {
+                $this->error(__('Parameter %s can not be empty', ['']));
+            }
+
+            $data   = $this->excludeFields($data);
+            $result = false;
+            $this->model->startTrans();
+            try {
+                // 模型验证
+                if ($this->modelValidate) {
+                    $validate = str_replace("\\model\\", "\\validate\\", get_class($this->model));
+                    if (class_exists($validate)) {
+                        $validate = new $validate();
+                        if ($this->modelSceneValidate) $validate->scene('edit');
+                        $data[$pk] = $row[$pk];
+                        $validate->check($data);
+                    }
+                }
+
+                $domains = Domain::where('id', 'in', $data['domain_arr'])->select();
+                foreach ($domains as $domain) {
+                    $domain->app_id   = $row['id'];
+                    $domain->admin_id = $row['admin_id'];
+                    $domain->save();
+                    DomainRate::where('domain', $domain->domain)->where('date', date("Y-m-d"))->delete();
+                }
+
+                $result = $row->save($data);
+                $this->model->commit();
+            } catch (Throwable $e) {
+                $this->model->rollback();
+                $this->error($e->getMessage());
+            }
+            if ($result !== false) {
+                $this->success(__('Update successful'));
+            } else {
+                $this->error(__('No rows updated'));
+            }
+        }
+
+        $this->success('', [
+            'row' => $row
+        ]);
+    }
 }

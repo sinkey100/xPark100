@@ -24,6 +24,7 @@
         <!-- 表单 -->
         <PopupForm />
         <PopupBill />
+        <PopupAppend />
     </div>
 </template>
 
@@ -31,6 +32,7 @@
 import { onMounted, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PopupForm from './popupForm.vue'
+import PopupAppend from './popupAppend.vue'
 import PopupBill from './popupBill.vue'
 import { baTableApi } from '/@/api/common'
 import { defaultOptButtons } from '/@/components/table'
@@ -46,7 +48,24 @@ defineOptions({
 const { t } = useI18n()
 const tableRef = ref()
 
-const optButtons: OptButton[] = defaultOptButtons(['edit', 'delete'])
+let optButtons: OptButton[] = [
+    {
+        render: 'tipButton',
+        name: 'info',
+        title: 'Info',
+        text: '',
+        type: 'success',
+        icon: 'fa fa-plus',
+        class: 'table-row-info',
+        disabledTip: false,
+        click: (row: TableRow) => {
+            baTable.form.items = row;
+            baTable.form.operate = 'Append'
+        },
+    },
+]
+optButtons = optButtons.concat(defaultOptButtons(['edit','delete']))
+
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -66,7 +85,7 @@ const baTable = new baTableClass(
             { label: t('xpark.apps.status'), prop: 'status', align: 'center', render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('cp.status 0'), '1': t('cp.status 1') } },
             { label: t('xpark.apps.createtime'), prop: 'createtime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             // { label: t('xpark.apps.updatetime'), prop: 'updatetime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
-            { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
+            { label: t('Operate'), align: 'center', width: 120, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
     },
