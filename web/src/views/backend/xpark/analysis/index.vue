@@ -105,37 +105,15 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-:deep(.t-table--bordered) {
-    --td-component-border: #f6f6f6;
-}
 
 :deep(.t-table) {
-    --td-text-color-placeholder: var(--el-text-color-primary);
-    --td-text-color-primary: #444;
-
-    thead {
-        th {
-            font-weight: 700
-        }
-
-    }
-
-    tr {
-        --td-bg-color-secondarycontainer: var(--el-fill-color-lighter);
-        --td-bg-color-secondarycontainer-hover: #f5f7fa;
-        --td-bg-color-container-hover: #f5f7fa;
-    }
-
-    th, td {
-        --td-comp-paddingTB-m: 8px;
-    }
 
     .t-table__th-col-revenue, th[data-colkey^="r_"] {
-        background-color: var(--el-color-primary-light-9);
+        background-color: var(--el-color-primary-light-7);
     }
 
     .t-table__th-col-clear, th[data-colkey^="c_"] {
-        background-color: var(--el-color-danger-light-9);
+        background-color: var(--el-color-danger-light-7);
     }
 
     .t-table__th-col-hold, th[data-colkey^="h_"] {
@@ -143,7 +121,7 @@ onMounted(() => {
     }
 
     .t-table__th-col-tidy, th[data-colkey^="t_"] {
-        background-color: var(--el-color-success-light-9);
+        background-color: var(--el-color-success-light-7);
     }
 
 

@@ -35,14 +35,12 @@
         <Table ref="tableRef"></Table>
 
         <!-- 表单 -->
-        <PopupForm/>
     </div>
 </template>
 
 <script setup lang="ts">
 import {onMounted, provide, reactive, ref} from 'vue'
 import {useI18n} from 'vue-i18n'
-import PopupForm from './popupForm.vue'
 import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'

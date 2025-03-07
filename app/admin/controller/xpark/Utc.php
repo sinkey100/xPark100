@@ -76,7 +76,7 @@ class Utc extends Backend
             if ($v[0] == 'utc.admin') {
                 $app_filter = Apps::field(['id'])->where('admin_id', $v[2])->select();
                 $app_filter = array_column($app_filter->toArray(), 'id');
-                if(empty($app_filter)) $app_filter = [1];
+                if (empty($app_filter)) $app_filter = [1];
                 unset($where[$k]);
             }
         }
@@ -183,7 +183,7 @@ class Utc extends Backend
             'ecpm'            => 'eCPM',
         ];
 
-        foreach (['utc.a_date', 'utc.domain_id', 'utc.sub_channel', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
+        foreach (['utc.a_date', 'utc.domain_id', 'utc.country_code', 'utc.ad_placement_id'] as $v) {
             $field = explode('.', $v);
             $field = $field[count($field) - 1];
             if (!in_array($v, $dimension)) unset($cell[$field]);

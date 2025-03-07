@@ -22,6 +22,7 @@ return [
         'Active'        => \app\command\User\Active::class,
         'Dau'           => \app\command\User\Dau::class,
         'Adjust'        => \app\command\User\Adjust::class,
+        'SLSTrack'      => \app\command\User\SLSTrack::class,
         'Bot'           => \app\command\Bot::class,
 
         // 投放

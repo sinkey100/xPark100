@@ -1,0 +1,15 @@
+export default {
+    id: 'id',
+    app_id: 'app_id',
+    channel_id: 'channel_id',
+    domain_id: 'domain_id',
+    date: 'date',
+    country_code: 'country_code',
+    event_type: 'event_type',
+    valid_events: 'valid_events',
+    invalid_events: 'invalid_events',
+    anchored_count: 'anchored_count',
+    banner_count: 'banner_count',
+    fullscreen_count: 'fullscreen_count',
+    'quick Search Fields': 'id',
+}

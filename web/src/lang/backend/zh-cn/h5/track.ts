@@ -1,0 +1,15 @@
+export default {
+    id: 'ID',
+    app_id: '应用',
+    channel_id: '通道',
+    domain_id: '域名',
+    date: '日期',
+    country_code: '地区',
+    event_type: '事件类型',
+    valid_events: '有效事件',
+    invalid_events: '无效事件',
+    anchored_count: 'anchored广告数',
+    banner_count: 'banner广告数',
+    fullscreen_count: 'fullscreen广告数',
+    'quick Search Fields': 'ID',
+}

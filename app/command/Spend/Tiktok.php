@@ -35,7 +35,7 @@ class Tiktok extends Base
                 'adgroup_id', 'stat_time_day', 'country_code'
             ]),
             'metrics'       => json_encode([
-                'campaign_name', 'campaign_id', 'spend', 'impressions', 'clicks', 'timezone',
+                'campaign_name', 'campaign_id', 'spend', 'impressions', 'clicks', 'conversion',
             ]),
             'start_date'    => date("Y-m-d", strtotime("-{$this->days} days")),
             'end_date'      => date("Y-m-d"),
@@ -119,10 +119,10 @@ class Tiktok extends Base
         $smart_data = [];
         foreach ($advertiser_ids as $advertiser_id) {
             $chunks = array_chunk($campaign_ids, 30);
-            foreach ($chunks as $chunk){
+            foreach ($chunks as $chunk) {
                 $smart_query['advertiser_id'] = $advertiser_id;
                 $smart_query['campaign_ids']  = $chunk;
-                $result = $this->http('GET', $smart_url, [
+                $result                       = $this->http('GET', $smart_url, [
                     'json'    => $smart_query,
                     'headers' => $headers
                 ]);
@@ -181,6 +181,7 @@ class Tiktok extends Base
 
             $clicks       = $item['metrics']['clicks'];
             $impressions  = $item['metrics']['impressions'];
+            $conversion   = $item['metrics']['conversion'];
             $spend        = $item['metrics']['spend'];
             $country_code = $item['dimensions']['country_code'];
             $cpc          = empty($impressions) ? 0 : $clicks / $impressions;
@@ -199,6 +200,7 @@ class Tiktok extends Base
                 'spend'         => $spend,
                 'clicks'        => $clicks,
                 'impressions'   => $impressions,
+                'conversion'    => $conversion,
                 'install'       => 0,
                 'campaign_name' => $item['metrics']['campaign_name'],
                 'cpc'           => $cpc,

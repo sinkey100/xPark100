@@ -88,20 +88,20 @@ const baTable = new baTableClass(
                 replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
             },
             {
-                label: t('xpark.domain.channel'),
-                prop: 'channel',
+                label: t('xpark.domain.tag'),
+                prop: 'tag',
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: 'LIKE',
                 sortable: false
             },
             {
-                label: t('xpark.domain.flag'),
-                prop: 'flag',
+                label: t('xpark.domain.channel'),
+                prop: 'channel_full',
                 align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
-                operator: 'LIKE',
-                sortable: false
+                operator: false,
+                width:150
             },
             {
                 render: 'slot',
@@ -128,6 +128,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 operator: false,
+                width: 120
             },
             {
                 label: t('xpark.domain.admin_id'),
@@ -149,6 +150,7 @@ const baTable = new baTableClass(
                 align: 'center',
                 sortable: false,
                 operator: false,
+                width: 120
             },
             {label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false},
         ],

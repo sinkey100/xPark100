@@ -67,7 +67,8 @@ class Domain extends Backend
 
         $list = $res->items();
         foreach ($list as &$v) {
-            $v['full_name'] = $v['domain'] . ' - ' . ($v['admin']['nickname'] ?? '/');
+            $v['full_name']    = $v['domain'] . ' - ' . ($v['admin']['nickname'] ?? '/');
+            $v['channel_full'] = ($v['channel'] ?? '') . '-' . ($v['flag'] ?? '');
         }
 
         $this->success('', [

@@ -176,41 +176,19 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-:deep(.t-table--bordered) {
-    --td-component-border: #f6f6f6;
-}
 
 :deep(.t-table) {
-    --td-text-color-placeholder: var(--el-text-color-primary);
-    --td-text-color-primary: #444;
-
-    thead {
-        th {
-            font-weight: 700
-        }
-
-    }
-
-    tr {
-        --td-bg-color-secondarycontainer: var(--el-fill-color-lighter);
-        --td-bg-color-secondarycontainer-hover: #f5f7fa;
-        --td-bg-color-container-hover: #f5f7fa;
-    }
-
-    th, td {
-        --td-comp-paddingTB-m: 8px;
-    }
 
     th[data-colkey^="dimensions_spend"] {
-        background-color: var(--el-color-primary-light-9);
+        background-color: var(--el-color-primary-light-7);
     }
 
     th[data-colkey^="dimensions_revenue"] {
-        background-color: var(--el-color-success-light-9);
+        background-color: var(--el-color-success-light-7);
     }
 
     th[data-colkey^="dimensions_user"] {
-        background-color: var(--el-color-warning-light-8);
+        background-color: var(--el-color-warning-light-7);
     }
 
     th[data-colkey="h5_advertise_spend"],
@@ -223,15 +201,6 @@ onMounted(() => {
         color: #2ba471;
     }
 
-    .td-red {
-        color: #fff;
-        background: var(--td-error-color-5);
-    }
-
-    .td-green {
-        color: #fff;
-        background: var(--td-success-color-5);
-    }
 }
 
 :deep(.table-search) {

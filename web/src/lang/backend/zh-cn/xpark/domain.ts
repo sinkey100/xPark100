@@ -2,6 +2,7 @@ export default {
     id: 'ID',
     domain: '域名',
     original_domain: '展示域名',
+    tag: 'TAG标签',
     flag: '通道账户',
     channel: '通道',
     admin_id: '用户',
