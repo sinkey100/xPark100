@@ -53,6 +53,14 @@ class Spend extends Backend
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $check_roi = false;
+        foreach ($where as $key => $item) {
+            if (str_starts_with($item[0], 'ext.')) {
+                $check_roi = $item[2];
+                unset($where[$key]);
+            }
+        }
+        $where = array_values($where);
 
         $field = array_merge($main_dimension, [
             'utc.sub_channel',
@@ -101,10 +109,14 @@ class Spend extends Backend
             ->where('utc.status', 0)
             ->where('utc.app_id', 29)
             ->where('spend.spend_total', '>', 0)
+            ->group(implode(',', $main_dimension))
+            ->when($check_roi !== false, function ($query) use ($check_roi) {
+                $operator = $check_roi == 1 ? '>=' : '<';
+                return $query->having("SUM(utc.ad_revenue) $operator MAX(IFNULL(spend.spend_total, 0))");
+            })
             ->order('utc.a_date', 'desc')
-            ->order('a_date desc')
-            ->order('ad_revenue desc')
-            ->group(implode(',', $main_dimension));
+            ->order('utc.domain_id desc')
+            ->order('ad_revenue desc');
 
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
@@ -163,7 +175,7 @@ class Spend extends Backend
             $v['spend_conv_rate'] = empty($v['spend_impressions']) ? '-' : round($v['spend_conversion'] / $v['spend_impressions'] * 100, 2) . '%';
             $v['spend_total']     = number_format((float)$v['spend_total'], 2, '.', '');
             $v['total_time']      = format_milliseconds((int)$v['total_time']);
-            $v['gap']             = empty($v['spend_conversion']) ? '-' : round($v['ad_clicks'] / $v['spend_conversion'] * 100, 2) . '%';
+            $v['gap']             = empty($v['spend_conversion']) ? '-' : round((1 - $v['ad_clicks'] / $v['spend_conversion']) * 100, 2) . '%';
         }
         return $data;
     }

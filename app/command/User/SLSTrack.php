@@ -26,7 +26,7 @@ class SLSTrack extends Base
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
         $this->sls        = new SLS();
         $this->domains    = array_column(Domain::where('channel_id', '>', 0)->select()->toArray(), null, 'domain');
-        $this->start_time = strtotime(date('Y-m-d')) - 28800;
+        $this->start_time = strtotime(date('Y-m-d')) - 86400 - 28800;
         $this->log("\n\n======== SLS Track 开始拉取数据 ========", false);
 
         // 计算活跃用户

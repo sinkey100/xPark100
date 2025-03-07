@@ -3,7 +3,14 @@ export const default_columns = [
         colKey: "base", className: "base", title: "基本", align: "center", children: [
             {colKey: "spend_total", className: "spend_total", title: "消耗", align: "center", width: 100},
             {colKey: "ad_revenue", className: "ad_revenue", title: "预计收入", align: "center", width: 100},
-            {colKey: "roi", className: "roi", title: "ROI", align: "center", width: 100},
+            {
+                colKey: "roi", title: "ROI", align: "center",  width: 100,
+                className: ({row}: { row: any }) => {
+                    const roi = String(row.roi);
+                    if(!roi.includes('%')) return 'roi';
+                    return parseFloat(roi.replace('%', '')) >= 100 ? 'td-text-green roi' : 'td-text-red roi';
+                },
+            }
         ]
     },
     {
@@ -11,7 +18,7 @@ export const default_columns = [
             {colKey: "valid_events", className: "diff_valid_events", title: "有效事件", align: "center", width: 100},
             {colKey: "spend_conversion", className: "diff_spend_conversion", title: "转化", align: "center", width: 100},
             {colKey: "ad_clicks", className: "diff_clicks", title: "广告点击", align: "center", width: 100},
-            {colKey: "gap", className: "diff_gap", title: "点击GAP", align: "center", width: 100},
+            {colKey: "gap", className: "diff_gap", title: "点击GAP", align: "center", width: 110},
 
         ]
     },

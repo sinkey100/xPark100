@@ -29,7 +29,7 @@ class Track extends Model
 FROM 
     log
 WHERE
-    "attribute.log.key" = 'ad_event' and "attribute.ae_ad_click_num" is not null
+    "attribute.log.key" = 'ad_event'
 GROUP BY 
     date, 
     domain,

@@ -63,7 +63,7 @@ const footData = ref();
 const isLoading = ref(false);
 const pagination = reactive({
     defaultCurrent: 1,
-    defaultPageSize: 20,
+    defaultPageSize: 100,
     pageSizeOptions: [20, 50, 100, 500],
     total: 0,
 });
@@ -114,6 +114,23 @@ const baTable = new baTableClass(
                 prop: 'domain.tag',
                 operator: 'LIKE'
             },
+            {
+                label: '事件类型',
+                prop: 'track.event_type',
+                align: 'center',
+                render: 'tag',
+                operator: 'eq',
+                replaceValue: {click: 'click', show: 'show'},
+            },
+            {
+                label: 'ROI',
+                prop: 'ext.roi',
+                align: 'center',
+                render: 'tag',
+                operator: 'eq',
+                replaceValue: {1: '回正', 0: '未回正'},
+            },
+
         ],
         dblClickNotEditColumn: [undefined],
     },
@@ -143,7 +160,7 @@ const baTable = new baTableClass(
             pagination.total = res.data.total;
             isLoading.value = false;
             // 动态修改表格列
-            columns.value = structuredClone(default_columns);
+            columns.value = DeepClone(default_columns);
             // 日期维度
             if (dimensions.a_date) {
                 columns.value[0].children.unshift({...columns_date});
@@ -179,7 +196,7 @@ provide('baTable', baTable)
 baTable.table.filter!.dimensions = dimensions
 onMounted(() => {
     baTable.table.ref = tableRef.value
-    baTable.table.filter!.limit = 20;
+    baTable.table.filter!.limit = 100;
     baTable.mount()
 
     baTable.getIndex()?.then(() => {
@@ -189,6 +206,29 @@ onMounted(() => {
     })
 
 })
+const DeepClone = <T>(obj: T): T => {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    // 如果是函数，则直接返回函数引用
+    if (typeof obj === 'function') {
+        return obj;
+    }
+    // 如果是数组，遍历每个元素进行深拷贝
+    if (Array.isArray(obj)) {
+        return obj.map(item => DeepClone(item)) as unknown as T;
+    }
+    // 处理普通对象
+    const clone = {} as any;
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            clone[key] = DeepClone((obj as any)[key]);
+        }
+    }
+    return clone as T;
+}
+
+
 
 </script>
 
@@ -204,11 +244,15 @@ onMounted(() => {
     }
 
     th.spend {
-        background: #ffeadd;
+        background: #ffe5d6;
     }
 
     th.ad {
         background: #e5f2e5;
+    }
+
+    th.event {
+        background: #faf1ff;
     }
 
     .sub_channel, .roi, .diff_gap, .per_display, .spend_conv_rate, .ad_cpc {
