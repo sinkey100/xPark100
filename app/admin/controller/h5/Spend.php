@@ -32,15 +32,13 @@ class Spend extends Backend
     {
         QueryTimeStamp::start();
 
-        // 排序信息获取
-        $order_by = $this->orderBy();
         // 维度信息获取
         $input_dimensions = $this->request->get('dimensions/a', []);
         $main_dimension   = $join_dimensions = $join_where = [];
         $active_join_on   = $track_join_on = $spend_join_on = [];
         foreach ($input_dimensions as $k => $v) {
             if ($k && $v == 'true') $main_dimension[] = ($k == 'event_type' ? 'track.' : 'utc.') . $k;
-            if (in_array($k, ['a_date', 'domain_id', 'country_code']) && $v == 'true') {
+            if (in_array($k, ['a_date', 'domain_id', 'country_code', 'channel_id']) && $v == 'true') {
                 $new_field         = $k == 'a_date' ? 'date' : $k;
                 $join_dimensions[] = $new_field;
                 $active_join_on[]  = "utc.$k = active.$new_field";
@@ -59,6 +57,7 @@ class Spend extends Backend
             if (str_ends_with($item[0], 'date')) $join_where[] = ['date', $item[1], $item[2]];
             if (str_ends_with($item[0], 'country_code')) $join_where[] = ['country_code', $item[1], $item[2]];
             if (str_ends_with($item[0], 'domain_id')) $join_where[] = ['domain_id', $item[1], $item[2]];
+            if (str_ends_with($item[0], 'channel_id')) $join_where[] = ['channel_id', $item[1], $item[2]];
         }
         $where = array_values($where);
 
@@ -85,6 +84,7 @@ class Spend extends Backend
             'IFNULL(track.fullscreen_count, 0) AS fullscreen_count',
         ]);
         if (in_array('utc.domain_id', $main_dimension)) $field[] = 'domain.tag';
+        if (in_array('utc.channel_id', $main_dimension)) $field[] = 'channel.channel_alias';
 
         $active_sql = SLSActive::field(array_merge($join_dimensions, [
             'SUM(new_users) AS new_users', 'SUM(active_users) AS active_users', 'SUM(page_views) AS page_views', 'AVG(total_time) AS total_time'
@@ -105,6 +105,9 @@ class Spend extends Backend
             ->when(in_array('utc.domain_id', $main_dimension), function ($query) {
                 return $query->join('xpark_domain domain', 'domain.id = utc.domain_id', 'left');
             })
+            ->when(in_array('utc.channel_id', $main_dimension), function ($query) {
+                return $query->join('xpark_channel channel', 'channel.id = utc.channel_id', 'left');
+            })
             ->where($where)
             ->where('utc.status', 0)
             ->where('utc.app_id', 29)
@@ -114,7 +117,9 @@ class Spend extends Backend
                 $operator = $check_roi == 1 ? '>=' : '<';
                 return $query->having("SUM(utc.ad_revenue) $operator MAX(IFNULL(spend.spend_total, 0))");
             })
-            ->order($order_by);
+            ->order('utc.a_date', 'desc')
+            ->order('utc.domain_id desc')
+            ->order('ad_revenue desc');
 
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
@@ -176,27 +181,6 @@ class Spend extends Backend
             $v['gap']             = empty($v['spend_conversion']) ? '-' : round((1 - $v['ad_clicks'] / $v['spend_conversion']) * 100, 2) . '%';
         }
         return $data;
-    }
-
-    protected function orderBy(): array
-    {
-        $sort = $this->request->param('sort/a', []);
-
-        $sortBy     = $sort['sortBy'] ?? '';
-        $descending = ($sort['descending'] ?? '') == 'true' ? 'desc' : 'asc';
-
-//        $this->error(1, [
-//            'a' => $sort,
-//            'b' => $sortBy,
-//            'd' => $descending
-//        ]);
-
-        $order_by = [];
-
-        $order_by['utc.a_date']    = 'desc';
-        $order_by['utc.domain_id'] = 'desc';
-        $order_by['ad_revenue']    = 'desc';
-        return $order_by;
     }
 
 

@@ -8,6 +8,7 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.domain_id" label="域名" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.country_code" label="地区" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.channel_id" label="通道" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.event_type" label="事件类型" border/>
             </el-form-item>
         </TableHeader>
@@ -37,8 +38,9 @@ import {useI18n} from 'vue-i18n'
 import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import baTableClass from '/@/utils/baTable'
-import {SortInfo, TableProps, TableSort} from "tdesign-vue-next";
+import {TableProps} from "tdesign-vue-next";
 import {
+    columns_channel,
     columns_country_code,
     columns_date,
     columns_domain,
@@ -57,6 +59,7 @@ const dimensions = reactive({
     a_date: true,
     domain_id: true,
     country_code: false,
+    channel_id: false,
     event_type: false,
 })
 
@@ -116,6 +119,17 @@ const baTable = new baTableClass(
                 }
             },
             {
+                label: '通道',
+                prop: 'channel_id',
+                operator: 'IN',
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Channel/index',
+                    field: 'channel_alias',
+                }
+            },
+            {
                 label: 'TAG标签',
                 prop: 'domain.tag',
                 operator: 'LIKE'
@@ -153,7 +167,7 @@ const baTable = new baTableClass(
                     render: 'datetime',
                 });
                 dimensions.a_date = dimensions.domain_id = true;
-                dimensions.country_code = dimensions.event_type = false;
+                dimensions.country_code = dimensions.event_type = dimensions.channel_id = false;
                 baTable.table.filter!.dimensions = dimensions
             }
             columns.value = [];
@@ -186,6 +200,14 @@ const baTable = new baTableClass(
             if (dimensions.event_type) {
                 columns.value[5].children.unshift({...columns_event_type});
             }
+            // 通道
+            if (dimensions.channel_id) {
+                let index = columns.value[0].children.findIndex((item: any) => item.colKey === 'tag');
+                if (index == -1) {
+                    index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                }
+                columns.value[0].children.splice(index, 0, {...columns_channel});
+            }
             tableData.value = res.data.list;
             footData.value = res.data.foot;
         },
@@ -202,10 +224,18 @@ const sortChange: TableProps['onSortChange'] = (val: TableProps['sort']) => {
     if (val && !Array.isArray(val)) {
         sort.value = val;
         const sortBy = val.sortBy;
-        if (val.descending) {
-            tableData.value = [...tableData.value].sort((a, b) => parseFloat(b[sortBy]) - parseFloat(a[sortBy]));
+        if (['sub_channel', 'country_code', 'channel_alias'].includes(sortBy)) {
+            if (val.descending) {
+                tableData.value = [...tableData.value].sort((a, b) => String(b[sortBy]).localeCompare(a[sortBy]));
+            } else {
+                tableData.value = [...tableData.value].sort((a, b) => String(a[sortBy]).localeCompare(b[sortBy]));
+            }
         } else {
-            tableData.value = [...tableData.value].sort((a, b) => parseFloat(a[sortBy]) - parseFloat(b[sortBy]));
+            if (val.descending) {
+                tableData.value = [...tableData.value].sort((a, b) => parseFloat(b[sortBy]) - parseFloat(a[sortBy]));
+            } else {
+                tableData.value = [...tableData.value].sort((a, b) => parseFloat(a[sortBy]) - parseFloat(b[sortBy]));
+            }
         }
     }
 };

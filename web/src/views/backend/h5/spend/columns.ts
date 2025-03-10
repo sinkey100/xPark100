@@ -64,7 +64,8 @@ export const default_columns = [
 ]
 
 export const columns_date = {colKey: "a_date", className: "a_date", title: "日期", align: "center", fixed: "left", width: 120}
-export const columns_domain = {colKey: "sub_channel", className: "sub_channel", title: "域名", align: "center", fixed: "left", width: 200}
+export const columns_domain = {colKey: "sub_channel", className: "sub_channel", title: "域名", align: "center", sorter:true, fixed: "left", width: 200}
 export const columns_tag = {colKey: "tag", className: "tag", title: "TAG标签", align: "center", width: 150}
-export const columns_country_code = {colKey: "country_code", className: "country_code", title: "地区", align: "center", width: 70}
+export const columns_country_code = {colKey: "country_code", className: "country_code", title: "地区", align: "center", sorter:true, width: 80}
 export const columns_event_type = {colKey: "event_type", className: "event_type", title: "事件类型", align: "center", width: 100}
+export const columns_channel = {colKey: "channel_alias", className: "channel_alias", title: "通道", align: "center", sorter:true, width: 150}
