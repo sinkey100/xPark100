@@ -85,6 +85,19 @@
     --td-text-color-placeholder: var(--el-text-color-primary);
     --td-text-color-primary: #444;
 
+    svg.t-icon{
+        font-size:12px;
+        color:#bbb;
+    }
+    .t-table__filter-icon-wrap{
+        margin-left: 3px;
+    }
+    .t-table__sort-icon--active{
+        svg.t-icon{
+            color: var(--el-color-primary-light-8);
+        }
+    }
+
     .t-table__footer{
         td{
             text-align: center;

@@ -170,7 +170,7 @@ class Report extends Frontend
             $v['fill_rate']  = $v['fills'] / (!empty($v['requests']) ? $v['requests'] : 1);
             $v['cpc']        = round($v['ad_revenue'] / (!empty($v['clicks']) ? $v['clicks'] : 1), 2);
             $v['ecpm']       = round($v['ad_revenue'] / (!empty($v['impressions']) ? $v['impressions'] : 1) * 1000, 3);
-            $v['ad_revenue'] = floatval(number_format($v['ad_revenue'], 5));
+            $v['ad_revenue'] = floatval(number_format($v['ad_revenue'], 5, '.', ''));
             // 人均展示：展示次数/UV
             $v['page_views']         = intval($v['page_views']);
             $v['new_users']          = intval($v['new_users']);

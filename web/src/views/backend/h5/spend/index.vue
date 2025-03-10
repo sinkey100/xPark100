@@ -22,7 +22,10 @@
             :hover="true"
             :pagination="pagination"
             :foot-data="footData"
+            :sort="sort"
+            :show-sort-column-bg-color="true"
             @page-change="onPageChange"
+            @sort-change="sortChange"
         ></t-table>
 
     </div>
@@ -34,7 +37,7 @@ import {useI18n} from 'vue-i18n'
 import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import baTableClass from '/@/utils/baTable'
-import {TableProps} from "tdesign-vue-next";
+import {SortInfo, TableProps, TableSort} from "tdesign-vue-next";
 import {
     columns_country_code,
     columns_date,
@@ -66,8 +69,11 @@ const pagination = reactive({
     defaultPageSize: 100,
     pageSizeOptions: [20, 50, 100, 500],
     total: 0,
-});
-
+})
+const sort = ref<TableProps['sort']>({
+    sortBy: '',
+    descending: true,
+})
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -138,7 +144,7 @@ const baTable = new baTableClass(
         getIndex: () => {
             // 默认查询昨天
             if (!baTable.comSearch.form['a_date']) {
-                const date = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+                const date = new Date(new Date().setDate(new Date().getDate())).toISOString().split('T')[0];
                 baTable.comSearch.form['a_date'] = [date, date];
                 baTable.table.filter!.search?.push({
                     field: 'a_date',
@@ -190,6 +196,18 @@ const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
     baTable.table.filter!.page = pageInfo.current;
     baTable.table.filter!.limit = pageInfo.pageSize;
     baTable.getIndex()
+}
+
+const sortChange: TableProps['onSortChange'] = (val: TableProps['sort']) => {
+    if (val && !Array.isArray(val)) {
+        sort.value = val;
+        const sortBy = val.sortBy;
+        if (val.descending) {
+            tableData.value = [...tableData.value].sort((a, b) => parseFloat(b[sortBy]) - parseFloat(a[sortBy]));
+        } else {
+            tableData.value = [...tableData.value].sort((a, b) => parseFloat(a[sortBy]) - parseFloat(b[sortBy]));
+        }
+    }
 };
 
 provide('baTable', baTable)
@@ -227,7 +245,6 @@ const DeepClone = <T>(obj: T): T => {
     }
     return clone as T;
 }
-
 
 
 </script>

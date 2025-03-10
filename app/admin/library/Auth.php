@@ -75,7 +75,7 @@ class Auth extends \ba\Auth
      * 可在 config/buildadmin.php 内修改默认值
      * @var int
      */
-    protected int $keepTime = 86400;
+    protected int $keepTime = 86400 * 7;
 
     /**
      * 刷新令牌有效期

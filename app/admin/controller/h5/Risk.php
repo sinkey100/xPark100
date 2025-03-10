@@ -161,7 +161,9 @@ class Risk extends Backend
         $active_sql = SLSActive::alias('active')
             ->field(array_merge($_active_dimensions, ['sum(active.new_users) as new_users', 'sum(active.active_users) as active_users']))
             ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_hide = 0', 'inner')
+            ->join('xpark_apps apps', 'apps.id = active.app_id', 'left')
             ->where($this->getBetweenTime('active.date'))
+            ->where('apps.hb_switch', 1)
             ->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
@@ -171,8 +173,10 @@ class Risk extends Backend
                 'COALESCE(active.new_users, 0) AS new_users'
             ]))
             ->join('xpark_domain domain', 'domain.id = xpark.domain_id', 'left')
+            ->join('xpark_apps apps', 'apps.id = xpark.app_id', 'left')
             ->leftJoin([$active_sql => 'active'], $_active_join_on)
             ->where('domain.is_hide', 0)
+            ->where('apps.hb_switch', 1)
             ->where('xpark.status', 0)
             ->where($this->getBetweenTime('xpark.a_date'))
             ->group(implode(',', $_show_dimensions))
