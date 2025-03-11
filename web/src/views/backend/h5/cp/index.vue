@@ -8,6 +8,14 @@
         <el-alert v-if="baTable.table.data!.length > 0" title="由于数据拉取存在延迟，当日数据仅供参考" type="warning"
                   :closable="false"/>
 
+        <el-popconfirm title="是否确认导出？" @confirm="derive">
+            <template #reference>
+                <el-button class="table-header-operate btn-export" type="default">
+                    <Icon style="color:#333!important;" name="el-icon-Download"/>
+                </el-button>
+            </template>
+        </el-popconfirm>
+
         <Table ref="tableRef"></Table>
 
     </div>
@@ -20,6 +28,8 @@ import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
+import {ElLoading} from "element-plus";
+import {exportToExcel} from "/@/utils/excel";
 
 defineOptions({
     name: 'h5/cp',
@@ -75,6 +85,10 @@ const baTable = new baTableClass(
             {label: t('h5.cp.share'), prop: 'share', align: 'center', operator: false, sortable: false},
         ],
         dblClickNotEditColumn: [undefined],
+    }, {}, {
+        getIndex: () => {
+            baTable.table.filter!.hideTimestamp = 0;
+        }
     }
 )
 
@@ -83,7 +97,6 @@ baTable.table.rowClass = ({row, rowIndex,}: { row: any, rowIndex: number }) => {
 }
 
 provide('baTable', baTable)
-
 
 onMounted(() => {
     baTable.table.ref = tableRef.value
@@ -94,6 +107,31 @@ onMounted(() => {
         baTable.table.showComSearch = true
     })
 })
+
+const derive = () => {
+    const loadingInstance = ElLoading.service()
+    const headerNames = baTable.table.column.map((col: any) => col.label || col.title);
+    const dataKeys = baTable.table.column.map((col: any) => col.prop || col.colKey);
+    const PAGE_SIZE = baTable.table.filter!.limit || 20;
+    const TOTAL_ITEMS = baTable.table!.total || 0;
+    const totalPages = Math.ceil(TOTAL_ITEMS / PAGE_SIZE); // 计算总页数
+    async function fetchData() {
+        let allData: any[] = [];
+        for (let page = 1; page <= totalPages; page++) {
+            baTable.table.filter!.page = page;
+            baTable.table.filter!.hideTimestamp = 1;
+            const res = await baTable.api.index(baTable.table.filter);
+            const pageData = res.data.list || [];
+            allData = allData.concat(pageData);
+        }
+        return allData;
+    }
+
+    fetchData().then(allData => {
+        exportToExcel(headerNames, dataKeys, allData, 'CP收入分析');
+        loadingInstance.close();
+    });
+}
 </script>
 
 
@@ -129,5 +167,11 @@ onMounted(() => {
 
 :deep(.row-success) {
     background-color: #fff8ee !important;
+}
+
+.btn-export {
+    top: 128px;
+    right: 33px;
+    width: 60px;
 }
 </style>

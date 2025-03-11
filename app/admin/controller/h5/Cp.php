@@ -35,6 +35,7 @@ class Cp extends Backend
     public function index(): void
     {
         QueryTimeStamp::start();
+        $hideTimestamp = request()->param('hideTimestamp/d', 0);
 
         $app_filter = array_column(Apps::field('id')->where('cp_admin_id', $this->auth->id)->select()->toArray(), 'id');
         if ($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
@@ -114,8 +115,7 @@ class Cp extends Backend
         $total['profit']  = round($total['profit'], 2);
         $total['revenue'] = round($total['revenue'], 2);
         $total['spend']   = round($total['spend'], 2);
-        $list[]           = $total;
-
+        if ($hideTimestamp != 1) $list[] = $total;
 
         $this->success('', [
             '_'      => $this->auth->id == 1 ? $sql : '',

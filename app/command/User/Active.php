@@ -61,37 +61,49 @@ class Active extends Base
             }
             $this->log('PV 计算完成');
 
-            // 计算新增活跃
-            $result = $this->sls->getLogsWithPowerSql($utc_start_time, $utc_end_time, SLSActive::$SQL_DAILY_ACTIVE_USER);
-            $this->log('准备遍历数据量：' . count($result));
-            foreach ($result as $row) {
-                $row = $row->getContents();
-                if (!isset($this->domains[$row['attribute.page.host']])) continue;
-                $this->log('开始处理：' . $row['attribute.page.host']);
-                $domain = $this->domains[$row['attribute.page.host']];
-
-                $user_list = json_decode($row['user_list'], true);
-                $user_list = array_map(fn($item) => ['uid' => $item], $user_list);
-
-                UserStaging::insertAll($user_list);
-
-                // 批量去重插入
-                Db::execute(SLSActive::SQL_MERGE_NEW_USERS_MYSQL(
-                    $domain['domain'], $domain['app_id'], $domain['id'], $row['attribute.country_id'], $date
-                ));
-
-                // 记录
-                $new_users = SLSUser::where('domain_id', $domain['id'])
-                    ->where('country_code', $row['attribute.country_id'])
-                    ->where('date', $date)
-                    ->count();
-
-                $this->update_active_row($row['attribute.page.host'], $row['attribute.country_id'], $date, [
-                    'new_users'    => $new_users,
-                    'active_users' => count($user_list)
-                ]);
+            // 新版计算新增活跃
+            $result = Db::query(SLSActive::SQL_CALC_NEW_AND_ACTIVE_USERS($date));
+            foreach ($result as $item) {
+                SLSActive::where('domain_id', $item['domain_id'])
+                    ->where('country_code', $item['country_code'])
+                    ->where("date", $date)
+                    ->update([
+                        'new_users'    => $item['new_user_count'],
+                        'active_users' => $item['active_user_count']
+                    ]);
             }
-            $this->log('新增活跃计算完成');
+
+//            // 计算新增活跃
+//            $result = $this->sls->getLogsWithPowerSql($utc_start_time, $utc_end_time, SLSActive::$SQL_DAILY_ACTIVE_USER);
+//            $this->log('准备遍历数据量：' . count($result));
+//            foreach ($result as $row) {
+//                $row = $row->getContents();
+//                if (!isset($this->domains[$row['attribute.page.host']])) continue;
+//                $this->log('开始处理：' . $row['attribute.page.host']);
+//                $domain = $this->domains[$row['attribute.page.host']];
+//
+//                $user_list = json_decode($row['user_list'], true);
+//                $user_list = array_map(fn($item) => ['uid' => $item], $user_list);
+//
+//                UserStaging::insertAll($user_list);
+//
+//                // 批量去重插入
+//                Db::execute(SLSActive::SQL_MERGE_NEW_USERS_MYSQL(
+//                    $domain['domain'], $domain['app_id'], $domain['id'], $row['attribute.country_id'], $date
+//                ));
+//
+//                // 记录
+//                $new_users = SLSUser::where('domain_id', $domain['id'])
+//                    ->where('country_code', $row['attribute.country_id'])
+//                    ->where('date', $date)
+//                    ->count();
+//
+//                $this->update_active_row($row['attribute.page.host'], $row['attribute.country_id'], $date, [
+//                    'new_users'    => $new_users,
+//                    'active_users' => count($user_list)
+//                ]);
+//            }
+//            $this->log('新增活跃计算完成');
 
 
             // 计算时长数据

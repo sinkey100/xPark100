@@ -55,10 +55,7 @@ import {
     columns_tag,
     default_columns
 } from "/@/views/backend/h5/spend/columns";
-import createAxios from "/@/utils/axios";
-import {AxiosPromise} from "axios";
-import fileDownload from "js-file-download";
-import * as XLSX from 'xlsx';
+import {ElLoading} from 'element-plus'
 import {exportToExcel} from "/@/utils/excel";
 
 
@@ -183,6 +180,7 @@ const baTable = new baTableClass(
                 dimensions.country_code = dimensions.event_type = dimensions.channel_id = false;
                 baTable.table.filter!.dimensions = dimensions
             }
+            baTable.table.filter!.hideTimestamp = 0;
             columns.value = [];
             tableData.value = [];
             footData.value = [];
@@ -301,6 +299,7 @@ const getLeafColumns = (cols: any) => {
 }
 
 const derive = () => {
+    const loadingInstance = ElLoading.service()
     const leafColumns = getLeafColumns(columns.value);
     const headerNames = leafColumns.map((col: any) => col.label || col.title);
     const dataKeys = leafColumns.map((col: any) => col.prop || col.colKey);
@@ -313,6 +312,7 @@ const derive = () => {
         let allData: any[] = [];
         for (let page = 1; page <= totalPages; page++) {
             baTable.table.filter!.page = page;
+            baTable.table.filter!.hideTimestamp = 1;
             const res = await baTable.api.index(baTable.table.filter);
             const pageData = res.data.list || [];
             allData = allData.concat(pageData);
@@ -322,6 +322,7 @@ const derive = () => {
 
     fetchData().then(allData => {
         exportToExcel(headerNames, dataKeys, allData, 'H5投放分析');
+        loadingInstance.close();
     });
 }
 </script>

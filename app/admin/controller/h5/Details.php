@@ -84,6 +84,7 @@ class Details extends Backend
             'h5_active_users'  => 0,
             'total_revenue'    => 0,
             'total_spend'      => 0,
+            'profit'           => 0,
             'native_revenue'   => 0,
             'h5_revenue'       => 0,
         ];
@@ -94,6 +95,7 @@ class Details extends Backend
             $total['h5_active_users']  += $v['h5_active_users'];
             $total['total_revenue']    += $v['total_revenue'];
             $total['total_spend']      += $v['total_spend'];
+            $total['profit']           += $v['profit'];
             $total['native_revenue']   += $v['native_revenue'];
             $total['h5_revenue']       += $v['h5_revenue'];
         }
@@ -111,8 +113,12 @@ class Details extends Backend
     protected function rate($data)
     {
         foreach ($data as &$v) {
+            $v['profit']       = $v['total_revenue'] - $v['total_spend'];
             $v['roi']          = $v['total_spend'] > 0
                 ? number_format((float)$v['total_revenue'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
+                : '-';
+            $v['cpi']          = $v['total_spend'] > 0
+                ? number_format((float)$v['app_new_users'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
                 : '-';
             $v['h5_arpu']      = $v['h5_active_users'] > 0
                 ? number_format((float)$v['h5_revenue'] / $v['h5_active_users'], 2, '.', '')
@@ -129,6 +135,7 @@ class Details extends Backend
                 ? number_format((float)$v['native_revenue'] / $v['total_revenue'] * 100, 2, '.', '') . '%'
                 : '-';
 
+            $v['profit']         = number_format((float)$v['profit'], 2, '.', '');
             $v['h5_revenue']     = number_format((float)$v['h5_revenue'], 2, '.', '');
             $v['native_revenue'] = number_format((float)$v['native_revenue'], 2, '.', '');
             $v['total_revenue']  = number_format((float)$v['total_revenue'], 2, '.', '');
