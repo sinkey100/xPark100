@@ -109,11 +109,7 @@ onMounted(() => {
     margin-left: 30px;
 }
 
-.btn-export {
-    position: absolute;
-    right: 20px;
-    top: 13px;
-}
+
 .table-header{
     .el-form-item{
         margin-bottom: 0;

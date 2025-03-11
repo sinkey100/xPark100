@@ -427,11 +427,7 @@ onMounted(() => {
     margin-left: 30px;
 }
 
-.btn-export {
-    position: absolute;
-    right: 20px;
-    top: 13px;
-}
+
 
 :deep(.table-search) {
     display: none;

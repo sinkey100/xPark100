@@ -1,7 +1,7 @@
 <template>
     <div class="default-main ba-table-box">
         <TableHeader
-            :buttons="['comSearch', 'columnDisplay']"
+            :buttons="['comSearch']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('spend.data.quick Search Fields') })"
         >
             <el-form-item class="form-dimensions" :label-width="100" label="维度">
@@ -11,6 +11,13 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.channel_id" label="通道" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.event_type" label="事件类型" border/>
             </el-form-item>
+            <el-popconfirm title="是否确认导出？" @confirm="derive">
+                <template #reference>
+                    <el-button class="table-header-operate btn-export" type="default">
+                        <Icon style="color:#333!important;" name="el-icon-Download"/>
+                    </el-button>
+                </template>
+            </el-popconfirm>
         </TableHeader>
 
         <t-table
@@ -48,6 +55,12 @@ import {
     columns_tag,
     default_columns
 } from "/@/views/backend/h5/spend/columns";
+import createAxios from "/@/utils/axios";
+import {AxiosPromise} from "axios";
+import fileDownload from "js-file-download";
+import * as XLSX from 'xlsx';
+import {exportToExcel} from "/@/utils/excel";
+
 
 defineOptions({
     name: 'h5/spend',
@@ -224,19 +237,18 @@ const sortChange: TableProps['onSortChange'] = (val: TableProps['sort']) => {
     if (val && !Array.isArray(val)) {
         sort.value = val;
         const sortBy = val.sortBy;
-        if (['sub_channel', 'country_code', 'channel_alias'].includes(sortBy)) {
-            if (val.descending) {
-                tableData.value = [...tableData.value].sort((a, b) => String(b[sortBy]).localeCompare(a[sortBy]));
+        const descendingFactor = val.descending ? -1 : 1;
+        const stringSortKeys = ['sub_channel', 'country_code', 'channel_alias'];
+        const comparator = (a: any, b: any) => {
+            const aVal = a[sortBy];
+            const bVal = b[sortBy];
+            if (stringSortKeys.includes(sortBy)) {
+                return descendingFactor * String(aVal).localeCompare(String(bVal));
             } else {
-                tableData.value = [...tableData.value].sort((a, b) => String(a[sortBy]).localeCompare(b[sortBy]));
+                return descendingFactor * (parseFloat(aVal) - parseFloat(bVal));
             }
-        } else {
-            if (val.descending) {
-                tableData.value = [...tableData.value].sort((a, b) => parseFloat(b[sortBy]) - parseFloat(a[sortBy]));
-            } else {
-                tableData.value = [...tableData.value].sort((a, b) => parseFloat(a[sortBy]) - parseFloat(b[sortBy]));
-            }
-        }
+        };
+        tableData.value = [...tableData.value].sort(comparator);
     }
 };
 
@@ -276,11 +288,50 @@ const DeepClone = <T>(obj: T): T => {
     return clone as T;
 }
 
+const getLeafColumns = (cols: any) => {
+    let result: any = [];
+    cols.forEach((col: any) => {
+        if (col.children && Array.isArray(col.children)) {
+            result = result.concat(getLeafColumns(col.children));
+        } else {
+            result.push(col);
+        }
+    })
+    return result;
+}
 
+const derive = () => {
+    const leafColumns = getLeafColumns(columns.value);
+    const headerNames = leafColumns.map((col: any) => col.label || col.title);
+    const dataKeys = leafColumns.map((col: any) => col.prop || col.colKey);
+
+    const PAGE_SIZE = baTable.table.filter!.limit || 20;
+    const TOTAL_ITEMS = pagination.total;
+    const totalPages = Math.ceil(TOTAL_ITEMS / PAGE_SIZE); // 计算总页数
+
+    async function fetchData() {
+        let allData: any[] = [];
+        for (let page = 1; page <= totalPages; page++) {
+            baTable.table.filter!.page = page;
+            const res = await baTable.api.index(baTable.table.filter);
+            const pageData = res.data.list || [];
+            allData = allData.concat(pageData);
+        }
+        return allData;
+    }
+
+    fetchData().then(allData => {
+        exportToExcel(headerNames, dataKeys, allData, 'H5投放分析');
+    });
+}
 </script>
 
 
 <style scoped lang="scss">
+:deep(.table-search) {
+    display: none;
+}
+
 :deep(.t-table) {
     th.diff {
         background: #ffeeee;

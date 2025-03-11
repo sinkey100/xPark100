@@ -35,12 +35,14 @@ class Google
         $client->setAuthConfig(json_decode($account->json_text, true));
         $client->setRedirectUri(Env::get('APP.APP_URL') . 'callback.php?s=google');
         $client->addScope(AdSense::ADSENSE_READONLY); // AdSense 数据权限
-        $client->addScope(AnalyticsData::ANALYTICS_READONLY);
-        $client->addScope(GoogleAnalyticsAdmin::ANALYTICS_EDIT);
-        $client->addScope(Oauth2::USERINFO_EMAIL); // 获取 Gmail
-        $client->addScope(Oauth2::USERINFO_PROFILE);
-        $client->addScope('https://www.googleapis.com/auth/dfp'); // Ad Manager API权限范围
-        $client->addScope(PeopleService::CONTACTS_READONLY);
+        if($account->id != 14){
+            $client->addScope(AnalyticsData::ANALYTICS_READONLY);
+            $client->addScope(GoogleAnalyticsAdmin::ANALYTICS_EDIT);
+            $client->addScope(Oauth2::USERINFO_EMAIL); // 获取 Gmail
+            $client->addScope(Oauth2::USERINFO_PROFILE);
+            $client->addScope('https://www.googleapis.com/auth/dfp'); // Ad Manager API权限范围
+            $client->addScope(PeopleService::CONTACTS_READONLY);
+        }
         $client->setState($account->id);
         $client->setAccessType('offline');
         $client->setPrompt('consent');

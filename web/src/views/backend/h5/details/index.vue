@@ -106,11 +106,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 
-.btn-export {
-    position: absolute;
-    right: 20px;
-    top: 13px;
-}
+
 
 :deep(.table-search) {
     display: none;

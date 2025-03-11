@@ -3,6 +3,8 @@
 namespace app\admin\controller\h5;
 
 use app\admin\model\spend\Data as SpendData;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use sdk\QueryTimeStamp;
 use app\admin\model\h5\Track as SLSTrack;
 use app\admin\model\sls\Active as SLSActive;
@@ -28,10 +30,8 @@ class Spend extends Backend
         $this->model = new \app\admin\model\xpark\Utc();
     }
 
-    public function index(): void
+    public function buildQuery(): array
     {
-        QueryTimeStamp::start();
-
         // 维度信息获取
         $input_dimensions = $this->request->get('dimensions/a', []);
         $main_dimension   = $join_dimensions = $join_where = [];
@@ -120,7 +120,13 @@ class Spend extends Backend
             ->order('utc.a_date', 'desc')
             ->order('utc.domain_id desc')
             ->order('ad_revenue desc');
+        return [$res, $limit];
+    }
 
+    public function index(): void
+    {
+        QueryTimeStamp::start();
+        [$res, $limit] = $this->buildQuery();
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
 
@@ -182,6 +188,5 @@ class Spend extends Backend
         }
         return $data;
     }
-
 
 }
