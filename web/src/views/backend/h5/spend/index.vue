@@ -50,7 +50,7 @@ import {
     columns_channel,
     columns_country_code,
     columns_date,
-    columns_domain,
+    columns_domain, columns_domain_days,
     columns_event_type,
     columns_tag,
     default_columns
@@ -200,6 +200,7 @@ const baTable = new baTableClass(
             if (dimensions.domain_id) {
                 const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
                 columns.value[0].children.splice(index, 0, {...columns_tag});
+                columns.value[0].children.splice(index, 0, {...columns_domain_days});
                 columns.value[0].children.splice(index, 0, {...columns_domain});
             }
             // 地区

@@ -15,7 +15,13 @@ class Domain extends Model
     protected $name = 'xpark_domain';
 
     // 自动写入时间戳字段
-    protected $autoWriteTimestamp = false;
+    protected $autoWriteTimestamp = true;
+
+    // 字段类型转换
+    protected $type = [
+        'created' => 'timestamp:Y-m-d H:i:s',
+        'updated' => 'timestamp:Y-m-d H:i:s',
+    ];
 
 //    public function admin(): BelongsTo
 //    {

@@ -117,8 +117,8 @@ class Details extends Backend
             $v['roi']          = $v['total_spend'] > 0
                 ? number_format((float)$v['total_revenue'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
                 : '-';
-            $v['cpi']          = $v['total_spend'] > 0
-                ? number_format((float)$v['app_new_users'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%'
+            $v['cpi']          = $v['app_new_users'] > 0
+                ? number_format((float)$v['total_spend'] / (float)$v['app_new_users'], 2, '.', '')
                 : '-';
             $v['h5_arpu']      = $v['h5_active_users'] > 0
                 ? number_format((float)$v['h5_revenue'] / $v['h5_active_users'], 2, '.', '')

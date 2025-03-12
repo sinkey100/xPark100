@@ -83,7 +83,7 @@ class Spend extends Backend
             'IFNULL(track.banner_count, 0) AS banner_count',
             'IFNULL(track.fullscreen_count, 0) AS fullscreen_count',
         ]);
-        if (in_array('utc.domain_id', $main_dimension)) $field[] = 'domain.tag';
+        if (in_array('utc.domain_id', $main_dimension)) $field = array_merge($field, ['domain.tag', 'domain.create_time as domain_date']);
         if (in_array('utc.channel_id', $main_dimension)) $field[] = 'channel.channel_alias';
 
         $active_sql = SLSActive::field(array_merge($join_dimensions, [
@@ -173,6 +173,7 @@ class Spend extends Backend
     {
         foreach ($data as &$v) {
             $v['a_date']          = empty($v['a_date']) ? '' : (strlen($v['a_date']) == 19 ? substr($v['a_date'], 0, 10) : $v['a_date']);
+            $v['domain_days']     = empty($v['domain_date']) ? '' : intval((time() - strtotime($v['domain_date'])) / 86400);
             $v['roi']             = $v['spend_total'] > 0 ? number_format((float)$v['ad_revenue'] / (float)$v['spend_total'] * 100, 2, '.', '') . '%' : '-';
             $v['per_display']     = empty($v['active_users']) ? '' : round($v['ad_impressions'] / $v['active_users'], 2);
             $v['ad_ecpm']         = empty($v['ad_impressions']) ? '-' : round($v['ad_revenue'] / $v['ad_impressions'] * 1000, 3);

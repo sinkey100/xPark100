@@ -14,78 +14,37 @@ class Active extends Model
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;
 
-
     protected $append = [];
 
-    public static string $SQL_DAILY_PV = <<<EOT
-* | 
-SELECT  "attribute.country_id", "attribute.page.host", count(*) as page_views
-FROM log 
-WHERE "attribute.t" = 'pv' 
-GROUP BY "attribute.country_id", "attribute.page.host"
-EOT;
-
-    public static string $SQL_DAILY_ACTIVE_USER = <<<EOT
-* | 
-SELECT "attribute.country_id", "attribute.page.host", ARRAY_AGG(DISTINCT "attribute.uid") AS user_list 
-FROM log 
-WHERE "attribute.t" = 'pv' 
-GROUP BY "attribute.country_id", "attribute.page.host"
-EOT;
-
-    public static string $SQL_DAILY_TOTAL_TIME = <<<EOT
-* | 
-SELECT "attribute.country_id", "attribute.page.host", AVG(total_time_per_user) AS total_time 
-FROM (
-    SELECT "attribute.country_id", "attribute.uid", "attribute.page.host", SUM("attribute.totalTimeMs") AS total_time_per_user
-    FROM log 
-    WHERE "attribute.t" = 'log' AND "attribute.log.key" = 'page_duration' 
-    GROUP BY "attribute.country_id",  "attribute.uid", "attribute.page.host"
-)
-GROUP BY "attribute.country_id","attribute.page.host"
-EOT;
-
-    public static function SQL_MERGE_NEW_USERS($domain_name, $appid, $domain_id, $country_code, $date): string
+    public static function SQL_DAILY_PV(string $date): string
     {
-        $country_code = substr(trim($country_code), 0, 2);
         return <<<EOT
-INSERT INTO ba_sls_user (domain_name, app_id, domain_id, uid, country_code, date)
-SELECT 
-    '$domain_name' AS domain_name, 
-    $appid AS app_id, 
-    $domain_id AS domain_id, 
-    uid, 
-    '$country_code' AS country_code, 
-    '$date' AS date
-FROM ba_sls_user_staging
-WHERE uid NOT IN (
-    SELECT uid FROM ba_sls_user
-);
+* | SELECT  
+"attribute.country_id", "attribute.page.host", count(*) as page_views
+FROM log 
+WHERE "attribute.t" = 'pv' AND date_format(from_unixtime("__time__" - 28800), '%Y-%m-%d') = '$date'
+GROUP BY "attribute.country_id", "attribute.page.host"
 EOT;
     }
 
-    public static function SQL_MERGE_NEW_USERS_MYSQL($domain_name, $appid, $domain_id, $country_code, $date): string
+    public static function SQL_DAILY_TOTAL_TIME(string $date): string
     {
-        $country_code = substr(trim($country_code), 0, 2);
-        return <<<EOT
-INSERT INTO ba_sls_user (`domain_name`, `app_id`, `domain_id`, `uid`, `country_code`, `date`)
-SELECT 
-    '$domain_name' AS domain_name, 
-    $appid AS app_id, 
-    $domain_id AS domain_id, 
-    s.uid, 
-    '$country_code' AS country_code, 
-    '$date' AS date
-FROM ba_sls_user_staging s
-LEFT JOIN ba_sls_user u ON s.uid = u.uid
-WHERE u.uid IS NULL;
+       return <<<EOT
+* | SELECT "attribute.country_id", "attribute.page.host", AVG(total_time_per_user) AS total_time 
+FROM (
+    SELECT "attribute.country_id", "attribute.uid", "attribute.page.host", SUM("attribute.totalTimeMs") AS total_time_per_user
+    FROM log 
+    WHERE "attribute.t" = 'log' AND "attribute.log.key" = 'page_duration' AND  date_format(from_unixtime("__time__" - 28800), '%Y-%m-%d') = '$date'
+    GROUP BY "attribute.country_id",  "attribute.uid", "attribute.page.host"
+)
+GROUP BY "attribute.country_id","attribute.page.host"
 EOT;
     }
 
     public static function SQL_CALC_NEW_AND_ACTIVE_USERS($date): string
     {
         return "SELECT 
-    date, domain_name, country_code,
+    date, domain_id, country_code,
     COUNT(DISTINCT uid) AS active_user_count,
     COUNT(DISTINCT CASE WHEN first_date = date THEN uid END) AS new_user_count
 FROM (
@@ -95,7 +54,7 @@ FROM (
     FROM ba_sls_dau t
 ) t
 where date = '$date'
-GROUP BY date, domain_name, country_code;";
+GROUP BY date, domain_id, country_code;";
     }
 
 
