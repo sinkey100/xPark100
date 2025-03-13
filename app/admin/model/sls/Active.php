@@ -44,7 +44,7 @@ EOT;
     public static function SQL_CALC_NEW_AND_ACTIVE_USERS($date): string
     {
         return "SELECT 
-    date, domain_id, country_code,
+    date, domain_name, country_code,
     COUNT(DISTINCT uid) AS active_user_count,
     COUNT(DISTINCT CASE WHEN first_date = date THEN uid END) AS new_user_count
 FROM (
@@ -54,7 +54,7 @@ FROM (
     FROM ba_sls_dau t
 ) t
 where date = '$date'
-GROUP BY date, domain_id, country_code;";
+GROUP BY date, domain_name, country_code;";
     }
 
 

@@ -65,13 +65,10 @@ class Active extends Base
             // 新版计算新增活跃
             $result = Db::query(SLSActive::SQL_CALC_NEW_AND_ACTIVE_USERS($date));
             foreach ($result as $item) {
-                SLSActive::where('domain_id', $item['domain_id'])
-                    ->where('country_code', $item['country_code'])
-                    ->where("date", $date)
-                    ->update([
-                        'new_users'    => $item['new_user_count'],
-                        'active_users' => $item['active_user_count']
-                    ]);
+                $this->update_active_row($item['domain_name'], $item['country_code'], $date, [
+                    'new_users'    => $item['new_user_count'],
+                    'active_users' => $item['active_user_count']
+                ]);
             }
             $this->log('新增活跃 计算完成');
 

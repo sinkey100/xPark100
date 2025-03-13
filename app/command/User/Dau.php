@@ -36,23 +36,23 @@ class Dau extends Base
 
         for ($i = $this->days - 1; $i >= 0; $i--) {
             $date = date("Y-m-d", strtotime("-{$i} days"));
-            // 计算活跃用户
-            $result = $this->sls->getLogsWithPowerSql(strtotime("-7 days"), time(), SLSDau::SQL_DAU($date));
-            $this->log('拉取到' . count($result) . '条数据，准备数据中');
-
-            foreach ($result as $row) {
-                $row         = $row->getContents();
-                $domain_name = $row['attribute.page.host'];
-                if (!isset($this->domains[$domain_name])) continue;
-                $data[] = [
-                    'app_id'       => $this->domains[$domain_name]['app_id'],
-                    'channel_id'   => $this->domains[$domain_name]['channel_id'],
-                    'domain_id'    => $this->domains[$domain_name]['id'],
-                    'date'         => $date,
-                    'uid'          => $row['attribute.uid'],
-                    'country_code' => $row['attribute.country_id'],
-                    'domain_name'  => $domain_name
-                ];
+            $this->log("开始拉取 $date");
+            foreach ($this->domains as $domain_name => $domain) {
+                // 计算活跃用户
+                $result = $this->sls->getLogsWithPowerSql(strtotime("-3 days"), time(), SLSDau::SQL_DAU($date, $domain_name));
+                $this->log('拉取到' . count($result) . '条数据，准备数据中');
+                foreach ($result as $row) {
+                    $row    = $row->getContents();
+                    $data[] = [
+                        'app_id'       => $this->domains[$domain_name]['app_id'],
+                        'channel_id'   => $this->domains[$domain_name]['channel_id'],
+                        'domain_id'    => $this->domains[$domain_name]['id'],
+                        'date'         => $date,
+                        'uid'          => $row['attribute.uid'],
+                        'country_code' => $row['attribute.country_id'],
+                        'domain_name'  => $domain_name
+                    ];
+                }
             }
             SLSDau::where('date', $date)->delete();
         }

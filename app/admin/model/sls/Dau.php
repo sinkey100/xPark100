@@ -14,16 +14,15 @@ class Dau extends Model
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;
 
-    public static function SQL_DAU(string $date): string
+    public static function SQL_DAU(string $date, string $domain): string
     {
         return <<<EOT
 * | SELECT
-    "attribute.page.host",
     "attribute.uid",
     "attribute.country_id"
 FROM log
-WHERE "attribute.t" = 'pv' AND date_format(from_unixtime("__time__" - 28800), '%Y-%m-%d') = '$date'
-GROUP BY "attribute.page.host", "attribute.uid","attribute.country_id"
+WHERE "attribute.t" = 'pv' AND date_format(from_unixtime("__time__" - 28800), '%Y-%m-%d') = '$date' AND "attribute.page.host" = '$domain'
+GROUP BY "attribute.uid","attribute.country_id"
 EOT;
     }
 

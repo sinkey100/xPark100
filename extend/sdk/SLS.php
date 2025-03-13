@@ -62,7 +62,7 @@ class SLS
 //
 //    }
 
-    public function getLogsWithPowerSql(int $from, int $to, string $query, int $line = 500): array
+    public function getLogsWithPowerSql(int $from, int $to, string $query, int $line = 5000): array
     {
         $allLogs = []; // 用于存储所有数据
         $offset = 0;   // 起始偏移量
