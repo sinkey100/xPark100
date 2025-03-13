@@ -51,6 +51,7 @@ class Utc extends Backend
     {
         $app_filter = array_column(Apps::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
         if ($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
+        $ad_unit_filter = [];
 
         // 如果是 select 则转发到 select 方法，若未重写该方法，其实还是继续执行 index
         if ($this->request->param('select')) {
@@ -79,6 +80,22 @@ class Utc extends Backend
                 if (empty($app_filter)) $app_filter = [1];
                 unset($where[$k]);
             }
+            if ($v[0] == 'utc.ad_type') {
+                if ($v[2] == 'afg_interstitial') {
+                    $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_interstitial'];
+                } else if ($v[2] == 'afg_reward') {
+                    $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_manual_rewarded'];
+                } else if ($v[2] == 'ads_interstitial') {
+                    $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_interstitial'];
+                } else if ($v[2] == 'ads_anchor') {
+                    $ad_unit_filter[] = ['ad_placement_id', 'in', ['ads_anchor', 'ads_shopping_anchor']];
+                } else if ($v[2] == 'ads_banner') {
+                    $ad_unit_filter[] = ['ad_placement_id', 'not in', [
+                        'ads_interstitial', 'ads_manual_rewarded', 'ads_interstitial', 'ads_anchor', 'ads_shopping_anchor'
+                    ]];
+                }
+                unset($where[$k]);
+            }
         }
 
         $field = array_merge($dimension, [
@@ -101,9 +118,9 @@ class Utc extends Backend
             ->where('status', 0)
             ->where($where);
 
-        if ($app_filter) {
-            $res = $res->where('utc.app_id', 'in', $app_filter);
-        }
+        if ($app_filter) $res = $res->where('utc.app_id', 'in', $app_filter);
+        if ($ad_unit_filter) $res = $res->where($ad_unit_filter);
+
         unset($order['utc.id']);
 
         $res = $res->order($order)->order('a_date', 'desc')

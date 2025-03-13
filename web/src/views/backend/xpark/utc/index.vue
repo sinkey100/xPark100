@@ -160,7 +160,7 @@ const baTable = new baTableClass(
                     pk: 'id',
                     remoteUrl: 'admin/auth.Admin/index',
                     field: 'nickname',
-                    params : {user : 1}
+                    params: {user: 1}
                 }
             },
             {
@@ -380,7 +380,7 @@ const baTable = new baTableClass(
                 sortable: false,
             },
             {
-                label: '广告类型',
+                label: '广告平台',
                 show: false,
                 prop: 'channel_type',
                 align: 'center',
@@ -392,8 +392,21 @@ const baTable = new baTableClass(
                     0: 'H5',
                     1: 'Native',
                 },
-
-
+            },
+            {
+                label: '广告类型',
+                show: false,
+                prop: 'ad_type',
+                render: 'tag',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {
+                    afg_interstitial: 'afg_interstitial',
+                    afg_reward: 'afg_reward',
+                    ads_interstitial: 'ads_interstitial',
+                    ads_anchor: 'ads_anchor',
+                    ads_banner: 'ads_banner',
+                },
             },
         ],
         dblClickNotEditColumn: [undefined],
