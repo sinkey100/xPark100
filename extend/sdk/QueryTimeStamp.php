@@ -22,7 +22,7 @@ class QueryTimeStamp
     public static function end(): float|bool
     {
         $hideTimestamp = request()->param('hideTimestamp/d', 0);
-        if ($hideTimestamp == 0) return false;
+        if ($hideTimestamp == 1) return false;
         return round((microtime(true) - self::$timestamp) * 1000, 2);
     }
 

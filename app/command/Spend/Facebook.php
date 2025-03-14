@@ -31,7 +31,7 @@ class Facebook extends Base
         $end_date   = date("Y-m-d");
         $query      = [
             'access_token'   => Env::get('SPEND.FACEBOOK_TOKEN'),
-            'fields'         => 'campaign_id,campaign_name,spend,impressions,clicks',
+            'fields'         => 'campaign_id,campaign_name,spend,impressions,clicks,actions',
             'time_range'     => '{"since":"' . $start_date . '","until":"' . $end_date . '"}',
             'level'          => 'campaign',
             'time_increment' => '1',
@@ -97,6 +97,7 @@ class Facebook extends Base
             if (!isset($fb_creative_row[$item['campaign_id']])) continue;
 
             $clicks      = $item['clicks'];
+            $actions     = array_column($item['actions'], null, 'action_type');
             $impressions = $item['impressions'];
             $spend       = $item['spend'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
@@ -115,7 +116,8 @@ class Facebook extends Base
                 'spend'         => $spend,
                 'clicks'        => $clicks,
                 'impressions'   => $impressions,
-                'install'       => 0,
+                'conversion'   => $actions['add_to_wishlist']['value'] ?? 0,
+                'install'       => $actions['mobile_app_install']['value'] ?? 0,
                 'campaign_name' => $item['campaign_name'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,

@@ -36,7 +36,7 @@ class Unity extends Base
                 'start'      => date("Y-m-d", strtotime("-{$this->days} days")) . 'T00:00:00.000Z',
                 'end'        => date("Y-m-d") . 'T23:59:59.000Z',
                 'scale'      => 'day',
-                'metrics'    => 'starts,views,clicks,installs,cpi,spend',
+                'metrics'    => 'starts,views,clicks,installs,cpi,spend,cvr',
                 'breakdowns' => 'campaign,country,app'
             ];
             $headers = [
@@ -63,6 +63,7 @@ class Unity extends Base
             $spend       = $item['spend'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
+            $conversion = $item['views'] * $item['cvr'];
 
             if (empty($impressions) && (empty($country_code))) continue;
 
@@ -78,6 +79,7 @@ class Unity extends Base
                 'clicks'        => $clicks,
                 'starts'        => $item['starts'],
                 'impressions'   => $impressions,
+                'conversion'   => (int)$conversion,
                 'install'       => $item['installs'],
                 'campaign_name' => $item['campaign name'],
                 'cpc'           => $cpc,

@@ -12,6 +12,7 @@ export default {
     spend: '投放金额',
     clicks: '点击',
     impressions: '展示',
+    conversion: '转化',
     install: '安装',
     campaign_name: 'Campaign',
     cpc: 'CPC',

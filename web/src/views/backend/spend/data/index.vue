@@ -168,6 +168,7 @@ const baTable = new baTableClass(
                 operator: false,
                 sortable: false
             },
+            {label: t('spend.data.conversion'), prop: 'conversion', align: 'center', operator: false, sortable: false},
             {label: t('spend.data.install'), prop: 'install', align: 'center', operator: false, sortable: false},
             {label: t('spend.data.cpc'), prop: 'cpc', align: 'center', operator: false, sortable: false},
             {label: t('spend.data.cpm'), prop: 'cpm', align: 'center', operator: false, sortable: false},

@@ -31,7 +31,7 @@ class AppLovin extends Base
             'start'       => date("Y-m-d", strtotime("-{$this->days} days")),
             'end'         => date("Y-m-d"),
             'format'      => 'json',
-            'columns'     => 'ad_id,day,campaign,country,impressions,clicks,campaign_package_name,cost',
+            'columns'     => 'ad_id,day,campaign,country,impressions,clicks,campaign_package_name,cost,conversions,installs',
             'report_type' => 'advertiser'
         ];
 
@@ -44,7 +44,7 @@ class AppLovin extends Base
         if ($result['code'] != 200) {
             $this->log('请求失败');
             $this->log(json_encode($result));
-        };
+        }
 
         foreach ($result['results'] as $item) {
             if (!isset($this->apps[$item['campaign_package_name']])) continue;
@@ -54,8 +54,6 @@ class AppLovin extends Base
             $spend       = $item['cost'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
-
-            if (empty($impressions) && (empty($country_code))) continue;
 
             $insert_list[] = [
                 'app_id'        => $this->apps[$item['campaign_package_name']]['id'],
@@ -68,7 +66,8 @@ class AppLovin extends Base
                 'spend'         => $spend,
                 'clicks'        => $clicks,
                 'impressions'   => $impressions,
-                'install'       => 0,
+                'conversion'    => $item['conversions'],
+                'install'       => $item['installs'],
                 'campaign_name' => $item['campaign'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,

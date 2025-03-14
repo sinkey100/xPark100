@@ -67,6 +67,7 @@ class Data extends Backend
             'SUM(data.spend) AS spend',
             'SUM(data.clicks) AS clicks',
             'SUM(data.impressions) AS impressions',
+            'SUM(data.conversion) AS conversion',
             'SUM(data.install) AS install',
             'SUM(data.starts) AS starts',
         ]);

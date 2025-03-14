@@ -33,6 +33,8 @@ class Base extends Command
         parent::__construct();
         $this->channelList = Channel::field(['id', 'channel_alias', 'ad_type'])->select()->toArray();
         $this->channelList = array_column($this->channelList, null, 'channel_alias');
+        $this->apps        = Apps::where('pkg_name', '<>', '')->select()->toArray();
+        $this->apps        = array_column($this->apps, null, 'pkg_name');
     }
 
     /**
@@ -264,10 +266,6 @@ class Base extends Command
         if (empty($this->domains)) {
             $this->domains = Domain::where('channel_id', '>', 0)->select()->toArray();
             $this->domains = array_column($this->domains, null, 'domain');
-        }
-        if (empty($this->apps)) {
-            $this->apps = Apps::where('pkg_name', '<>', '')->select()->toArray();
-            $this->apps = array_column($this->apps, null, 'pkg_name');
         }
 
         $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
