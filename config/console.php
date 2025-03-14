@@ -30,6 +30,7 @@ return [
         'SpendUnity'    => \app\command\Spend\Unity::class,
         'SpendAppLovin' => \app\command\Spend\AppLovin::class,
         'SpendFacebook' => \app\command\Spend\Facebook::class,
+        'SpendManage'  => \app\command\Spend\Manage::class,
 
 
         // 小米工具

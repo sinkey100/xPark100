@@ -3,6 +3,7 @@
 namespace app\command\Spend;
 
 use app\admin\model\cy\CYIosGame;
+use app\admin\model\spend\Bind;
 use app\admin\model\spend\Data as SpendData;
 use app\command\Base;
 use think\console\Input;
@@ -22,6 +23,9 @@ class Tiktok extends Base
     {
         $this->days = 2;
         [$spend_table, $advertiser_ids] = $this->getSpendTable('tiktok');
+
+        $bind = Bind::field(['campaign_id', 'domain_name'])->where('platform', 'tiktok')->order('date', 'desc')->group('campaign_id')->select();
+        $bind = array_column($bind->toArray(), null, 'campaign_id');
 
         SpendData::where('channel_name', 'tiktok')->where('status', 1)->delete();
 
@@ -43,30 +47,10 @@ class Tiktok extends Base
             'page_size'     => 1000,
             'advertiser_id' => ''
         ];
-        // 普通广告列表参数
-        $ad_url   = 'https://business-api.tiktok.com/open_api/v1.3/ad/get/';
-        $ad_query = [
-            'page'          => 1,
-            'page_size'     => 1000,
-            'advertiser_id' => ''
-        ];
-        // Smart 广告列表参数
-        $smart_url   = 'https://business-api.tiktok.com/open_api/v1.3/campaign/spc/get/';
-        $smart_query = [
-            'advertiser_id' => ''
-        ];
-        // App 广告列表参数
-        $app_url       = 'https://business-api.tiktok.com/open_api/v1.3/adgroup/get/';
-        $app_query     = [
-            'advertiser_id' => '',
-            'page'          => 1,
-            'page_size'     => 1000,
-        ];
         $headers       = [
             'Access-Token' => Env::get('SPEND.TIKTOK_TOKEN'),
             'Content-Type' => 'application/json'
         ];
-        $campaign_list = [];
 
         // 分页获取所有投放数据
         $spend_data = [];
@@ -88,89 +72,11 @@ class Tiktok extends Base
             } while ($spend_query['page'] <= $totalPages);
         }
 
-        // 分页获取普通广告数据
-        $ad_data = [];
-        foreach ($advertiser_ids as $advertiser_id) {
-            $ad_query['advertiser_id'] = $advertiser_id;
-            $ad_query['page']          = 1;
-            do {
-                $result = $this->http('GET', $ad_url, [
-                    'json'    => $ad_query,
-                    'headers' => $headers
-                ]);
-                if ($result['code'] == 0 && $result['message'] == 'OK') {
-                    $ad_data    = array_merge($ad_data, $result['data']['list']);
-                    $totalPages = $result['data']['page_info']['total_page'];
-                    $ad_query['page']++;
-                } else {
-                    break;
-                }
-            } while ($ad_query['page'] <= $totalPages);
-        }
-        foreach ($ad_data as $row) {
-            if (empty($row['landing_page_url']) || isset($campaign_list[$row['campaign_id']])) continue;
-            $campaign_list[$row['campaign_id']] = parse_url($row['landing_page_url'])['host'];
-        }
-
-        $campaign_ids = array_map(fn($item) => $item['metrics']['campaign_id'], $spend_data);
-        $campaign_ids = array_values(array_unique($campaign_ids));
-
-        // 获取smart广告数据
-        $smart_data = [];
-        foreach ($advertiser_ids as $advertiser_id) {
-            $chunks = array_chunk($campaign_ids, 30);
-            foreach ($chunks as $chunk) {
-                $smart_query['advertiser_id'] = $advertiser_id;
-                $smart_query['campaign_ids']  = $chunk;
-                $result                       = $this->http('GET', $smart_url, [
-                    'json'    => $smart_query,
-                    'headers' => $headers
-                ]);
-                if ($result['code'] == 0 && $result['message'] == 'OK') {
-                    $smart_data = array_merge($smart_data, $result['data']['list']);
-                }
-            }
-        }
-        foreach ($smart_data as $row) {
-            if (empty($row['landing_page_urls'][0]['landing_page_url']) || isset($campaign_list[$row['campaign_id']])) continue;
-            $campaign_list[$row['campaign_id']] = parse_url($row['landing_page_urls'][0]['landing_page_url'])['host'];
-        }
-
-        // 分页获取app投放数据
-        $app_data = [];
-        foreach ($advertiser_ids as $advertiser_id) {
-            $app_query['advertiser_id'] = $advertiser_id;
-            $app_query['page']          = 1;
-            do {
-                $result = $this->http('GET', $app_url, [
-                    'json'    => $app_query,
-                    'headers' => $headers
-                ]);
-                if ($result['code'] == 0 && $result['message'] == 'OK') {
-                    $app_data   = array_merge($app_data, $result['data']['list']);
-                    $totalPages = $result['data']['page_info']['total_page'];
-                    $app_query['page']++;
-                } else {
-                    break;
-                }
-            } while ($app_query['page'] <= $totalPages);
-        }
-
-        foreach ($app_data as $row) {
-            if (empty($row['app_download_url']) || isset($campaign_list[$row['campaign_id']])) continue;
-            if (!preg_match('/id(\d+)/', $row['app_download_url'], $matches)) continue;
-            $appstore_id = $matches[0];
-            $ios_app     = CYIosGame::where('appstore_url', 'like', "%$appstore_id%")->find();
-            if (!$ios_app) continue;
-            $campaign_list[$row['campaign_id']] = $ios_app->bundle_id;
-        }
-
         // 存储数据
         $insert_list = [];
 
         foreach ($spend_data as $item) {
-
-            $domain_name = $campaign_list[$item['metrics']['campaign_id']] ?? null;
+            $domain_name = $bind[$item['metrics']['campaign_id']]['domain_name'] ?? null;
             if (!$domain_name) continue;
             $is_app = isset($this->apps[$domain_name]) ? 1 : 0;
             if ($is_app == 0 && !isset($this->domains[$domain_name])) continue;

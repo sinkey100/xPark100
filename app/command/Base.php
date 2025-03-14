@@ -58,8 +58,10 @@ class Base extends Command
 
     protected function log(string $text, $time = true): void
     {
-        if ($time) $text = date("Y-m-d H:i:s") . '  ' . $text;
-        $this->output->writeln($text);
+        if (PHP_SAPI == 'cli') {
+            if ($time) $text = date("Y-m-d H:i:s") . '  ' . $text;
+            $this->output->writeln($text);
+        }
     }
 
     protected function getPeriods($totalDays, $daysPerPeriod): array

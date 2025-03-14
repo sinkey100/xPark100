@@ -158,10 +158,11 @@
                         :class="btn.class"
                         class="table-operate"
                         :type="btn.type"
+                        plain
                         :disabled="btn.disabled && btn.disabled(row, field)"
                         v-bind="btn.attr"
                     >
-                        <Icon :name="btn.icon"/>
+                        <Icon v-if="btn.icon" :name="btn.icon"/>
                         <div v-if="btn.text" class="table-operate-text">{{ btn.text }}</div>
                     </el-button>
                 </el-tooltip>
