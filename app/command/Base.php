@@ -35,6 +35,9 @@ class Base extends Command
         $this->channelList = array_column($this->channelList, null, 'channel_alias');
         $this->apps        = Apps::where('pkg_name', '<>', '')->select()->toArray();
         $this->apps        = array_column($this->apps, null, 'pkg_name');
+        $this->domains     = Domain::where('channel_id', '>', 0)->select()->toArray();
+        $this->domains     = array_column($this->domains, null, 'domain');
+
     }
 
     /**
@@ -263,11 +266,6 @@ class Base extends Command
      */
     protected function getSpendTable(string $platform = ''): array
     {
-        if (empty($this->domains)) {
-            $this->domains = Domain::where('channel_id', '>', 0)->select()->toArray();
-            $this->domains = array_column($this->domains, null, 'domain');
-        }
-
         $access_token = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));
         $token        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_TOKEN');
         $table        = Env::get('BOT.HB_SPEND_TO_APP_TABLE_ID');

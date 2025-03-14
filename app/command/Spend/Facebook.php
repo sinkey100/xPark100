@@ -3,6 +3,7 @@
 namespace app\command\Spend;
 
 use app\admin\model\cy\CYIosGame;
+use app\admin\model\spend\Bind;
 use app\admin\model\spend\Data as SpendData;
 use app\admin\model\spend\FbCreative;
 use app\admin\model\xpark\Domain;
@@ -25,6 +26,9 @@ class Facebook extends Base
         $this->days = 2;
         [$spend_table, $advertiser_ids] = $this->getSpendTable('facebook');
         SpendData::where('channel_name', 'facebook')->where('status', 1)->delete();
+
+        $bind = Bind::field(['campaign_id', 'domain_name'])->where('platform', 'facebook')->order('date', 'desc')->group('campaign_id')->select();
+        $bind = array_column($bind->toArray(), null, 'campaign_id');
 
         // 拉数据
         $start_date = date("Y-m-d", strtotime("-{$this->days} days"));
@@ -53,10 +57,9 @@ class Facebook extends Base
         }
 
         // 获取 campaign_id
-        $campaign_ids    = array_unique(array_column($results, 'campaign_id'));
-        $fb_creative_row = array_column(FbCreative::select()->toArray(), null, 'campaign_id');
+        $campaign_ids = array_unique(array_column($results, 'campaign_id'));
         foreach ($campaign_ids as $campaign_id) {
-            if (isset($fb_creative_row[$campaign_id])) continue;
+            if (isset($bind[$campaign_id])) continue;
 
             $url    = "https://graph.facebook.com/v21.0/$campaign_id/ads";
             $result = $this->http('GET', $url, [
@@ -66,7 +69,7 @@ class Facebook extends Base
                 ],
             ]);
             if (!isset($result['data'][0]['creative']['id'])) continue;
-            $appstore_id = null;
+            $action_link = null;
             foreach ($result['data'] as $v) {
                 $url    = "https://graph.facebook.com/v21.0/{$v['creative']['id']}/";
                 $result = $this->http('GET', $url, [
@@ -76,25 +79,43 @@ class Facebook extends Base
                     ],
                 ]);
                 if (isset($result['object_story_spec']['video_data']['call_to_action']['value']['link'])) {
-                    $appstore_id = explode('/', parse_url($result['object_story_spec']['video_data']['call_to_action']['value']['link'])['path']);
-                    $appstore_id = end($appstore_id);
+                    $action_link = $result['object_story_spec']['video_data']['call_to_action']['value']['link'];
                     break;
                 }
             }
-            if (empty($appstore_id)) continue;
+            if (empty($action_link)) continue;
             // 匹配包名
-            $bundle_id = CYIosGame::where('appstore_url', 'like', "%$appstore_id%")->value('bundle_id');
-            if (empty($bundle_id) || !isset($this->apps[$bundle_id])) continue;
+            if (str_contains($action_link, 'itunes.apple')) {
+                $appstore_id = explode('/', parse_url($action_link)['path']);
+                $appstore_id = end($appstore_id);
+                $bundle_id   = CYIosGame::where('appstore_url', 'like', "%$appstore_id%")->value('bundle_id');
+                if (empty($bundle_id) || !isset($this->apps[$bundle_id])) continue;
+                $bind[$campaign_id] = Bind::create([
+                    'platform'    => 'facebook',
+                    'campaign_id' => $campaign_id,
+                    'app_id'      => $this->apps[$bundle_id]['id'],
+                    'domain_id'   => 0,
+                    'domain_name' => $bundle_id,
+                    'date'        => date("Y-m-d")
+                ]);
 
-            // 记录对应关系
-            $row = ['campaign_id' => $campaign_id, 'app_id' => $this->apps[$bundle_id]['id']];
-            FbCreative::create($row);
-            $fb_creative_row[$campaign_id] = $row;
+            } else {
+                $domain_name = parse_url($action_link)['host'];
+                if (!isset($this->domains[$domain_name])) continue;
+                $bind[$campaign_id] = Bind::create([
+                    'platform'    => 'facebook',
+                    'campaign_id' => $campaign_id,
+                    'app_id'      => $this->domains[$domain_name]['app_id'],
+                    'domain_id'   => $this->domains[$domain_name]['id'],
+                    'domain_name' => $domain_name,
+                    'date'        => date("Y-m-d")
+                ]);
+            }
         }
 
 
         foreach ($results as $item) {
-            if (!isset($fb_creative_row[$item['campaign_id']])) continue;
+            if (!isset($bind[$item['campaign_id']])) continue;
 
             $clicks      = $item['clicks'];
             $actions     = array_column($item['actions'], null, 'action_type');
@@ -105,18 +126,21 @@ class Facebook extends Base
 
             if (empty($impressions) && (empty($country_code))) continue;
 
+            $domain_info = $this->domains[$bind[$item['campaign_id']]['domain_name']] ?? false;
+            if(!$domain_info) continue;
+
             $insert_list[] = [
-                'app_id'        => $fb_creative_row[$item['campaign_id']]['app_id'],
+                'app_id'        => $domain_info['app_id'],
                 'channel_name'  => 'facebook',
-                'domain_id'     => 0,
-                'channel_id'    => 0,
-                'is_app'        => 1,
+                'domain_id'     => $domain_info['is_app'] == 1 ? 0 : $domain_info['id'],
+                'channel_id'    => $domain_info['is_app'] == 1 ? 0 : $domain_info['channel_id'],
+                'is_app'        => $domain_info['is_app'],
                 'date'          => $item['date_start'],
                 'country_code'  => strtoupper($item['country']),
                 'spend'         => $spend,
                 'clicks'        => $clicks,
                 'impressions'   => $impressions,
-                'conversion'   => $actions['add_to_wishlist']['value'] ?? 0,
+                'conversion'    => $actions['add_to_wishlist']['value'] ?? 0,
                 'install'       => $actions['mobile_app_install']['value'] ?? 0,
                 'campaign_name' => $item['campaign_name'],
                 'cpc'           => $cpc,
