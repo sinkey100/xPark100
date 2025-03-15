@@ -31,7 +31,8 @@ class Active extends Base
         ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
         $this->sls = new SLS();
         // 凌晨一点拉昨天和今天，其余时间只拉昨天
-        $this->days = date("H" == 1) ? 2 : 1;
+        $this->days = date("H") < 9 ? 2 : 1;
+
         // 查找所有SLS域名
         $sls_domains   = Domain::where('channel_id', '>', 0)->select()->toArray();
         $this->domains = array_column($sls_domains, null, 'domain');
