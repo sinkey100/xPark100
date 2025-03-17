@@ -2,6 +2,8 @@
 
 namespace app\admin\controller\spend;
 
+use app\admin\model\xpark\Utc;
+use app\admin\model\spend\Data as SpendData;
 use app\common\controller\Backend;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -50,17 +52,43 @@ class Manage extends Backend
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $revenue_map = $spend_map = [];
+        foreach ($where as $k => $v) {
+            if ($v[0] == 'manage.a_date') {
+                $revenue_map[] = ['a_date', $v[1], $v[2]];
+                $spend_map[]   = ['date', $v[1], $v[2]];
+                unset($where[$k]);
+            }
+        }
+        $where = array_values($where);
+
+        $revenue_sql = Utc::field(['domain_id', 'country_code', 'SUM(ad_revenue) AS total_revenue'])->where($revenue_map)->group('domain_id,country_code')->buildSql();
+        $spend_sql   = SpendData::field(['campaign_id', 'country_code', 'SUM(spend) AS total_spend'])->where($spend_map)->group('campaign_id, country_code')->buildSql();
+
+
         $res = $this->model
             ->alias($alias)
-            ->field(['manage.*', 'domain.domain as domain_name'])
+            ->field(['manage.*', 'domain.domain as domain_name', 'revenue.total_revenue', 'spend.total_spend'])
             ->join('xpark_domain domain', 'domain.id = manage.domain_id', 'left')
+            ->leftJoin([$revenue_sql => 'revenue'], 'revenue.domain_id = manage.domain_id AND revenue.country_code = manage.country_code')
+            ->leftJoin([$spend_sql => 'spend'], 'spend.campaign_id = manage.campaign_id AND spend.country_code = manage.country_code')
+            ->order('manage.domain_id', 'desc')
             ->where($where)
+            ->where('domain.channel', '<>', 'AppLovin')
             ->order($order);
         $sql = $res->fetchSql(true)->select();
         $res = $res->paginate($limit);
 
+        $list = [];
+        foreach ($res->items() as $v) {
+            $v['roi']           = $v['total_spend'] > 0 ? number_format((float)$v['total_revenue'] / (float)$v['total_spend'] * 100, 2, '.', '') . '%' : '-';
+            $v['total_revenue'] = round($v['total_revenue'] ?? 0, 2);
+            $v['total_spend']   = round($v['total_spend'] ?? 0, 2);
+            $list[]             = $v;
+        }
+
         $this->success('', [
-            'list'   => $res->items(),
+            'list'   => $list,
             'total'  => $res->total(),
             'remark' => get_route_remark(),
             'sql'    => $sql,

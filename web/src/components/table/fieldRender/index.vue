@@ -172,6 +172,7 @@
                     v-if="btn.render == 'confirmButton' && ((btn.name == 'delete' && baTable.auth('del')) || btn.name != 'delete')"
                     :disabled="btn.disabled && btn.disabled(row, field)"
                     v-bind="btn.popconfirm"
+                    width="250"
                     @confirm="onButtonClick(btn)"
                 >
                     <template #reference>

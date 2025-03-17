@@ -11,7 +11,7 @@
                 <Icon color="#ffffff" name="fa fa-cloud-download"/>
                 <span class="table-header-operate-text">同步数据</span>
             </el-button>
-<!--            <div class="last-time">上次同步时间： 2025-03-13 16:16:40</div>-->
+            <!--            <div class="last-time">上次同步时间： 2025-03-13 16:16:40</div>-->
         </TableHeader>
 
         <Table ref="tableRef"></Table>
@@ -120,7 +120,19 @@ const baTable = new baTableClass(
                 align: 'center',
                 width: 70,
                 operator: false,
-                sortable: 'custom'
+                sortable: 'custom',
+                show: false
+            },
+            {
+                label: '日期',
+                prop: 'a_date',
+                align: 'center',
+                render: 'datetime',
+                comSearchRender: 'date',
+                operator: 'RANGE',
+                sortable: false,
+                show: false,
+                timeFormat: 'yyyy-mm-dd',
             },
             {
                 label: t('spend.manage.domain_id'),
@@ -145,6 +157,38 @@ const baTable = new baTableClass(
                 operator: false
             },
             {
+                label: '地区',
+                prop: 'country_code',
+                align: 'center',
+                operator: 'eq',
+                sortable: false,
+                width: 70,
+            },
+            {
+                label: '收入',
+                prop: 'total_revenue',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 100,
+            },
+            {
+                label: '支出',
+                prop: 'total_spend',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 100,
+            },
+            {
+                label: 'ROI',
+                prop: 'roi',
+                align: 'center',
+                operator: false,
+                sortable: false,
+                width: 100,
+            },
+            {
                 label: t('spend.manage.smart_switch'),
                 prop: 'smart_switch',
                 align: 'center',
@@ -159,7 +203,7 @@ const baTable = new baTableClass(
                 label: t('spend.manage.campaign_id'),
                 prop: 'campaign_id',
                 align: 'center',
-                operator: 'eq',
+                operator: 'LIKE',
                 sortable: 'custom',
                 width: 160,
             },
@@ -202,6 +246,23 @@ provide('baTable', baTable)
 onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.mount()
+    // 默认查询今天
+    const date = new Date(new Date().setDate(new Date().getDate())).toISOString().split('T')[0];
+    baTable.comSearch.form['a_date'] = [date, date];
+    baTable.table.filter!.search?.push({
+        field: 'a_date',
+        val: `${date} 00:00:00,${date} 23:59:59`,
+        operator: 'RANGE',
+        render: 'datetime',
+    });
+    baTable.comSearch.form['status'] = '1';
+    baTable.table.filter!.search?.push({
+        field: 'status',
+        val: '1',
+        operator: 'eq',
+    });
+    baTable.table.filter!.limit = 100;
+
     baTable.getIndex()?.then(() => {
         baTable.initSort()
         baTable.dragSort()
@@ -237,17 +298,16 @@ const syncData = () => {
         font-size: 12px;
     }
 }
-:deep(.ba-operate-dialog){
-    .el-dialog__body{
-        height:250px;
+
+:deep(.ba-operate-dialog) {
+    .el-dialog__body {
+        height: 250px;
     }
 }
 
 </style>
 <style>
 .el-popper:not(.is-dark) {
-    width: 250px !important;
-
     .el-popconfirm__icon {
         font-size: 30px !important;
     }
