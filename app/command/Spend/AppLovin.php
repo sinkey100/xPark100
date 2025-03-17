@@ -31,7 +31,7 @@ class AppLovin extends Base
             'start'       => date("Y-m-d", strtotime("-{$this->days} days")),
             'end'         => date("Y-m-d"),
             'format'      => 'json',
-            'columns'     => 'ad_id,day,campaign,country,impressions,clicks,campaign_package_name,cost,conversions,installs',
+            'columns'     => 'ad_id,day,campaign,country,impressions,clicks,campaign_package_name,cost,conversions,installs,campaign_id',
             'report_type' => 'advertiser'
         ];
 
@@ -69,6 +69,7 @@ class AppLovin extends Base
                 'conversion'    => $item['conversions'],
                 'install'       => $item['installs'],
                 'campaign_name' => $item['campaign'],
+                'campaign_id'   => $item['campaign_id'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,
             ];

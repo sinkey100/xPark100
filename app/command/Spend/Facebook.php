@@ -35,7 +35,7 @@ class Facebook extends Base
         $end_date   = date("Y-m-d");
         $query      = [
             'access_token'   => Env::get('SPEND.FACEBOOK_TOKEN'),
-            'fields'         => 'campaign_id,campaign_name,spend,impressions,clicks,actions',
+            'fields'         => 'campaign_id,campaign_name,spend,impressions,inline_link_clicks,actions',
             'time_range'     => '{"since":"' . $start_date . '","until":"' . $end_date . '"}',
             'level'          => 'campaign',
             'time_increment' => '1',
@@ -117,7 +117,7 @@ class Facebook extends Base
         foreach ($results as $item) {
             if (!isset($bind[$item['campaign_id']])) continue;
 
-            $clicks      = $item['clicks'];
+            $clicks      = $item['inline_link_clicks'];
             $actions     = array_column($item['actions'], null, 'action_type');
             $impressions = $item['impressions'];
             $spend       = $item['spend'];
@@ -127,7 +127,7 @@ class Facebook extends Base
             if (empty($impressions) && (empty($country_code))) continue;
 
             $domain_info = $this->domains[$bind[$item['campaign_id']]['domain_name']] ?? false;
-            if(!$domain_info) continue;
+            if (!$domain_info) continue;
 
             $insert_list[] = [
                 'app_id'        => $domain_info['app_id'],
@@ -143,6 +143,7 @@ class Facebook extends Base
                 'conversion'    => $actions['add_to_wishlist']['value'] ?? 0,
                 'install'       => $actions['mobile_app_install']['value'] ?? 0,
                 'campaign_name' => $item['campaign_name'],
+                'campaign_id'   => $item['campaign_id'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,
             ];

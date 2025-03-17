@@ -63,7 +63,7 @@ class Unity extends Base
             $spend       = $item['spend'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
-            $conversion = $item['views'] * $item['cvr'];
+            $conversion  = $item['views'] * $item['cvr'];
 
             if (empty($impressions) && (empty($country_code))) continue;
 
@@ -79,8 +79,9 @@ class Unity extends Base
                 'clicks'        => $clicks,
                 'starts'        => $item['starts'],
                 'impressions'   => $impressions,
-                'conversion'   => (int)$conversion,
+                'conversion'    => (int)$conversion,
                 'install'       => $item['installs'],
+                'campaign_id'   => $item['campaign id'],
                 'campaign_name' => $item['campaign name'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,

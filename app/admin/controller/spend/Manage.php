@@ -6,6 +6,7 @@ use app\common\controller\Backend;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use sdk\FeishuBot;
+use sdk\QueryTimeStamp;
 use think\facade\Env;
 use Exception;
 use app\admin\model\spend\Manage as ManageModel;
@@ -43,6 +44,7 @@ class Manage extends Backend
 
     public function index(): void
     {
+        QueryTimeStamp::start();
         if ($this->request->param('select')) {
             $this->select();
         }
@@ -53,13 +55,16 @@ class Manage extends Backend
             ->field(['manage.*', 'domain.domain as domain_name'])
             ->join('xpark_domain domain', 'domain.id = manage.domain_id', 'left')
             ->where($where)
-            ->order($order)
-            ->paginate($limit);
+            ->order($order);
+        $sql = $res->fetchSql(true)->select();
+        $res = $res->paginate($limit);
 
         $this->success('', [
             'list'   => $res->items(),
             'total'  => $res->total(),
             'remark' => get_route_remark(),
+            'sql'    => $sql,
+            'ts'     => QueryTimeStamp::end()
         ]);
     }
 

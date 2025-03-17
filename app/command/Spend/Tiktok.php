@@ -47,7 +47,7 @@ class Tiktok extends Base
             'page_size'     => 1000,
             'advertiser_id' => ''
         ];
-        $headers       = [
+        $headers     = [
             'Access-Token' => Env::get('SPEND.TIKTOK_TOKEN'),
             'Content-Type' => 'application/json'
         ];
@@ -109,6 +109,7 @@ class Tiktok extends Base
                 'conversion'    => $conversion,
                 'install'       => 0,
                 'campaign_name' => $item['metrics']['campaign_name'],
+                'campaign_id'   => $item['metrics']['campaign_id'],
                 'cpc'           => $cpc,
                 'cpm'           => $cpm,
             ];
