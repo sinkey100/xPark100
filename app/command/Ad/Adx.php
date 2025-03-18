@@ -138,7 +138,7 @@ class Adx extends Base
         $reportQuery->setDimensions([
             Dimension::DATE,
             Dimension::COUNTRY_CODE,
-            Dimension::AD_UNIT_ID,
+            Dimension::PARENT_AD_UNIT_ID,
             Dimension::SITE_NAME,
         ]);
         $reportQuery->setColumns([
@@ -190,6 +190,10 @@ class Adx extends Base
                 [$domain_id, $app_id] = $this->getDomainRow($v['Dimension.SITE_NAME'], $v['Dimension.DATE'], 'Adx');
                 $channel_full = 'Adx-传游';
 
+                $ad_path    = explode(',', $v['Dimension.PARENT_AD_UNIT_ID']);
+                $ad_path    = array_values(array_filter($ad_path));
+                $ad_unit_id = $ad_path[count($ad_path) - 1] ?? null;
+
                 $saveData[] = [
                     'channel'         => 'Adx',
                     'channel_full'    => $channel_full,
@@ -200,7 +204,7 @@ class Adx extends Base
                     'app_id'          => $app_id,
                     'a_date'          => $v['Dimension.DATE'],
                     'country_code'    => $v['Dimension.COUNTRY_CODE'],
-                    'ad_placement_id' => $adUnits[$v['Dimension.AD_UNIT_ID']] ?? $v['Dimension.AD_UNIT_ID'],
+                    'ad_placement_id' => $adUnits[$ad_unit_id] ?? $ad_unit_id,
                     'requests'        => $v['Column.AD_EXCHANGE_TOTAL_REQUESTS'],
                     'fills'           => $v['Column.AD_EXCHANGE_MATCH_RATE'] * $v['Column.AD_EXCHANGE_TOTAL_REQUESTS'],
                     'impressions'     => $v['Column.AD_EXCHANGE_ACTIVE_VIEW_VIEWABLE_IMPRESSIONS'],
