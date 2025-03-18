@@ -158,7 +158,7 @@
                         :class="btn.class"
                         class="table-operate"
                         :type="btn.type"
-                        plain
+                        :plain="!btn.icon"
                         :disabled="btn.disabled && btn.disabled(row, field)"
                         v-bind="btn.attr"
                     >

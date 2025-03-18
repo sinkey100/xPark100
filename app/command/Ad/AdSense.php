@@ -265,7 +265,7 @@ class AdSense extends Base
         foreach ($accounts as $account) {
             $expired_time = is_int($account['updated']) ? $account['updated'] : strtotime($account['updated']);
             $day          = round(($expired_time - time()) / 86400, 2);
-            $message[]    = "{$account->flag} Google授权有效期还剩 $day 天";
+            $message[]    = "{$account->flag} Google授权" . (time() > $expired_time ? '已过期' : "有效期还剩 $day 天");
         }
         FeishuBot::text(implode("\n", $message));
     }

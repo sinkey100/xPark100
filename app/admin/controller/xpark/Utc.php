@@ -82,7 +82,7 @@ class Utc extends Backend
             }
             if ($v[0] == 'utc.ad_type') {
                 if ($v[2] == 'afg_interstitial') {
-                    $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_interstitial'];
+                    $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_manual_interstitial'];
                 } else if ($v[2] == 'afg_reward') {
                     $ad_unit_filter[] = ['ad_placement_id', '=', 'ads_manual_rewarded'];
                 } else if ($v[2] == 'ads_interstitial') {
@@ -91,7 +91,7 @@ class Utc extends Backend
                     $ad_unit_filter[] = ['ad_placement_id', 'in', ['ads_anchor', 'ads_shopping_anchor']];
                 } else if ($v[2] == 'ads_banner') {
                     $ad_unit_filter[] = ['ad_placement_id', 'not in', [
-                        'ads_interstitial', 'ads_manual_rewarded', 'ads_interstitial', 'ads_anchor', 'ads_shopping_anchor'
+                        'ads_interstitial', 'ads_manual_rewarded', 'ads_manual_interstitial', 'ads_anchor', 'ads_shopping_anchor'
                     ]];
                 }
                 unset($where[$k]);

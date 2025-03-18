@@ -55,6 +55,18 @@
                         </el-row>
                     </el-form-item>
 
+                    <FormItem :label="t('xpark.channel.is_own')" type="switch" v-model="baTable.form.items!.is_own" prop="is_own" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
+                    <FormItem :label="t('xpark.channel.private_switch')" type="switch" v-model="baTable.form.items!.private_switch" prop="private_switch" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
+                    <FormItem
+                        :label="t('xpark.channel.timezone')"
+                        v-model="baTable.form.items!.timezone"
+                        prop="timezone"
+                        type="radio"
+                        :input-attr="{
+                            border: true,
+                            content: { 0: 'UTC 0', 8:'UTC+8' },
+                        }"
+                    />
 
 
 
