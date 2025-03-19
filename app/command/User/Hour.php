@@ -37,7 +37,12 @@ class Hour extends Base
         $this->end_time   = strtotime('-1 hour', strtotime(date('Y-m-d H:00:00')));
 
         // 查找所有SLS域名
-        $sls_domains   = Domain::where('channel_id', '>', 0)->select()->toArray();
+        $sls_domains   = Domain::alias('domain')
+            ->field('domain.*')
+            ->join('xpark_channel channel', 'channel.id = domain.channel_id', 'left')
+            ->where('domain.channel_id', '>', 0)
+            ->where('channel.timezone', 8)
+            ->select()->toArray();
         $this->domains = array_column($sls_domains, null, 'domain');
 
         // 重置数据
