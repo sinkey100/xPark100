@@ -208,6 +208,7 @@ class Manage extends Base
                 if (!$ios_app) continue;
                 $campaign_list[$row['campaign_id']] = $ios_app->bundle_id;
             }
+            print_r($campaign_list);
 
             // 存储到数据库
             foreach ($campaign_list as $campaign_id => $domain_name) {

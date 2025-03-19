@@ -10,6 +10,7 @@ use app\admin\model\sls\Active as SLSActive;
 use app\common\controller\Backend;
 use app\admin\model\xpark\Domain;
 use app\admin\model\xpark\Apps;
+use app\admin\model\xpark\Channel;
 
 /**
  * xPark数据
@@ -52,6 +53,12 @@ class Utc extends Backend
         $app_filter = array_column(Apps::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
         if ($this->auth->id > 1 && count($app_filter) == 0) $app_filter = [1];
         $ad_unit_filter = [];
+        $channel_filter = [];
+        if ($this->auth->id > 1) {
+            $private_ids      = Channel::field('id')->where('private_switch', 1)->select();
+            $private_ids      = array_column($private_ids->toArray(), 'id');
+            $channel_filter[] = ['utc.channel_id', 'not in', $private_ids];
+        }
 
         // 如果是 select 则转发到 select 方法，若未重写该方法，其实还是继续执行 index
         if ($this->request->param('select')) {
@@ -120,7 +127,7 @@ class Utc extends Backend
 
         if ($app_filter) $res = $res->where('utc.app_id', 'in', $app_filter);
         if ($ad_unit_filter) $res = $res->where($ad_unit_filter);
-
+        if ($channel_filter) $res = $res->where($channel_filter);
         unset($order['utc.id']);
 
         $res = $res->order($order)->order('a_date', 'desc')

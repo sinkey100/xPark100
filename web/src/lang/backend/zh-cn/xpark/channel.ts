@@ -12,6 +12,7 @@ export default {
     revenue_model: '收入标准模型',
     user_model: '用户标准模型',
     is_own: '自有通道',
+    status: '启用',
     private_switch: '内部通道',
     timezone: '时区',
     'quick Search Fields': 'ID',

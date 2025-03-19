@@ -77,7 +77,11 @@ class Tiktok extends Base
 
         foreach ($spend_data as $item) {
             $domain_name = $bind[$item['metrics']['campaign_id']]['domain_name'] ?? null;
-            if (!$domain_name) continue;
+            if (!$domain_name){
+                print_r($item['metrics']['campaign_id']);
+                $output->writeln("\n\n");
+                continue;
+            }
             $is_app = isset($this->apps[$domain_name]) ? 1 : 0;
             if ($is_app == 0 && !isset($this->domains[$domain_name])) continue;
 

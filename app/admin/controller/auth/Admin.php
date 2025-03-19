@@ -46,9 +46,13 @@ class Admin extends Backend
         }
         $map = [];
         if ($this->request->get('user/d', 0) == 1) {
-            $ids = array_column(Apps::field('admin_id')->where('admin_id', '>', 0)->group('admin_id')->select()->toArray(), 'admin_id');
-            $ids = array_unique($ids);
+            $ids   = array_column(Apps::field('admin_id')->where('admin_id', '>', 0)->group('admin_id')->select()->toArray(), 'admin_id');
+            $ids   = array_unique($ids);
             $map[] = ['id', 'in', $ids];
+        }
+
+        if ($this->request->param('select')) {
+            $map[] = ['status', '=', 1];
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();

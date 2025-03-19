@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use app\admin\model\xpark\Utc;
 use app\admin\model\xpark\Apps;
 use app\admin\model\xpark\Channel;
+use Exception;
 
 /**
  * 域名
@@ -202,8 +203,12 @@ class Domain extends Backend
                     }
                 }
 
+                $flag = $this->model->where('domain', $data['domain'])->find();
+                if($flag) throw new Exception('域名重复添加');
+
                 $channel = Channel::where('id', $data['channel_id'])->find();
-                if (!$channel) $this->error('通道不存在');
+                if($channel) throw new Exception('通道不存在');
+
                 $data['channel'] = $channel->channel_type;
                 $data['flag']    = $channel->channel_account;
 

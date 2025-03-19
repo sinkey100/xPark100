@@ -28,10 +28,15 @@ class Channel extends Backend
 
     public function select(): void
     {
+        $map = [];
+        if ($this->auth->id != 1) $map[] = ['private_switch', '=', 0];
+        $map[] = ['status', '=' , 1];
+
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $res = $this->model
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
+            ->where($map)
             ->where($where)
             ->order($order)
             ->paginate($limit);

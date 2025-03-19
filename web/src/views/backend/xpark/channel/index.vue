@@ -53,6 +53,7 @@ const baTable = new baTableClass(
             { label: t('xpark.channel.channel_alias'), prop: 'channel_alias', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.channel.is_own'), prop: 'is_own', align: 'center', width: 110, render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1') } },
             { label: t('xpark.channel.private_switch'), prop: 'private_switch', align: 'center', width: 110, render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1') } },
+            { label: t('xpark.channel.status'), prop: 'status', align: 'center', width: 110, render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1') } },
             { label: t('xpark.channel.timezone'), prop: 'timezone', align: 'center', operator: false, sortable: false ,width: 80},
             {
                 label: t('xpark.channel.spend_model'),
@@ -79,7 +80,6 @@ const baTable = new baTableClass(
                 sortable: false
             },
             { label: t('xpark.channel.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
-            { label: t('xpark.channel.update_time'), prop: 'update_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
