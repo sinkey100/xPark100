@@ -88,6 +88,16 @@ const baTable = new baTableClass(
                 replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
             },
             {
+                label: t('xpark.domain.status'),
+                prop: 'status',
+                align: 'center',
+                width: 110,
+                render: 'switch',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
+            },
+            {
                 label: t('xpark.domain.tag'),
                 prop: 'tag',
                 align: 'center',

@@ -4,7 +4,13 @@
         <TableHeader
             :buttons="['comSearch', 'columnDisplay']"
             :quick-search-placeholder="t('Quick search placeholder', { fields: t('spend.data.quick Search Fields') })"
-        ></TableHeader>
+        >
+            <el-form-item class="dimensions-form" :label-width="100" label="维度">
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.a_date" label="日期" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.app_id" label="应用" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.channel_id" label="通道" border/>
+            </el-form-item>
+        </TableHeader>
 
         <Table ref="tableRef"></Table>
 
@@ -25,6 +31,11 @@ defineOptions({
 
 const {t} = useI18n()
 const tableRef = ref()
+const dimensions = reactive({
+    a_date: true,
+    app_id: true,
+    channel_id: false,
+})
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -59,31 +70,67 @@ const baTable = new baTableClass(
                     pk: 'id',
                     remoteUrl: 'admin/xpark.Apps/select',
                     field: 'app_name',
-                    multiple:true
+                    multiple: true
                 }
             },
-            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false,},
-            {label: 'App新增', prop: 'app_new_users', align: 'center', operator: false, sortable: false},
-            {label: 'App活跃', prop: 'app_active_users', align: 'center', operator: false, sortable: false},
-            {label: 'CPI', prop: 'cpi', align: 'center', operator: false, sortable: false},
-            {label: 'H5新增', prop: 'h5_new_users', align: 'center', operator: false, sortable: false},
-            {label: 'H5活跃', prop: 'h5_active_users', align: 'center', operator: false, sortable: false},
-            {label: '总支出', prop: 'total_spend', align: 'center', operator: false, sortable: false},
-            {label: '总收入', prop: 'total_revenue', align: 'center', operator: false, sortable: false},
-            {label: '预估利润', prop: 'profit', align: 'center', operator: false, sortable: false},
-            {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false},
-            {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, sortable: false},
-            {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false},
+            {
+                label: '通道',
+                prop: 'channel_id',
+                operator: 'eq',
+                show: false,
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/xpark.Channel/index',
+                    field: 'channel_alias',
+                }
+            },
+            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false},
+            {label: '通道', prop: 'channel_full', align: 'center', sortable: false, operator: false},
+            {label: 'App新增', prop: 'app_new_users', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'App活跃', prop: 'app_active_users', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'CPI', prop: 'cpi', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'H5新增', prop: 'h5_new_users', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'H5活跃', prop: 'h5_active_users', align: 'center', operator: false, sortable: false, width: 100},
+            {label: '总支出', prop: 'total_spend', align: 'center', operator: false, sortable: false, width: 100},
+            {label: '总收入', prop: 'total_revenue', align: 'center', operator: false, sortable: false, width: 100},
+            {label: '预估利润', prop: 'profit', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false, width: 100},
+            {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, width: 100},
+            {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false, width: 90},
             {label: 'H5 ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'HB开启率', prop: 'hb_open_rate', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'Native收入比', prop: 'native_rate', align: 'center', operator: false, sortable: false, width: 115},
         ],
         dblClickNotEditColumn: [undefined],
+    }, {}, {}, {
+        getIndex: ({res}) => {
+            baTable.table.column.forEach((item: any) => {
+                if (item.prop == 'app_id') return;
+
+                // 显示应用名称
+                if (item.prop == 'app_name') {
+                    item.show = baTable.table.filter!.dimensions['app_id'] == true;
+                    return;
+                }
+
+                if (item.prop == 'channel_id') return;
+                if (item.prop == 'channel_full') {
+                    item.show = baTable.table.filter!.dimensions['channel_id'] == true;
+                    return;
+                }
+
+                if (baTable.table.filter!.dimensions[item.prop] == undefined) return;
+                item.show = baTable.table.filter!.dimensions[item.prop];
+            })
+        },
     }
 )
 
 provide('baTable', baTable)
+baTable.table.filter!.dimensions = dimensions
+
 onMounted(() => {
     baTable.table.ref = tableRef.value
     baTable.mount()
@@ -109,7 +156,6 @@ onMounted(() => {
 <style scoped lang="scss">
 
 
-
 :deep(.table-search) {
     display: none;
 }
@@ -127,6 +173,10 @@ onMounted(() => {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+}
+
+.dimensions-form {
+    margin-bottom: 0;
 }
 
 </style>

@@ -207,7 +207,7 @@ class Domain extends Backend
                 if($flag) throw new Exception('域名重复添加');
 
                 $channel = Channel::where('id', $data['channel_id'])->find();
-                if($channel) throw new Exception('通道不存在');
+                if(!$channel) throw new Exception('通道不存在');
 
                 $data['channel'] = $channel->channel_type;
                 $data['flag']    = $channel->channel_account;
