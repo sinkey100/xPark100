@@ -72,7 +72,7 @@ class Risk extends Backend
         $fields = array_merge($_main_dimensions, [
             'data.channel_full', 'sum(data.ad_revenue) as xpark_ad_revenue',
             'apps.app_name',
-            'domain.domain', 'domain.is_hide as domain_is_hide',
+            'domain.domain', 'domain.is_show as domain_is_show',
             'COALESCE(activity.active_users, 0) AS xpark_active_users'
         ]);
 
@@ -89,7 +89,7 @@ class Risk extends Backend
             ->join('xpark_domain domain', 'domain.id = data.domain_id', 'left')
             ->join('xpark_apps apps', 'apps.id = data.app_id', 'left')
             ->leftJoin([$active_sql => 'activity'], $_active_join_on)
-            ->where('domain.is_hide', 1)
+            ->where('domain.is_show', 0)
             ->where('data.status', 0)
             ->where('data.app_id', 'not in', $this->oem_appid)
             ->where('data.channel_id', 'in', array_keys($this->channel))
@@ -160,7 +160,7 @@ class Risk extends Backend
 
         $active_sql = SLSActive::alias('active')
             ->field(array_merge($_active_dimensions, ['sum(active.new_users) as new_users', 'sum(active.active_users) as active_users']))
-            ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_hide = 0', 'inner')
+            ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_show = 1', 'inner')
             ->join('xpark_apps apps', 'apps.id = active.app_id', 'left')
             ->where($this->getBetweenTime('active.date'))
             ->where('apps.app_type', 'in', [0, 1])
@@ -175,7 +175,7 @@ class Risk extends Backend
             ->join('xpark_domain domain', 'domain.id = xpark.domain_id', 'left')
             ->join('xpark_apps apps', 'apps.id = xpark.app_id', 'left')
             ->leftJoin([$active_sql => 'active'], $_active_join_on)
-            ->where('domain.is_hide', 0)
+            ->where('domain.is_show', 1)
             ->where('apps.app_type', 'in', [0, 1])
             ->where('xpark.status', 0)
             ->where($this->getBetweenTime('xpark.a_date'))

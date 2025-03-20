@@ -68,24 +68,14 @@ const baTable = new baTableClass(
                 sortable: false
             },
             {
-                label: t('xpark.domain.sls_switch'),
-                prop: 'sls_switch',
+                label: t('xpark.domain.is_show'),
+                prop: 'is_show',
                 align: 'center',
                 width: 110,
                 render: 'switch',
                 operator: 'eq',
                 sortable: false,
-                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
-            },
-            {
-                label: t('xpark.domain.is_hide'),
-                prop: 'is_hide',
-                align: 'center',
-                width: 110,
-                render: 'switch',
-                operator: 'eq',
-                sortable: false,
-                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
+                replaceValue: {'0': '隐藏层', '1': '显示层'}
             },
             {
                 label: t('xpark.domain.status'),
@@ -95,7 +85,7 @@ const baTable = new baTableClass(
                 render: 'switch',
                 operator: 'eq',
                 sortable: false,
-                replaceValue: {'0': t('build.domain.is_ssl 0'), '1': t('build.domain.is_ssl 1')}
+                replaceValue: {'0': '未上线', '1':  '已上线'}
             },
             {
                 label: t('xpark.domain.tag'),
@@ -179,6 +169,7 @@ onMounted(() => {
     baTable.getIndex()?.then(() => {
         baTable.initSort()
         baTable.dragSort()
+        baTable.table.showComSearch = true
     })
 })
 </script>

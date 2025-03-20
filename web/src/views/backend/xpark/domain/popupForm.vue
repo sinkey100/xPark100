@@ -45,7 +45,7 @@
                               :placeholder="t('Please select field', { field: t('xpark.domain.channel') })"/>
 
                     <FormItem :label="t('xpark.domain.sls_switch')" type="switch" v-model="baTable.form.items!.sls_switch" prop="sls_switch" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
-                    <FormItem :label="t('xpark.domain.is_hide')" type="switch" v-model="baTable.form.items!.is_hide" prop="is_hide" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
+                    <FormItem :label="t('xpark.domain.is_show')" type="switch" v-model="baTable.form.items!.is_show" prop="is_show" :data="{ content: { '0': t('xpark.domain.is_ssl 0'), '1': t('xpark.domain.is_ssl 1') } }" />
                     <FormItem :label="t('xpark.domain.tag')" type="string"
                               v-model="baTable.form.items!.tag" prop="tag"
                               :placeholder="t('Please input field', { field: t('xpark.domain.tag') })"/>
