@@ -51,6 +51,7 @@ import createAxios from "/@/utils/axios";
 import {AxiosPromise} from "axios";
 import fileDownload from "js-file-download";
 import {useAdminInfo} from '/@/stores/adminInfo'
+import app_type from "/@/views/backend/xpark/apps/app_type";
 
 defineOptions({
     name: 'xpark/utc',
@@ -407,6 +408,27 @@ const baTable = new baTableClass(
                     ads_anchor: 'ads_anchor',
                     ads_banner: 'ads_banner',
                 },
+            },
+            {
+                label: '链接状态',
+                show: false,
+                prop: 'domain.status',
+                render: 'tag',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {
+                    0: '已下线',
+                    1: '已上线',
+                },
+            },
+            {
+                label: '项目类型',
+                show: false,
+                prop: 'apps.app_type',
+                render: 'tag',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: app_type,
             },
         ],
         dblClickNotEditColumn: [undefined],

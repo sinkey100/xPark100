@@ -59,6 +59,8 @@ class Details extends Backend
                 }
             }
         }
+        if(count($main_dimension) == 0) $this->error('维度为必选项');
+        if(count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') $this->error('通道维度不能单独选择');
 
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
@@ -74,14 +76,15 @@ class Details extends Backend
                 $spend_where[]      = ['app_id', $item[1], $item[2]];
             }
             if (str_ends_with($item[0], 'channel_id')) {
-                $h5_active_where[]  = ['channel_id', $item[1], $item[2]];
-                $spend_where[] = ['channel_id', $item[1], $item[2]];
+                $h5_active_where[] = ['channel_id', $item[1], $item[2]];
+                $spend_where[]     = ['channel_id', $item[1], $item[2]];
             }
         }
         $where = array_values($where);
 
         $field = array_merge($main_dimension, [
             'utc.channel_full',
+            'apps.app_type',
             'SUM(utc.ad_revenue) AS total_revenue',
             'SUM(CASE WHEN channel_type = 0 THEN ad_revenue ELSE 0 END) AS h5_revenue',
             'SUM(CASE WHEN channel_type = 1 THEN ad_revenue ELSE 0 END) AS native_revenue',
@@ -116,6 +119,7 @@ class Details extends Backend
             ->join($h5_active_sql . ' h5_active', implode(' AND ', $h5_active_join_on), 'left')
             ->join($app_active_sql . ' app_active', implode(' AND ', $app_active_join_on), 'left')
             ->join($spend_sql . ' spend', implode(' AND ', $spend_active_join_on), 'left')
+            ->join('xpark_apps apps', 'apps.id = utc.app_id', 'left')
             ->where($where)
             ->order('utc.a_date', 'desc')
             ->order('a_date desc')
@@ -177,7 +181,7 @@ class Details extends Backend
             $v['app_arpu']     = $v['app_active_users'] > 0
                 ? number_format((float)$v['total_revenue'] / $v['app_active_users'], 2, '.', '')
                 : '-';
-            $v['hb_open_rate'] = ($this->apps[$v['app_id']]['hb_switch'] ?? 0) == 0
+            $v['hb_open_rate'] = !in_array(($this->apps[$v['app_id']]['app_type'] ?? 2), [0, 1])
                 ? '-'
                 : ($v['app_active_users'] > 0
                     ? number_format((float)$v['h5_active_users'] / $v['app_active_users'] * 100, 2, '.', '') . '%'

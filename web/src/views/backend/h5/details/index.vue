@@ -24,6 +24,7 @@ import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
+import app_type from "/@/views/backend/xpark/apps/app_type";
 
 defineOptions({
     name: 'h5/details',
@@ -85,7 +86,25 @@ const baTable = new baTableClass(
                     field: 'channel_alias',
                 }
             },
-            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false},
+            {
+                label: '项目类型',
+                show: false,
+                prop: 'apps.app_type',
+                render: 'tag',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: app_type,
+            },
+            {
+                label: '项目类型',
+                prop: 'app_type',
+                align: 'center',
+                sortable: false,
+                render: 'tag',
+                width: 100,
+                replaceValue: app_type
+            },
+            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false,width: 120},
             {label: '通道', prop: 'channel_full', align: 'center', sortable: false, operator: false},
             {label: 'App新增', prop: 'app_new_users', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'App活跃', prop: 'app_active_users', align: 'center', operator: false, sortable: false, width: 100},
@@ -110,7 +129,7 @@ const baTable = new baTableClass(
                 if (item.prop == 'app_id') return;
 
                 // 显示应用名称
-                if (item.prop == 'app_name') {
+                if (item.prop == 'app_name' || item.prop == 'app_type') {
                     item.show = baTable.table.filter!.dimensions['app_id'] == true;
                     return;
                 }
@@ -165,6 +184,14 @@ onMounted(() => {
         tr:last-child {
             background: #eaeef0 !important;
         }
+    }
+
+    .el-tag {
+        background: transparent;
+        border: 0;
+        color: var(--el-table-text-color);
+        padding: 0;
+        font-size: 14px;
     }
 
     .el-table__cell div {

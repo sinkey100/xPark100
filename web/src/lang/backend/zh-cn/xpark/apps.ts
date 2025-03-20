@@ -5,6 +5,7 @@ export default {
     admin_id: '所属用户',
     admin__nickname: '所属用户',
     cp_admin_id: '所属CP',
+    app_type: '项目类型',
     cp_admin__nickname: '所属CP',
     pkg_name: '包名',
     hb_switch: 'HB项目',

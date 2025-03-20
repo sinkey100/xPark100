@@ -35,7 +35,7 @@
                     <FormItem :label="t('xpark.apps.remarks')" type="string" v-model="baTable.form.items!.remarks" prop="remarks" :placeholder="t('Please input field', { field: t('xpark.apps.remarks') })" />
                     <FormItem :label="t('xpark.apps.admin_id')" type="remoteSelect" v-model="baTable.form.items!.admin_id" prop="admin_id" :input-attr="{ pk: 'ba_admin.id', field: 'nickname', remoteUrl: '/admin/auth.Admin/index' }" :placeholder="t('Please select field', { field: t('xpark.apps.admin_id') })" />
                     <FormItem :label="t('xpark.apps.cp_admin_id')" type="remoteSelect" v-model="baTable.form.items!.cp_admin_id" prop="cp_admin_id" :input-attr="{ pk: 'ba_admin.id', field: 'nickname', remoteUrl: '/admin/auth.Admin/index' }" :placeholder="t('Please select field', { field: t('xpark.apps.cp_admin_id') })" />
-
+                    <FormItem :label="t('xpark.apps.app_type')" type="radio" v-model="baTable.form.items!.app_type" prop="app_type" :data="{ content: app_type }" />
 
                     <FormItem
                         v-if="baTable.form.items!.id > 0"
@@ -75,6 +75,7 @@ import FormItem from '/@/components/formItem/index.vue'
 import { useConfig } from '/@/stores/config'
 import type baTableClass from '/@/utils/baTable'
 import { buildValidatorData } from '/@/utils/validate'
+import app_type from "/@/views/backend/xpark/apps/app_type";
 
 const config = useConfig()
 const formRef = ref<FormInstance>()

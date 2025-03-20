@@ -39,7 +39,8 @@ import { defaultOptButtons } from '/@/components/table'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
-import {ElNotification} from "element-plus";
+import {ElNotification} from "element-plus"
+import app_type from "/@/views/backend/xpark/apps/app_type";
 
 defineOptions({
     name: 'xpark/apps',
@@ -81,7 +82,14 @@ const baTable = new baTableClass(
             { label: t('xpark.apps.remarks'), prop: 'remarks', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('xpark.apps.admin__nickname'), prop: 'admin_nickname', align: 'center', operator: false },
             { label: t('xpark.apps.cp_admin__nickname'), prop: 'cp_admin_nickname', align: 'center', operator: false },
-            { label: t('xpark.apps.hb_switch'), prop: 'hb_switch', align: 'center', render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('cp.status 0'), '1': t('cp.status 1') } },
+            {
+                label: t('xpark.apps.app_type'),
+                prop: 'app_type',
+                align: 'center',
+                render: 'tag',
+                custom: { '0': 'primary', '1': 'warning' , '2': 'success', '3': 'info' },
+                replaceValue: app_type,
+            },
             { label: t('xpark.apps.status'), prop: 'status', align: 'center', render: 'switch', operator: 'eq', sortable: false, replaceValue: { '0': t('cp.status 0'), '1': t('cp.status 1') } },
             { label: t('xpark.apps.createtime'), prop: 'createtime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             // { label: t('xpark.apps.updatetime'), prop: 'updatetime', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },

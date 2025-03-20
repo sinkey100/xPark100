@@ -163,7 +163,7 @@ class Risk extends Backend
             ->join('xpark_domain domain', 'active.domain_id = domain.id and domain.is_hide = 0', 'inner')
             ->join('xpark_apps apps', 'apps.id = active.app_id', 'left')
             ->where($this->getBetweenTime('active.date'))
-            ->where('apps.hb_switch', 1)
+            ->where('apps.app_type', 'in', [0, 1])
             ->group(implode(',', $_active_dimensions))->buildSql();
         $show_data  = XparkData::alias('xpark')
             ->field(array_merge($_show_dimensions, [
@@ -176,7 +176,7 @@ class Risk extends Backend
             ->join('xpark_apps apps', 'apps.id = xpark.app_id', 'left')
             ->leftJoin([$active_sql => 'active'], $_active_join_on)
             ->where('domain.is_hide', 0)
-            ->where('apps.hb_switch', 1)
+            ->where('apps.app_type', 'in', [0, 1])
             ->where('xpark.status', 0)
             ->where($this->getBetweenTime('xpark.a_date'))
             ->group(implode(',', $_show_dimensions))

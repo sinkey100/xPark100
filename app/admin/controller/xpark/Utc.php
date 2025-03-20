@@ -122,7 +122,7 @@ class Utc extends Backend
 
         $res = $this->model->field($field)
             ->alias($alias)
-            ->where('status', 0)
+            ->where('utc.status', 0)
             ->where($where);
 
         if ($app_filter) $res = $res->where('utc.app_id', 'in', $app_filter);
@@ -130,7 +130,10 @@ class Utc extends Backend
         if ($channel_filter) $res = $res->where($channel_filter);
         unset($order['utc.id']);
 
-        $res = $res->order($order)->order('a_date', 'desc')
+        $res = $res
+            ->join('xpark_domain domain', 'domain.id = utc.domain_id', 'left')
+            ->join('xpark_apps apps', 'apps.id = utc.app_id', 'left')
+            ->order($order)->order('a_date', 'desc')
             ->group(implode(',', $dimension));
 
         return [$res, $limit, $dimension];
