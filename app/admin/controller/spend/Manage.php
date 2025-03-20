@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use sdk\FeishuBot;
 use sdk\QueryTimeStamp;
+use think\facade\Cache;
 use think\facade\Env;
 use Exception;
 use app\admin\model\spend\Manage as ManageModel;
@@ -30,6 +31,7 @@ class Manage extends Backend
     protected string|array $quickSearchField = ['id'];
 
     protected Client $http;
+    protected string $cache_key = 'spend_manage';
 
     public function initialize(): void
     {
@@ -87,12 +89,15 @@ class Manage extends Backend
             $list[]             = $v;
         }
 
+        $cache_time = humanize_time(Cache::get($this->cache_key, 0));
+
         $this->success('', [
-            'list'   => $list,
-            'total'  => $res->total(),
-            'remark' => get_route_remark(),
-            'sql'    => $sql,
-            'ts'     => QueryTimeStamp::end()
+            'list'      => $list,
+            'total'     => $res->total(),
+            'remark'    => get_route_remark(),
+            'sql'       => $sql,
+            'ts'        => QueryTimeStamp::end(),
+            'last_time' => $cache_time
         ]);
     }
 

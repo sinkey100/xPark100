@@ -100,6 +100,7 @@ const baTable = new baTableClass(
                 prop: 'app_type',
                 align: 'center',
                 sortable: false,
+                operator: false,
                 render: 'tag',
                 width: 100,
                 replaceValue: app_type

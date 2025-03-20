@@ -11,23 +11,37 @@
                 <Icon color="#ffffff" name="fa fa-cloud-download"/>
                 <span class="table-header-operate-text">同步数据</span>
             </el-button>
-            <!--            <div class="last-time">上次同步时间： 2025-03-13 16:16:40</div>-->
+            <div class="last-time">上次同步： {{ last_time }}</div>
         </TableHeader>
 
-        <Table ref="tableRef"></Table>
+        <t-table
+            row-key="key"
+            :bordered="true"
+            :resizable="true"
+            :data="tableData"
+            :loading="isLoading"
+            :columns="columns"
+            :hover="true"
+            :pagination="pagination"
+            :sort="sort"
+            :show-sort-column-bg-color="true"
+            @page-change="onPageChange"
+            @sort-change="sortChange"
+        ></t-table>
 
         <PopupForm/>
     </div>
 </template>
 
-<script setup lang="ts">
-import {onMounted, provide, ref} from 'vue'
+<script setup lang="tsx">
+import {onMounted, provide, reactive, ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
-import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
 import PopupForm from './popupForm.vue'
+import {ElTag, ElButton, ElMessageBox} from 'element-plus';
+import {TableProps} from "tdesign-vue-next";
 
 defineOptions({
     name: 'spend/manage',
@@ -35,76 +49,58 @@ defineOptions({
 
 const {t} = useI18n()
 const tableRef = ref()
+const tableData = ref([]);
+const last_time = ref('')
+const columns = ref<TableProps['columns']>([
+    {colKey: "domain_name", title: "域名", align: "center", sorter: true, width: 250},
+    {colKey: "country_code", title: "地区", align: "center", sorter: true, width: 80},
+    {colKey: "total_revenue", title: "收入", align: "center", sorter: true, width: 100},
+    {colKey: "total_spend", title: "支出", align: "center", sorter: true, width: 100},
+    {colKey: "roi", title: "ROI", align: "center", sorter: true, width: 100},
+    {
+        colKey: "smart_switch",
+        title: "推广类型",
+        align: "center",
+        width: 100,
+        cell: (h, {row}) => row.smart_switch == 1 ? 'Smart+' : '普通'
+    },
+    {colKey: "campaign_id", title: "推广计划ID", align: "center", sorter: true, width: 170},
+    {colKey: "campaign_name", title: "推广计划名称", align: "center", sorter: true, width: 350},
+    {colKey: "budget", title: "预算", align: "center", sorter: true, width: 100},
+    {
+        colKey: "status", title: "状态", align: "center", width: 100, cell: (h, {row}) => {
+            return (
+                <ElTag type={row.status === 1 ? 'success' : 'warning'}>
+                    {row.status == 1 ? '投放中' : '已停止'}
+                </ElTag>
+            );
+        }
+    },
+    {
+        title: '操作', colKey: 'link', align: "center", width: 150, cell: (h, {row}) => (
+            <div>
+                <ElButton size="small" type="primary" plain onClick={() => budget(row)}>修改预算</ElButton>
+                <ElButton size="small"
+                          type={row.status == 1 ? 'danger' : 'success'}
+                          onClick={() => change(row, row.status === 1 ? 0 : 1)}>
+                    {row.status == 1 ? '停投' : '启投'}
+                </ElButton>
+            </div>
+        ),
+    },
+])
 
-const optButtons: OptButton[] = [
-    {
-        render: 'tipButton',
-        name: 'info',
-        text: '修改预算',
-        type: 'primary',
-        icon: '',
-        class: 'table-row-info',
-        disabledTip: false,
-        click: (row: TableRow) => {
-            baTable.form.items = {...row};
-            baTable.form.operate = 'Budget'
-        },
-    },
-    {
-        render: 'confirmButton',
-        name: 'info',
-        text: '停投',
-        type: 'danger',
-        icon: '',
-        popconfirm: {
-            confirmButtonText: '确认',
-            cancelButtonText: '取消',
-            confirmButtonType: 'warning',
-            title: '是否确认停投此计划?',
-        },
-        display: (row: TableRow) => {
-            return row.status;
-        },
-        click: (row: TableRow) => {
-            baTable.table.loading = true;
-            baTable.api.postData('switch', {
-                id: row.id,
-                status: 0,
-            }).then(res => {
-                if (res.code === 1) row!.status = res.data.status;
-            }).finally(() => {
-                baTable.table.loading = false;
-            })
-        }
-    },
-    {
-        render: 'confirmButton',
-        name: 'info',
-        text: '启投',
-        type: 'success',
-        icon: '',
-        popconfirm: {
-            confirmButtonText: '确认',
-            cancelButtonText: '取消',
-            confirmButtonType: 'warning',
-            title: '是否确认启投此计划?',
-        },
-        display: (row: TableRow) => {
-            return !row.status;
-        },
-        click: (row: TableRow) => {
-            baTable.table.loading = true;
-            baTable.api.postData('switch', {
-                id: row.id,
-                status: 1,
-            }).then(res => {
-                if (res.code === 1) row!.status = res.data.status;
-            }).finally(() => {
-                baTable.table.loading = false;
-            })
-        }
-    },
-]
+const isLoading = ref(false);
+const pagination = reactive({
+    defaultCurrent: 1,
+    defaultPageSize: 100,
+    pageSizeOptions: [20, 50, 100, 500],
+    total: 0,
+})
+const sort = ref<TableProps['sort']>({
+    sortBy: '',
+    descending: true,
+})
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -150,43 +146,10 @@ const baTable = new baTableClass(
                 }
             },
             {
-                label: t('spend.manage.domain_id'),
-                prop: 'domain_name',
-                align: 'center',
-                width: 250,
-                operator: false
-            },
-            {
                 label: '地区',
                 prop: 'country_code',
                 align: 'center',
                 operator: 'eq',
-                sortable: false,
-                width: 70,
-            },
-            {
-                label: '收入',
-                prop: 'total_revenue',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 100,
-            },
-            {
-                label: '支出',
-                prop: 'total_spend',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 100,
-            },
-            {
-                label: 'ROI',
-                prop: 'roi',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 100,
             },
             {
                 label: t('spend.manage.smart_switch'),
@@ -195,50 +158,43 @@ const baTable = new baTableClass(
                 operator: 'eq',
                 render: 'tag',
                 sortable: false,
-                width: 120,
-                custom: {'0': 'plain', '1': 'plain'},
                 replaceValue: {'0': '普通', '1': 'Smart+'}
             },
             {
                 label: t('spend.manage.campaign_id'),
                 prop: 'campaign_id',
-                align: 'center',
                 operator: 'LIKE',
                 sortable: 'custom',
-                width: 160,
             },
             {
                 label: t('spend.manage.campaign_name'),
                 prop: 'campaign_name',
-                align: 'center',
                 operatorPlaceholder: t('Fuzzy query'),
                 operator: 'LIKE',
                 sortable: false,
             },
             {
-                label: t('spend.manage.budget'),
-                prop: 'budget',
-                align: 'center',
-                operator: false,
-                sortable: false,
-                width: 100,
-            },
-            {
                 label: t('spend.manage.status'),
                 prop: 'status',
-                align: 'center',
                 render: 'tag',
                 operator: 'eq',
-                sortable: false,
-                width: 120,
                 replaceValue: {'0': t('spend.manage.status 0'), '1': t('spend.manage.status 1')},
-                custom: {'0': 'warning', '1': 'primary'},
             },
-            {label: t('Operate'), align: 'center', width: 150, render: 'buttons', buttons: optButtons, operator: false},
         ],
-        dblClickNotEditColumn: [undefined, 'smart_switch'],
     },
-    {}
+    {}, {
+        getIndex: () => {
+            tableData.value = [];
+            isLoading.value = true;
+        }
+    }, {
+        getIndex: ({res}) => {
+            pagination.total = res.data.total;
+            isLoading.value = false;
+            last_time.value = res.data.last_time;
+            tableData.value = res.data.list;
+        },
+    }
 )
 
 provide('baTable', baTable)
@@ -269,6 +225,30 @@ onMounted(() => {
         baTable.table.showComSearch = true
     })
 })
+const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
+    baTable.table.filter!.page = pageInfo.current;
+    baTable.table.filter!.limit = pageInfo.pageSize;
+    baTable.getIndex()
+}
+
+const sortChange: TableProps['onSortChange'] = (val: TableProps['sort']) => {
+    if (val && !Array.isArray(val)) {
+        sort.value = val;
+        const sortBy = val.sortBy;
+        const descendingFactor = val.descending ? -1 : 1;
+        const stringSortKeys = ['campaign_name', 'domain_name', 'country_code'];
+        const comparator = (a: any, b: any) => {
+            const aVal = a[sortBy];
+            const bVal = b[sortBy];
+            if (stringSortKeys.includes(sortBy)) {
+                return descendingFactor * String(aVal).localeCompare(String(bVal));
+            } else {
+                return descendingFactor * (parseFloat(aVal) - parseFloat(bVal));
+            }
+        };
+        tableData.value = [...tableData.value].sort(comparator);
+    }
+}
 
 const syncData = () => {
     baTable.table.loading = true;
@@ -278,6 +258,36 @@ const syncData = () => {
         baTable.table.loading = false;
     })
 }
+
+const budget = (row: any) => {
+    baTable.form.items = {...row};
+    baTable.form.operate = 'Budget'
+}
+
+const change = (row: any, status: number) => {
+    ElMessageBox.confirm(
+        `是否确认${status == 1 ? '启投' : '停投'}此计划：\n ${row.campaign_name} `,
+        row.domain_name,
+        {
+            confirmButtonText: '确认',
+            cancelButtonText: '取消',
+            type: 'warning',
+        }
+    ).then(() => {
+        isLoading.value = true;
+        baTable.api.postData('switch', {
+            id: row.id,
+            status,
+        }).then(res => {
+            if (res.code === 1) row!.status = res.data.status;
+        }).finally(() => {
+            isLoading.value = false;
+        })
+    })
+
+// baTable.form.items = {...row};
+// baTable.form.operate = 'Budget'
+}
 </script>
 
 <style scoped lang="scss">
@@ -286,30 +296,20 @@ const syncData = () => {
     margin-left: 20px;
 }
 
-:deep(.el-table) {
-    .el-tag--plain {
-        --el-tag-border-color: transparent;
-        --el-tag-bg-color: transparent;
-        font-size: 14px;
-    }
-
-    .table-operate-text {
-        padding-left: 0;
-        font-size: 12px;
-    }
-}
-
 :deep(.ba-operate-dialog) {
     .el-dialog__body {
         height: 250px;
     }
 }
 
-</style>
-<style>
-.el-popper:not(.is-dark) {
-    .el-popconfirm__icon {
-        font-size: 30px !important;
+:deep(.t-table) {
+    .el-button {
+        padding: 4px 5px;
+        border-radius: 2px;
+
+        &.el-button--primary {
+            font-weight: 400;
+        }
     }
 }
 </style>

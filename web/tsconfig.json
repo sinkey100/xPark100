@@ -7,7 +7,9 @@
         "moduleResolution": "Bundler",
         "strict": true,
         "jsx": "preserve",
+        "jsxFactory": "h",
         "sourceMap": false,
+        "jsxFragmentFactory": "Fragment",
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "isolatedModules": true,
@@ -19,5 +21,5 @@
         },
         "types": ["vite/client", "element-plus/global"]
     },
-    "include": ["src/**/*.ts", "src/**/*.vue", "types/**/*.d.ts", "vite.config.ts"]
+    "include": ["src/**/*.ts", "src/**/*.vue", "types/**/*.d.ts", "vite.config.ts", "jsx.d.ts"]
 }

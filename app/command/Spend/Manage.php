@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use sdk\FeishuBot;
 use think\console\Input;
 use think\console\Output;
+use think\facade\Cache;
 use think\facade\Env;
 
 class Manage extends Base
@@ -20,6 +21,7 @@ class Manage extends Base
 
     protected array  $domains;
     protected string $date;
+    protected string $cache_key = 'spend_manage';
 
     protected function configure(): void
     {
@@ -74,6 +76,7 @@ class Manage extends Base
                         'spend_platform' => 'tiktok',
                         'campaign_id'    => $v['campaign_id'],
                         'campaign_name'  => $v['campaign_name'],
+                        'country_code'   => $this->getCountryCode($v['campaign_name']),
                         'domain_id'      => $bind[$v['campaign_id']]['domain_id'] ?? null,
                         'smart_switch'   => $v['is_smart_performance_campaign'] ? 1 : 0,
                         'budget'         => $v['budget'],
@@ -91,6 +94,7 @@ class Manage extends Base
                 }
             }
         }
+        Cache::set($this->cache_key, time());
         $this->log('拉取完成 Tiktok 计划');
     }
 
@@ -242,6 +246,19 @@ class Manage extends Base
         $result = array_map(fn($item) => $item['fields'], $result['data']['items']);
         $result = array_filter($result, fn($item) => $item['ad_platform'] == 'tiktok');
         return array_column(array_values((array)$result), null, 'advertiser_id');
+    }
+
+    protected function getCountryCode(string $campaign_name): string
+    {
+        $arr  = explode('_', $campaign_name);
+        $code = '';
+        foreach ($arr as $value) {
+            if (strlen($value) == 2 && ctype_upper($value)) {
+                $code = $value;
+                break;
+            }
+        }
+        return $code;
     }
 
 }

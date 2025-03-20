@@ -783,6 +783,28 @@ if (!function_exists('percent2decimal')) {
     }
 }
 
+if (!function_exists('humanize_time')) {
+    function humanize_time(int $timestamp): string
+    {
+        $now  = time();
+        $diff = $now - $timestamp;
+        if ($diff < 0) {
+            return "未来的时间";
+        }
+        if ($diff < 60) {
+            return $diff . "秒前";
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return $minutes . "分钟前";
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . "小时前";
+        } else {
+            $days = floor($diff / 86400);
+            return $days . "天前";
+        }
+    }
+}
 if (!function_exists('format_milliseconds')) {
     function format_milliseconds(int $milliseconds): string
     {

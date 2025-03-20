@@ -11,6 +11,9 @@ module.exports = {
         ecmaVersion: 12,
         parser: '@typescript-eslint/parser',
         sourceType: 'module',
+        ecmaFeatures: {
+            jsx: true
+        }
     },
     extends: ['plugin:vue/vue3-essential', 'plugin:vue/vue3-recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
     plugins: ['vue', '@typescript-eslint'],
