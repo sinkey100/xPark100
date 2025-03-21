@@ -139,11 +139,11 @@ const baTable = new baTableClass(
                     field: 'channel_alias',
                 }
             },
-            {
-                label: 'TAG标签',
-                prop: 'domain.tag',
-                operator: 'LIKE'
-            },
+            // {
+            //     label: 'TAG标签',
+            //     prop: 'domain.tag',
+            //     operator: 'LIKE'
+            // },
             {
                 label: '事件类型',
                 prop: 'track.event_type',
@@ -199,7 +199,7 @@ const baTable = new baTableClass(
             // 域名维度
             if (dimensions.domain_id) {
                 const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                columns.value[0].children.splice(index, 0, {...columns_tag});
+                // columns.value[0].children.splice(index, 0, {...columns_tag});
                 columns.value[0].children.splice(index, 0, {...columns_domain_days});
                 columns.value[0].children.splice(index, 0, {...columns_domain});
             }

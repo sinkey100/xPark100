@@ -9,7 +9,7 @@
         >
             <el-button v-blur class="table-header-operate" type="primary" @click="syncData">
                 <Icon color="#ffffff" name="fa fa-cloud-download"/>
-                <span class="table-header-operate-text">同步数据</span>
+                <span class="table-header-operate-text">同步计划</span>
             </el-button>
             <div class="last-time">上次同步： {{ last_time }}</div>
         </TableHeader>
