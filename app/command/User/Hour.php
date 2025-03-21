@@ -144,6 +144,7 @@ class Hour extends Base
                             'country_name'    => $daily['country_name'],
                             'sub_channel'     => $daily['sub_channel'],
                             'ad_placement_id' => $daily['ad_placement_id'],
+                            'ad_unit_type'    => $daily['ad_unit_type'],
                             'requests'        => $daily['requests'] * $rate,
                             'fills'           => $daily['fills'] * $rate,
                             'impressions'     => $daily['impressions'] * $rate,
@@ -176,13 +177,13 @@ class Hour extends Base
 
             $list = DataHour::whereDay('time_utc_0', $date)
                 ->field([
-                    'DATE(time_utc_0) as a_date', 'app_id', 'domain_id', 'country_code', 'ad_placement_id', 'channel',
+                    'DATE(time_utc_0) as a_date', 'app_id', 'domain_id', 'country_code', 'ad_placement_id', 'ad_unit_type','channel',
                     'channel_id', 'channel_full', 'country_level', 'country_name', 'sub_channel', 'channel_type',
                     'SUM(requests)as requests', 'SUM(fills) as fills', 'SUM(impressions) as impressions',
                     'SUM(clicks) as clicks', 'SUM(ad_revenue) as ad_revenue', 'SUM(gross_revenue) as gross_revenue',
                     '1 as status'
                 ])
-                ->group('DATE(time_utc_0), app_id, domain_id, country_code, ad_placement_id, channel, channel_id, channel_full, country_level, country_name, sub_channel, channel_type')
+                ->group('DATE(time_utc_0), app_id, domain_id, country_code, ad_placement_id, channel, ad_unit_type, channel_id, channel_full, country_level, country_name, sub_channel, channel_type')
                 ->select()->toArray();
 
             $chunks = array_chunk($list, 100000);
@@ -201,10 +202,10 @@ class Hour extends Base
                     $sql            = "
 INSERT INTO ba_xpark_utc (
     `app_id`, `channel_id`, `domain_id`, `channel`, `channel_full`, `a_date`, `country_code`, `country_level`, `country_name`, `sub_channel`,
-    `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`, `status`
+    `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`,`ad_unit_type`, `status`
 )
 SELECT `app_id`, `channel_id`, `domain_id`, `channel`, `channel_full`, `a_date`, `country_code`, `country_level`, `country_name`,
-    `sub_channel`, `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`, CAST(1 AS TINYINT) as status
+    `sub_channel`, `ad_placement_id`,`requests`,`fills`,`impressions`,`clicks`,`ad_revenue`,`channel_type`,`gross_revenue`, `ad_unit_type`, CAST(1 AS TINYINT) as status
 FROM ba_xpark_data
 WHERE domain_id in ( $ext_domain_ids ) and date(a_date) = '$date' and status = 0;";
                     try {

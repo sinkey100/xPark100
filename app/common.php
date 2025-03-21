@@ -805,6 +805,7 @@ if (!function_exists('humanize_time')) {
         }
     }
 }
+
 if (!function_exists('format_milliseconds')) {
     function format_milliseconds(int $milliseconds): string
     {
@@ -837,4 +838,19 @@ if (!function_exists('format_milliseconds')) {
         return implode('', array_slice($result, 0, 2));
     }
 
+}
+
+if (!function_exists('ad_name_to_type')) {
+    function ad_name_to_type(string $ad_unit_name): string
+    {
+        // banner，anchor，interstitial
+        $arr = [
+            'ads_manual_interstitial' => 'afg_interstitial',
+            'ads_manual_rewarded'     => 'afg_reward',
+            'ads_interstitial'        => 'ads_interstitial',
+            'ads_anchor'              => 'ads_anchor',
+            'ads_shopping_anchor'     => 'ads_anchor',
+        ];
+        return current(array_filter($arr, fn($v, $k) => str_ends_with($ad_unit_name, $k), ARRAY_FILTER_USE_BOTH)) ?: 'banner';
+    }
 }

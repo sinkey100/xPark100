@@ -139,6 +139,7 @@ class Base extends Command
             $v['country_name']  = $country_data[$v['country_code']]['name'] ?? '';
             $v['country_level'] = $country_data[$v['country_code']]['level'] ?? '';
             $v['country_code']  = substr($v['country_code'], 0, 2);
+            $v['ad_unit_type']  = ad_name_to_type($v['ad_placement_id']);
 
             // 需要特殊处理
             $v['a_date'] = $_date = date("Y-m-d", strtotime($v['a_date']));

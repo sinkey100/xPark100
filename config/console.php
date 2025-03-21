@@ -33,6 +33,11 @@ return [
         'SpendManage'  => \app\command\Spend\Manage::class,
 
 
+        // 机器人
+        'BotHb'           => \app\command\Bot\Hb::class,
+
+
+
         // 小米工具
         'MiTools'       => \app\command\MiTools::class,
         'Demo'          => \app\command\Demo::class,
