@@ -22,7 +22,7 @@ class Hb extends Base
     protected function execute(Input $input, Output $output): void
     {
         $this->hour = (int)date("H");
-        if (!in_array($this->hour, [10, 19])) return;
+//        if (!in_array($this->hour, [10, 19])) return;
 
         $this->today = $this->hour > 12 ? date('Y-m-d') : date('Y-m-d', strtotime('-1 days'));
         $this->log("\n\n======== HB广告收入报警开始 ========", false);
@@ -42,6 +42,7 @@ class Hb extends Base
             ->where('utc.a_date', $this->today)
             ->where('domain.is_show', 0) // 隐藏层
             ->where('domain.channel', 'AdSense')
+            ->where('apps.app_name', '<>', 'th5apk')
             ->whereIn('utc.ad_unit_type', ['ads_interstitial', 'ads_anchor', 'banner'])
             ->select()
             ->toArray();
@@ -61,7 +62,7 @@ class Hb extends Base
                     'impressions'  => 0,
                     'clicks'       => 0,
                     'ad_revenue'   => 0,
-                    'days'         => 0
+                    'trend'        => 0
                 ];
             }
             $groupedData[$key]['requests']    += $item['requests'];
@@ -76,17 +77,24 @@ class Hb extends Base
             return $item['ad_revenue'] > 1;
         });
 
-        // 检查历史数据
+        // 检查填充率趋势
         foreach ($groupedData as $key => &$item) {
-            $days = 0;
-            for ($i = ($this->hour > 12 ? 1 : 2); $i <= 10; $i++) {
-                $date    = date('Y-m-d', strtotime("-$i days"));
+            $currentFillRate = $item['requests'] > 0 ? ($item['fills'] / $item['requests']) : 0;
+            
+            // 如果当天填充率高于80%，不需要检查趋势
+            if ($currentFillRate >= 0.8) {
+                $item['trend'] = 0;
+                continue;
+            }
+
+            // 获取最近10天的填充率数据
+            $fillRates = [];
+            for ($i = 1; $i <= 10; $i++) {
+                $date = date('Y-m-d', strtotime("-$i days"));
                 $history = Utc::where('domain_id', explode('_', $key)[0])
                     ->where('ad_unit_type', $item['ad_unit_type'])
                     ->where('a_date', $date)
                     ->field([
-                        'SUM(impressions) as total_impressions',
-                        'SUM(clicks) as total_clicks',
                         'SUM(requests) as total_requests',
                         'SUM(fills) as total_fills'
                     ])
@@ -94,27 +102,23 @@ class Hb extends Base
 
                 if (!$history) continue;
 
-                $ctr      = $history['total_impressions'] > 0 ? ($history['total_clicks'] / $history['total_impressions']) : 0;
                 $fillRate = $history['total_requests'] > 0 ? ($history['total_fills'] / $history['total_requests']) : 0;
-
-                if ($this->checkAlertConditions($item['ad_unit_type'], $ctr, $fillRate)) {
-                    $days++;
-                } else {
-                    break;
-                }
+                $fillRates[] = $fillRate;
             }
-            $item['days'] = $days;
+
+            // 检查趋势
+            $item['trend'] = $this->checkFillRateTrend($fillRates);
         }
         unset($item);
 
         // 构建报警表格
         $alertRows = [];
         foreach ($groupedData as $item) {
-            $ctr      = $item['impressions'] > 0 ? ($item['clicks'] / $item['impressions']) : 0;
+            $ctr = $item['impressions'] > 0 ? ($item['clicks'] / $item['impressions']) : 0;
             $fillRate = $item['requests'] > 0 ? ($item['fills'] / $item['requests']) : 0;
 
-            $ctrText      = $this->formatRate($ctr, $item['ad_unit_type'], $item['days']);
-            $fillRateText = $this->formatFillRate($fillRate, $item['days']);
+            $ctrText = $this->formatRate($ctr, $item['ad_unit_type']);
+            $fillRateText = $this->formatFillRate($fillRate, $item['trend']);
 
             if ($this->checkAlertConditions($item['ad_unit_type'], $ctr, $fillRate)) {
                 $alertRows[] = [
@@ -128,6 +132,11 @@ class Hb extends Base
             }
         }
 
+        // 按应用名排序
+        usort($alertRows, function($a, $b) {
+            return strcmp($a['app_name'], $b['app_name']);
+        });
+
         if (!empty($alertRows)) {
             $this->sendAlert($alertRows);
         }
@@ -135,10 +144,39 @@ class Hb extends Base
         $this->log('======== HB广告收入报警完成 ========', false);
     }
 
+    protected function checkFillRateTrend(array $fillRates): int
+    {
+        if (count($fillRates) < 4) return 0;
+
+        // 检查上升趋势
+        $upCount = 0;
+        for ($i = 1; $i < count($fillRates); $i++) {
+            if ($fillRates[$i] > $fillRates[$i-1]) {
+                $upCount++;
+            } else {
+                break;
+            }
+        }
+        if ($upCount >= 3) return $upCount;
+
+        // 检查下降趋势
+        $downCount = 0;
+        for ($i = 1; $i < count($fillRates); $i++) {
+            if ($fillRates[$i] < $fillRates[$i-1]) {
+                $downCount++;
+            } else {
+                break;
+            }
+        }
+        if ($downCount >= 4) return -$downCount;
+
+        return 0;
+    }
+
     protected function checkAlertConditions(string $adType, float $ctr, float $fillRate): bool
     {
         // 检查填充率
-        if ($fillRate < 0.9) {
+        if ($fillRate < 0.8) {
             return true;
         }
 
@@ -151,14 +189,10 @@ class Hb extends Base
         };
     }
 
-    protected function formatRate(float $rate, string $adType, int $days): string
+    protected function formatRate(float $rate, string $adType): string
     {
         $percentage = round($rate * 100, 2);
-        $text       = $percentage . '%';
-
-        if ($days > 0) {
-            $text .= " ($days)";
-        }
+        $text = $percentage . '%';
 
         switch ($adType) {
             case 'banner':
@@ -178,20 +212,24 @@ class Hb extends Base
         }
     }
 
-    protected function formatFillRate(float $rate, int $days): string
+    protected function formatFillRate(float $rate, int $trend): string
     {
         $percentage = round($rate * 100, 2);
-        $text       = $percentage . '%';
+        $text = $percentage . '%';
 
-        if ($days > 0) {
-            $text .= " ($days)";
+        if ($rate >= 0.8) {
+            return $text;
         }
 
-        if ($rate < 0.9) {
-            return "<font color='blue'>$text</font>";
+        // 当日低于阈值，根据趋势显示颜色
+        if ($trend > 0) {
+            return "<font color='green'>$text ($trend)</font>";
+        } elseif ($trend < 0) {
+            return "<font color='red'>$text (" . abs($trend) . ")</font>";
+        } else {
+            // 当日低于阈值但没有趋势，显示绿色并标注(0)
+            return "<font color='green'>$text (0)</font>";
         }
-
-        return $text;
     }
 
     protected function sendAlert(array $rows): void
@@ -232,14 +270,6 @@ class Hb extends Base
                             "width"            => "140px"
                         ],
                         [
-                            "name"             => "channel",
-                            "display_name"     => "通道",
-                            "data_type"        => "text",
-                            "horizontal_align" => "left",
-                            "vertical_align"   => "top",
-                            "width"            => "120px"
-                        ],
-                        [
                             "name"             => "ad_unit_type",
                             "display_name"     => "广告类型",
                             "data_type"        => "text",
@@ -253,7 +283,7 @@ class Hb extends Base
                             "data_type"        => "lark_md",
                             "horizontal_align" => "left",
                             "vertical_align"   => "top",
-                            "width"            => "110px"
+                            "width"            => "100px"
                         ],
                         [
                             "name"             => "fill_rate",
@@ -262,6 +292,14 @@ class Hb extends Base
                             "horizontal_align" => "left",
                             "vertical_align"   => "top",
                             "width"            => "110px"
+                        ],
+                        [
+                            "name"             => "channel",
+                            "display_name"     => "通道",
+                            "data_type"        => "text",
+                            "horizontal_align" => "left",
+                            "vertical_align"   => "top",
+                            "width"            => "120px"
                         ]
                     ],
                     "rows"                => $rows

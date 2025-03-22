@@ -23,7 +23,6 @@ return [
         'Dau'           => \app\command\User\Dau::class,
         'Adjust'        => \app\command\User\Adjust::class,
         'SLSTrack'      => \app\command\User\SLSTrack::class,
-        'Bot'           => \app\command\Bot::class,
 
         // 投放
         'SpendTikTok'   => \app\command\Spend\Tiktok::class,
