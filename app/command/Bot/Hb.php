@@ -22,7 +22,7 @@ class Hb extends Base
     protected function execute(Input $input, Output $output): void
     {
         $this->hour = (int)date("H");
-//        if (!in_array($this->hour, [10, 19])) return;
+        if (!in_array($this->hour, [10, 19])) return;
 
         $this->today = $this->hour > 12 ? date('Y-m-d') : date('Y-m-d', strtotime('-1 days'));
         $this->log("\n\n======== HB广告收入报警开始 ========", false);

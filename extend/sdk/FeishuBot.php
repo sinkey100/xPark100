@@ -13,13 +13,12 @@ class FeishuBot
 
     protected static array $config;
 
-    public static function appMsg(array $content, bool $test = false, string $msg_type = 'interactive'): bool
+    public static function appMsg(array $content, string $group = 'HB', string $msg_type = 'interactive'): bool
     {
         $config = [
-            'app_id'        => Env::get('BOT.HB_APP_ID'),
-            'app_secret'    => Env::get('BOT.HB_APP_SECRET'),
-            'group_id'      => Env::get('BOT.HB_GROUP_ID'),
-            'test_group_id' => Env::get('BOT.HB_TEST_GROUP_ID'),
+            'app_id'     => Env::get('BOT.HB_APP_ID'),
+            'app_secret' => Env::get('BOT.HB_APP_SECRET'),
+            'group_id'   => Env::get('BOT.HB_GROUP_ID_' . $group),
         ];
 
         $http  = new Client(['verify' => false]);
@@ -27,7 +26,7 @@ class FeishuBot
 
         $body = [
             "msg_type"   => $msg_type,
-            'receive_id' => $config[$test ? 'test_group_id' : 'group_id'],
+            'receive_id' => $config['group_id'],
             "content"    => json_encode($content)
         ];
 
@@ -61,7 +60,7 @@ class FeishuBot
 
     protected static function send(array $params): bool
     {
-        $http   = new Client(['verify' => false]);
+        $http = new Client(['verify' => false]);
         [$timestamp, $sign] = self::sign(Env::get('BOT.BUILD_SECRET'));
 
         $message = [
