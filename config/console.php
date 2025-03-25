@@ -29,12 +29,12 @@ return [
         'SpendUnity'    => \app\command\Spend\Unity::class,
         'SpendAppLovin' => \app\command\Spend\AppLovin::class,
         'SpendFacebook' => \app\command\Spend\Facebook::class,
-        'SpendManage'  => \app\command\Spend\Manage::class,
+        'SpendManage'   => \app\command\Spend\Manage::class,
 
 
         // 机器人
-        'BotHb'           => \app\command\Bot\Hb::class,
-
+        'BotHb'         => \app\command\Bot\Hb::class,
+        'BotH5Roi'      => \app\command\Bot\H5Roi::class,
 
 
         // 小米工具
