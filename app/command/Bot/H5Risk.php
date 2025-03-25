@@ -270,12 +270,12 @@ class H5Risk extends Base
             "header"   => [
                 "template" => "red",
                 "title"    => [
-                    "content" => "🔥 H5广告收入风控报警",
+                    "content" => "⚠️ H5广告收入风控报警",
                     "tag"     => "plain_text"
                 ]
             ]
         ];
 
-        FeishuBot::appMsg($struct);
+        FeishuBot::appMsg($struct, 'H5');
     }
 }

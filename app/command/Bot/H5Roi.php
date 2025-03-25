@@ -129,15 +129,28 @@ class H5Roi extends Base
                     'spend'        => round($spend, 2),
                     'revenue'      => round($revenue, 2),
                     'roi'          => $roi . '%',
-                    'trend'        => $trendText
+                    'trend'        => $trendText,
+                    'trend_value'  => $trend, // 添加用于排序的原始趋势值
+                    'is_up'        => $trend >= 0 // 添加用于分组排序的标记
                 ];
             }
         }
 
-        // 按域名排序
+        // 先按上升/下降分组，再按趋势值从大到小排序
         usort($result, function ($a, $b) {
-            return strcmp($a['domain'], $b['domain']);
+            // 先按上升/下降分组
+            if ($a['is_up'] !== $b['is_up']) {
+                return $b['is_up'] - $a['is_up'];
+            }
+            // 同组内按趋势值绝对值从大到小排序
+            return abs($b['trend_value']) <=> abs($a['trend_value']);
         });
+
+        // 移除用于排序的临时字段
+        foreach ($result as &$row) {
+            unset($row['trend_value']);
+            unset($row['is_up']);
+        }
 
         return $result;
     }
