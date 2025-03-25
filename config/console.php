@@ -35,6 +35,7 @@ return [
         // 机器人
         'BotHb'         => \app\command\Bot\Hb::class,
         'BotH5Roi'      => \app\command\Bot\H5Roi::class,
+        'BotH5Risk'     => \app\command\Bot\H5Risk::class,
 
 
         // 小米工具
