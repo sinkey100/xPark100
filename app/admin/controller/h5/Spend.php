@@ -9,6 +9,7 @@ use sdk\QueryTimeStamp;
 use app\admin\model\h5\Track as SLSTrack;
 use app\admin\model\sls\Active as SLSActive;
 use app\common\controller\Backend;
+use think\facade\Db;
 
 /**
  * 投放分析
@@ -33,11 +34,26 @@ class Spend extends Backend
     public function buildQuery(): array
     {
         // 维度信息获取
+        $only_main_domain = false;
         $input_dimensions = $this->request->get('dimensions/a', []);
         $main_dimension   = $join_dimensions = $join_where = [];
         $active_join_on   = $track_join_on = $spend_join_on = [];
+
+        if (($input_dimensions['domain_id'] ?? 'false') == 'false' && ($input_dimensions['main_domain'] ?? 'false') == 'true') {
+            $only_main_domain              = true;
+            $input_dimensions['domain_id'] = 'true';
+        }
+
         foreach ($input_dimensions as $k => $v) {
-            if ($k && $v == 'true') $main_dimension[] = ($k == 'event_type' ? 'track.' : 'utc.') . $k;
+            if ($k && $v == 'true') {
+                if ($k == 'event_type') {
+                    $main_dimension[] = 'track.event_type';
+                } else if ($k == 'main_domain') {
+                    $main_dimension[] = 'domain.main_domain';
+                } else {
+                    $main_dimension[] = 'utc.' . $k;
+                }
+            }
             if (in_array($k, ['a_date', 'domain_id', 'country_code', 'channel_id']) && $v == 'true') {
                 $new_field         = $k == 'a_date' ? 'date' : $k;
                 $join_dimensions[] = $new_field;
@@ -120,6 +136,44 @@ class Spend extends Backend
             ->order('utc.a_date', 'desc')
             ->order('utc.domain_id desc')
             ->order('ad_revenue desc');
+
+        if ($only_main_domain) {
+            $group = [];
+            foreach ($main_dimension as $dimension) {
+                if (!str_ends_with($dimension, 'domain_id')) {
+                    $v       = explode('.', $dimension);
+                    $group[] = $v[count($v) - 1];
+                }
+            }
+            $res = Db::table($res->buildSql() . ' main')
+                ->field(array_merge($group, [
+                    'SUM(ad_revenue) AS ad_revenue',
+                    'SUM(ad_requests) AS ad_requests',
+                    'SUM(ad_fills) AS ad_fills',
+                    'SUM(ad_clicks) AS ad_clicks',
+                    'SUM(ad_impressions) AS ad_impressions',
+                    'SUM(IFNULL(new_users, 0)) AS new_users',
+                    'SUM(IFNULL(active_users, 0)) AS active_users',
+                    'SUM(IFNULL(total_time, 0)) AS total_time',
+
+                    'SUM(IFNULL(spend_total, 0)) AS spend_total',
+                    'SUM(IFNULL(spend_impressions, 0)) AS spend_impressions',
+                    'SUM(IFNULL(spend_clicks, 0)) AS spend_clicks',
+                    'SUM(IFNULL(spend_conversion, 0)) AS spend_conversion',
+
+                    'SUM(IFNULL(valid_events, 0)) AS valid_events',
+                    'SUM(IFNULL(invalid_events, 0)) AS invalid_events',
+                    'SUM(IFNULL(anchored_count, 0)) AS anchored_count',
+                    'SUM(IFNULL(banner_count, 0)) AS banner_count',
+                    'SUM(IFNULL(fullscreen_count, 0)) AS fullscreen_count',
+                ]))
+                ->group($group)
+                ->when(in_array('a_date', $group), function ($query) {
+                    return $query->order('a_date', 'desc');
+                })
+                ->order('ad_revenue desc');
+        }
+
         return [$res, $limit];
     }
 

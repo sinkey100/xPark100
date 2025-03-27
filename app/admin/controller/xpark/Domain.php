@@ -40,22 +40,27 @@ class Domain extends Backend
 
     public function index(): void
     {
+        $domain_filter = array_column(DomainModel::field('id')->where('admin_id', $this->auth->id)->select()->toArray(), 'id');
+        if ($this->auth->id > 1 && count($domain_filter) == 0) $domain_filter = [1];
 
-        $domain_filter = array_column(
-            DomainModel::field('id')->where('admin_id', $this->auth->id)->select()->toArray(),
-            'id'
-        );
-
-        if ($this->request->param('select')) {
-            $this->select();
+        $map = [];
+        if ($this->auth->id == 27) {
+            $domain_filter = [];
+            $map[] = ['channel.private_switch' , '=', 0];
         }
+
+//        if ($this->request->param('select')) {
+//            $this->select();
+//        }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         $res = $this->model->alias($alias)
-            ->field(['*', 'domain.id', 'apps.app_name', 'admin.nickname as admin_nickname'])
+            ->field(['*', 'domain.id', 'domain.status', 'apps.app_name', 'admin.nickname as admin_nickname'])
             ->join('xpark_apps apps', 'apps.id = domain.app_id', 'left')
+            ->join('xpark_channel channel', 'channel.id = domain.channel_id', 'left')
             ->join('admin admin', 'admin.id = domain.admin_id', 'left')
-            ->where($where);
+            ->where($where)
+            ->where($map);
 
         if ($domain_filter) {
             $res = $res->where('domain.id', 'in', $domain_filter);
@@ -204,13 +209,15 @@ class Domain extends Backend
                 }
 
                 $flag = $this->model->where('domain', $data['domain'])->find();
-                if($flag) throw new Exception('域名重复添加');
+                if ($flag) throw new Exception('域名重复添加');
 
                 $channel = Channel::where('id', $data['channel_id'])->find();
-                if(!$channel) throw new Exception('通道不存在');
+                if (!$channel) throw new Exception('通道不存在');
 
                 $data['channel'] = $channel->channel_type;
                 $data['flag']    = $channel->channel_account;
+
+                $data['main_domain'] = implode('.', array_slice(explode('.', $data['domain']), -2));
 
                 $result = $this->model->save($data);
                 $this->model->commit();
@@ -272,10 +279,10 @@ class Domain extends Backend
                     if (!$channel) $this->error('通道不存在');
                     $data['channel'] = $channel->channel_type;
                     $data['flag']    = $channel->channel_account;
-
                 }
 
                 $result = $row->save($data);
+
                 $this->model->commit();
             } catch (Throwable $e) {
                 $this->model->rollback();

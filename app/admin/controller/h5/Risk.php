@@ -33,10 +33,13 @@ class Risk extends Backend
     public function initialize(): void
     {
         parent::initialize();
-        $this->model   = new \app\admin\model\xpark\Data;
-        $apps          = Apps::alias('apps')->field(['apps.*'])->select()->toArray();
-        $this->apps    = array_column($apps, null, 'id');
-        $channel       = Channel::where('is_own', 1)->select()->toArray();
+        $this->model = new \app\admin\model\xpark\Data;
+        $apps        = Apps::alias('apps')->field(['apps.*'])->select()->toArray();
+        $this->apps  = array_column($apps, null, 'id');
+        $channel     = Channel::where('is_own', 1)->select()->toArray();
+        if ($this->auth->id == 27) {
+            $channel = Channel::where('is_own', 1)->where('private_switch', 0)->select()->toArray();
+        }
         $this->channel = array_column($channel, null, 'id');
     }
 
