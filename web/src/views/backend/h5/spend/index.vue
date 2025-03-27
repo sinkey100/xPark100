@@ -11,6 +11,7 @@
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.channel_id" label="通道" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.event_type" label="事件类型" border/>
                 <el-checkbox v-model="baTable.table.filter!.dimensions!.main_domain" label="主域名" border/>
+                <el-checkbox v-model="baTable.table.filter!.dimensions!.account_name" label="投放账户" border/>
             </el-form-item>
             <el-popconfirm title="是否确认导出？" @confirm="derive">
                 <template #reference>
@@ -55,6 +56,7 @@ import {
     columns_event_type,
     columns_tag,
     columns_main_domain,
+    columns_account_name,
     default_columns
 } from "/@/views/backend/h5/spend/columns";
 import {ElLoading} from 'element-plus'
@@ -74,6 +76,7 @@ const dimensions = reactive({
     channel_id: false,
     event_type: false,
     main_domain: false,
+    account_name: false,
 })
 
 const tableData = ref([]);
@@ -223,6 +226,11 @@ const baTable = new baTableClass(
                     index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
                 }
                 columns.value[0].children.splice(index, 0, {...columns_main_domain});
+            }
+            // 投放账户
+            if (dimensions.account_name) {
+                const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                columns.value[0].children.splice(index, 0, {...columns_account_name});
             }
             // 通道
             if (dimensions.channel_id) {

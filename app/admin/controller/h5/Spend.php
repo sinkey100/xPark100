@@ -34,13 +34,18 @@ class Spend extends Backend
     public function buildQuery(): array
     {
         // 维度信息获取
-        $only_main_domain = false;
+        $only_main_domain = $ony_account_name = false;
         $input_dimensions = $this->request->get('dimensions/a', []);
         $main_dimension   = $join_dimensions = $join_where = [];
         $active_join_on   = $track_join_on = $spend_join_on = [];
+        $spend_dimensions = [];
 
         if (($input_dimensions['domain_id'] ?? 'false') == 'false' && ($input_dimensions['main_domain'] ?? 'false') == 'true') {
             $only_main_domain              = true;
+            $input_dimensions['domain_id'] = 'true';
+        }
+        if (($input_dimensions['domain_id'] ?? 'false') == 'false' && ($input_dimensions['account_name'] ?? 'false') == 'true') {
+            $ony_account_name              = true;
             $input_dimensions['domain_id'] = 'true';
         }
 
@@ -50,6 +55,9 @@ class Spend extends Backend
                     $main_dimension[] = 'track.event_type';
                 } else if ($k == 'main_domain') {
                     $main_dimension[] = 'domain.main_domain';
+                } else if ($k == 'account_name') {
+                    $main_dimension[]   = 'spend.account_name';
+                    $spend_dimensions[] = 'account_name';
                 } else {
                     $main_dimension[] = 'utc.' . $k;
                 }
@@ -110,8 +118,9 @@ class Spend extends Backend
             'event_type', 'SUM(valid_events) AS valid_events', 'SUM(invalid_events) AS invalid_events', 'SUM(anchored_count) AS anchored_count', 'SUM(banner_count) AS banner_count', 'SUM(fullscreen_count) AS fullscreen_count'
         ]))->where($join_where)->where('app_id', 29)->group(implode(',', $join_dimensions))->buildSql();
 
-        $spend_sql = SpendData::field(array_merge($join_dimensions, ['SUM(impressions) AS impressions', 'SUM(clicks) AS clicks', 'SUM(conversion) AS conversion', 'SUM(spend) AS spend_total'
-        ]))->where($join_where)->where('app_id', 29)->group(implode(',', $join_dimensions))->buildSql();
+        $spend_sql = SpendData::field(array_merge($join_dimensions, [
+            'account_name', 'SUM(impressions) AS impressions', 'SUM(clicks) AS clicks', 'SUM(conversion) AS conversion', 'SUM(spend) AS spend_total'
+        ]))->where($join_where)->where('app_id', 29)->group(implode(',', array_merge($join_dimensions, $spend_dimensions)))->buildSql();
 
         $res = $this->model->field($field)
             ->alias($alias)
@@ -137,7 +146,7 @@ class Spend extends Backend
             ->order('utc.domain_id desc')
             ->order('ad_revenue desc');
 
-        if ($only_main_domain) {
+        if ($only_main_domain || $ony_account_name) {
             $group = [];
             foreach ($main_dimension as $dimension) {
                 if (!str_ends_with($dimension, 'domain_id')) {

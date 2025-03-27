@@ -23,6 +23,7 @@ class Tiktok extends Base
     {
         $this->days = 2;
         [$spend_table, $advertiser_ids] = $this->getSpendTable('tiktok');
+        $account_name = array_column($spend_table, null, 'advertiser_id');
 
         $bind = Bind::field(['campaign_id', 'domain_name'])->where('platform', 'tiktok')->order('date', 'desc')->group('campaign_id')->select();
         $bind = array_column($bind->toArray(), null, 'campaign_id');
@@ -63,6 +64,9 @@ class Tiktok extends Base
                     'headers' => $headers
                 ]);
                 if ($result['code'] == 0 && $result['message'] == 'OK') {
+                    foreach ($result['data']['list'] as &$v) {
+                        $v['advertiser_id'] = $advertiser_id;
+                    }
                     $spend_data = array_merge($spend_data, $result['data']['list']);
                     $totalPages = $result['data']['page_info']['total_page'];
                     $spend_query['page']++;
@@ -77,7 +81,7 @@ class Tiktok extends Base
 
         foreach ($spend_data as $item) {
             $domain_name = $bind[$item['metrics']['campaign_id']]['domain_name'] ?? null;
-            if (!$domain_name){
+            if (!$domain_name) {
                 print_r($item['metrics']['campaign_id']);
                 $output->writeln("\n\n");
                 continue;
@@ -104,6 +108,7 @@ class Tiktok extends Base
                 'channel_name'  => 'tiktok',
                 'domain_id'     => $domain_id,
                 'channel_id'    => $channel_id,
+                'account_name'  => $account_name[$item['advertiser_id']]['account_name'] ?? '',
                 'is_app'        => $is_app,
                 'date'          => $item['dimensions']['stat_time_day'],
                 'country_code'  => $country_code,

@@ -71,3 +71,4 @@ export const columns_country_code = {colKey: "country_code", className: "country
 export const columns_event_type = {colKey: "event_type", className: "event_type", title: "事件类型", align: "center", width: 100}
 export const columns_channel = {colKey: "channel_alias", className: "channel_alias", title: "通道", align: "center", sorter:true, width: 150}
 export const columns_main_domain = {colKey: "main_domain", className: "main_domain", title: "主域名", align: "center", sorter:true, fixed: "left", width: 150}
+export const columns_account_name = {colKey: "account_name", className: "account_name", title: "投放账户", align: "center", sorter:true, width: 200}
