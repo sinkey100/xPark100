@@ -72,3 +72,29 @@ export const columns_event_type = {colKey: "event_type", className: "event_type"
 export const columns_channel = {colKey: "channel_alias", className: "channel_alias", title: "通道", align: "center", sorter:true, width: 150}
 export const columns_main_domain = {colKey: "main_domain", className: "main_domain", title: "主域名", align: "center", sorter:true, fixed: "left", width: 150}
 export const columns_account_name = {colKey: "account_name", className: "account_name", title: "投放账户", align: "center", sorter:true, width: 200}
+export const columns_more_roi = [
+    {
+        colKey: "roi1", title: "ROI D-1", align: "center", width: 110, sorter:true,
+        className: ({row}: { row: any }) => {
+            const roi = String(row.roi1);
+            if(!roi.includes('%')) return 'roi1';
+            return parseFloat(roi.replace('%', '')) >= 100 ? 'td-text-green' : 'td-text-red';
+        },
+    },
+    {
+        colKey: "roi2", title: "ROI D-2", align: "center", width: 110, sorter:true,
+        className: ({row}: { row: any }) => {
+            const roi = String(row.roi2);
+            if(!roi.includes('%')) return 'roi2';
+            return parseFloat(roi.replace('%', '')) >= 100 ? 'td-text-green' : 'td-text-red';
+        },
+    },
+    {
+        colKey: "roi3", title: "ROI D-3", align: "center", width: 110, sorter:true,
+        className: ({row}: { row: any }) => {
+            const roi = String(row.roi3);
+            if(!roi.includes('%')) return 'roi3';
+            return parseFloat(roi.replace('%', '')) >= 100 ? 'td-text-green roi3' : 'td-text-red roi3';
+        },
+    }
+]

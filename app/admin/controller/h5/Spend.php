@@ -3,6 +3,7 @@
 namespace app\admin\controller\h5;
 
 use app\admin\model\spend\Data as SpendData;
+use app\admin\model\xpark\Utc;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use sdk\QueryTimeStamp;
@@ -183,15 +184,102 @@ class Spend extends Backend
                 ->order('ad_revenue desc');
         }
 
-        return [$res, $limit];
+        return [$res, $limit, $where, $main_dimension];
     }
 
     public function index(): void
     {
         QueryTimeStamp::start();
-        [$res, $limit] = $this->buildQuery();
-        $sql = $res->fetchSql(true)->select();
-        $res = $res->paginate($limit);
+        [$res, $limit, $where, $dimensions] = $this->buildQuery();
+        $sql   = $res->fetchSql(true)->select();
+        $res   = $res->paginate($limit);
+        $items = $res->items();
+
+        if (
+            in_array('utc.a_date', $dimensions)
+            && !in_array('utc.channel_id', $dimensions)
+            && !in_array('track.event_type', $dimensions)
+            && !in_array('domain.main_domain', $dimensions)
+            && !in_array('spend.account_name', $dimensions)
+        ) {
+            $date             = '';
+            $utc_dimensions   = [];
+            $spend_dimensions = [];
+            $join_on          = [];
+            $roi_key          = [];
+            foreach ($where as $v) {
+                if (
+                    str_ends_with($v[0], 'a_date')
+                    && substr($v[2][0], 0, 10) == substr($v[2][1], 0, 10)
+                ) {
+                    $date = substr($v[2][0], 0, 10);
+                }
+            }
+            if ($date) {
+                $start_date = date("Y-m-d", strtotime($date) - 86400 * 3);
+                $mid_date   = date("Y-m-d", strtotime($date) - 86400 * 2);
+                $end_date   = date("Y-m-d", strtotime($date) - 86400);
+                // 计算多日ROI
+                if (in_array('utc.a_date', $dimensions)) {
+                    $utc_dimensions[]   = 'utc.a_date';
+                    $spend_dimensions[] = 'spend.date';
+                    $join_on[]          = 'spend.date = utc.a_date';
+                }
+                if (in_array('utc.domain_id', $dimensions)) {
+                    $utc_dimensions[]   = 'utc.domain_id';
+                    $spend_dimensions[] = 'spend.domain_id';
+                    $join_on[]          = 'spend.domain_id = utc.domain_id';
+                    $roi_key[]          = 'domain_id';
+                }
+                if (in_array('utc.country_code', $dimensions)) {
+                    $utc_dimensions[]   = 'utc.country_code';
+                    $spend_dimensions[] = 'spend.country_code';
+                    $join_on[]          = 'spend.country_code = utc.country_code';
+                    $roi_key[]          = 'country_code';
+                }
+                $spend_sql = SpendData::alias('spend')
+                    ->field(array_merge($spend_dimensions, ['SUM(spend) AS total_spend']))
+                    ->where('date', 'BETWEEN', [$start_date, $end_date])
+                    ->where('spend', '>', 0)
+                    ->where('status', 0)
+                    ->group($spend_dimensions)
+                    ->buildSql();
+                $utc_sql   = Utc::alias('utc')
+                    ->field(array_merge($utc_dimensions, ['SUM(ad_revenue) AS total_revenue']))
+                    ->where('a_date', 'BETWEEN', [$start_date, $end_date])
+                    ->where('status', 0)
+                    ->group($utc_dimensions)
+                    ->buildSql();
+
+                // 处理数据
+                $history       = Db::table($spend_sql . ' spend')->field(array_merge($spend_dimensions, [
+                    'spend.total_spend', 'utc.total_revenue'
+                ]))->join($utc_sql . ' utc', implode(' AND ', $join_on), 'left')->select();
+                $history_items = [];
+                foreach ($history as $item) {
+                    $item['roi'] = $item['total_spend'] > 0 ? number_format($item['total_revenue'] / $item['total_spend'] * 100, 2, '.', '') . '%' : '-';
+                    $key         = [];
+                    foreach (array_merge(['date'], $roi_key) as $k) {
+                        $key[] = $item[$k];
+                    }
+                    $history_items[implode('_', $key)] = $item;
+                }
+                unset($item);
+                // 计算完成 添加到报表
+                foreach ($items as &$item) {
+                    $key = [];
+                    foreach ($roi_key as $k) {
+                        $key[] = $item[$k];
+                    }
+                    $key_1 = $start_date . '_' . implode('_', $key);
+                    $key_2 = $mid_date . '_' . implode('_', $key);
+                    $key_3 = $end_date . '_' . implode('_', $key);
+                    $item['roi1'] = $history_items[$key_3]['roi'] ?? '-';
+                    $item['roi2'] = $history_items[$key_2]['roi'] ?? '-';
+                    $item['roi3'] = $history_items[$key_1]['roi'] ?? '-';
+                }
+            }
+        }
 
         $total = [
             'a_date'            => '本页汇总',
@@ -208,7 +296,7 @@ class Spend extends Backend
             'spend_conversion'  => 0,
             'total_time'        => 0,
         ];
-        foreach ($res->items() as $v) {
+        foreach ($items as $v) {
             $total['new_users']         += $v['new_users'];
             $total['active_users']      += $v['active_users'];
             $total['ad_revenue']        += $v['ad_revenue'];
@@ -224,7 +312,7 @@ class Spend extends Backend
 
         $this->success('', [
             '_'      => $this->auth->id == 1 ? $sql : '',
-            'list'   => $this->rate($res->items()),
+            'list'   => $this->rate($items),
             'foot'   => $this->rate([$total]),
             'total'  => $res->total(),
             'remark' => get_route_remark(),

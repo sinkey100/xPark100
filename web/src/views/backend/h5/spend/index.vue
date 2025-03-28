@@ -57,7 +57,7 @@ import {
     columns_tag,
     columns_main_domain,
     columns_account_name,
-    default_columns
+    default_columns, columns_more_roi
 } from "/@/views/backend/h5/spend/columns";
 import {ElLoading} from 'element-plus'
 import {exportToExcel} from "/@/utils/excel";
@@ -153,7 +153,6 @@ const baTable = new baTableClass(
             {
                 label: '事件类型',
                 prop: 'track.event_type',
-                align: 'center',
                 render: 'tag',
                 operator: 'eq',
                 replaceValue: {click: 'click', show: 'show'},
@@ -161,12 +160,20 @@ const baTable = new baTableClass(
             {
                 label: 'ROI',
                 prop: 'ext.roi',
-                align: 'center',
                 render: 'tag',
                 operator: 'eq',
                 replaceValue: {1: '回正', 0: '未回正'},
             },
-
+            {
+                label: '主域名',
+                prop: 'domain.main_domain',
+                operator: 'LIKE'
+            },
+            {
+                label: '投放账户',
+                prop: 'spend.account_name',
+                operator: 'LIKE'
+            },
         ],
         dblClickNotEditColumn: [undefined],
     },
@@ -239,6 +246,14 @@ const baTable = new baTableClass(
                     index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
                 }
                 columns.value[0].children.splice(index, 0, {...columns_channel});
+            }
+            // 更多ROI
+            if (
+                dimensions.a_date == true && dimensions.channel_id == false && dimensions.event_type == false
+                && dimensions.main_domain == false && dimensions.account_name == false
+            ) {
+                columns.value[0].children = columns.value[0].children.concat([...columns_more_roi]);
+                console.log(columns);
             }
             tableData.value = res.data.list;
             footData.value = res.data.foot;
@@ -375,7 +390,7 @@ const derive = () => {
         background: #faf1ff;
     }
 
-    .sub_channel, .roi, .diff_gap, .per_display, .spend_conv_rate, .ad_cpc {
+    .sub_channel, .roi3, .roi, .diff_gap, .per_display, .spend_conv_rate, .ad_cpc {
         border-right: 2px solid var(--td-component-border);
     }
 
