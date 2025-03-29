@@ -151,24 +151,28 @@ class Hb extends Base
         // 检查上升趋势
         $upCount = 0;
         for ($i = 1; $i < count($fillRates); $i++) {
-            if ($fillRates[$i] > $fillRates[$i-1]) {
+            if ($fillRates[$i] < $fillRates[$i-1]) {
                 $upCount++;
             } else {
                 break;
             }
         }
-        if ($upCount >= 3) return $upCount;
+        if ($upCount >= 3) {
+            return $upCount;
+        }
 
         // 检查下降趋势
         $downCount = 0;
         for ($i = 1; $i < count($fillRates); $i++) {
-            if ($fillRates[$i] < $fillRates[$i-1]) {
+            if ($fillRates[$i] > $fillRates[$i-1]) {
                 $downCount++;
             } else {
                 break;
             }
         }
-        if ($downCount >= 4) return -$downCount;
+        if ($downCount >= 4) {
+            return -$downCount;
+        }
 
         return 0;
     }
