@@ -6,6 +6,7 @@ use app\admin\model\Admin;
 use app\admin\model\AdminLog;
 use app\admin\model\sls\Active as SLSActive;
 use app\admin\model\xpark\Apps;
+use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Data;
 use app\admin\model\xpark\Utc;
 use think\facade\Db;
@@ -115,6 +116,7 @@ class Report extends Frontend
     {
         // 验参和鉴权
         [$from_date, $to_date, $admin] = $this->authorized();
+        $unauthorized_channel_ids = array_column(Channel::field('id')->where('private_switch', 1)->select()->toArray(), 'id');
 
         // 获取账号的应用
         $apps = Apps::where('admin_id', $admin->id)->select()->toArray();
@@ -133,6 +135,7 @@ class Report extends Frontend
             ->whereIn('app_id', $app_ids)
             ->where('status', 0)
             ->whereBetweenTime('a_date', $from_date, $to_date)
+            ->whereNotIn('channel_id', $unauthorized_channel_ids)
             ->group('a_date, app_id, country_code, domain_id')
             ->buildSql();
 

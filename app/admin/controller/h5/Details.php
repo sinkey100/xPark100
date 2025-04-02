@@ -59,8 +59,8 @@ class Details extends Backend
                 }
             }
         }
-        if(count($main_dimension) == 0) $this->error('维度为必选项');
-        if(count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') $this->error('通道维度不能单独选择');
+        if (count($main_dimension) == 0) $this->error('维度为必选项');
+        if (count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') $this->error('通道维度不能单独选择');
 
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
@@ -79,7 +79,14 @@ class Details extends Backend
                 $h5_active_where[] = ['channel_id', $item[1], $item[2]];
                 $spend_where[]     = ['channel_id', $item[1], $item[2]];
             }
+            if (str_ends_with($item[0], 'app_type') && !in_array('utc.app_id', $main_dimension)) {
+                $app_filter         = array_column(Apps::field('id')->where('app_type', $item[2])->select()->toArray(), 'id');
+                $app_active_where[] = ['app_id', 'in', $app_filter];
+                $h5_active_where[]  = ['app_id', 'in', $app_filter];
+                $spend_where[]      = ['app_id', 'in', $app_filter];
+            }
         }
+
         $where = array_values($where);
 
         $field = array_merge($main_dimension, [
