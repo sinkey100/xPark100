@@ -10,7 +10,7 @@ class Analysis extends Model
 {
 
     // 表名
-    protected $name = 'xpark_data';
+    protected $name = 'xpark_utc';
 
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = false;

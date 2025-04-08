@@ -118,6 +118,7 @@ class Adx extends Base
         }
 
 
+
         $reportQuery = new ReportQuery();
 
         $endDate = new Date();

@@ -21,27 +21,31 @@
                 </template>
             </el-popconfirm>
         </TableHeader>
+        <div ref="tableRef">
+            <t-table
+                row-key="key"
+                :bordered="true"
+                :resizable="true"
+                :data="tableData"
+                :loading="isLoading"
+                :columns="columns"
+                :hover="true"
 
-        <t-table
-            row-key="key"
-            :bordered="true"
-            :resizable="true"
-            :data="tableData"
-            :loading="isLoading"
-            :columns="columns"
-            :hover="true"
-            :pagination="pagination"
-            :foot-data="footData"
-            :sort="sort"
-            :show-sort-column-bg-color="true"
-            @page-change="onPageChange"
-            @sort-change="sortChange"
-        ></t-table>
+                :pagination="pagination"
+                :foot-data="footData"
+                :sort="sort"
+                :show-sort-column-bg-color="true"
+                @page-change="onPageChange"
+                @sort-change="sortChange"
+            ></t-table>
+
+        </div>
+        <PopupManage/>
 
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import {onMounted, provide, reactive, ref} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {baTableApi} from '/@/api/common'
@@ -52,15 +56,17 @@ import {
     columns_channel,
     columns_country_code,
     columns_date,
-    columns_domain, columns_domain_days,
+    columns_domain_days,
     columns_event_type,
     columns_tag,
     columns_main_domain,
     columns_account_name,
     default_columns, columns_more_roi
 } from "/@/views/backend/h5/spend/columns";
-import {ElLoading} from 'element-plus'
+import {ElButton, ElLoading} from 'element-plus'
 import {exportToExcel} from "/@/utils/excel";
+import {PrimaryTableCol} from "tdesign-vue-next/es/table/type";
+import PopupManage from "/@/views/backend/spend/manage/popupManage.vue";
 
 
 defineOptions({
@@ -68,7 +74,7 @@ defineOptions({
 })
 
 const {t} = useI18n()
-const tableRef = ref()
+const tableRef = ref<HTMLElement | null>(null)
 const dimensions = reactive({
     a_date: true,
     domain_id: true,
@@ -93,173 +99,186 @@ const sort = ref<TableProps['sort']>({
     sortBy: '',
     descending: true,
 })
+const columns_domain = ref<PrimaryTableCol>({
+    colKey: "sub_channel",
+    className: "sub_channel",
+    title: "域名",
+    align: "center",
+    sorter: true,
+    fixed: "left",
+    width: 200,
+    cell: (h, {row}) => (
+        <span ondblclick={() => showManager(row)}>{row.sub_channel}</span>
+    ),
+})
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
  */
-const baTable = new baTableClass(
-    new baTableApi('/admin/h5.Spend/'),
-    {
-        pk: 'id',
-        column: [
-            {
-                label: '日期',
-                prop: 'a_date',
-                render: 'datetimeAndTotal',
-                comSearchRender: 'date',
-                operator: 'RANGE',
-                timeFormat: 'yyyy-mm-dd',
-            },
-            {
-                label: '域名',
-                prop: 'domain_id',
-                operator: 'IN',
-                comSearchRender: 'remoteSelect',
-                remote: {
-                    pk: 'id',
-                    remoteUrl: 'admin/xpark.Domain/index',
-                    field: 'domain',
-                    multiple: true
-                }
-            },
-            {
-                label: '地区',
-                prop: 'country_code',
-                operator: 'IN',
-                comSearchRender: 'remoteSelect',
-                remote: {
-                    pk: 'id',
-                    remoteUrl: 'admin/xpark.Data/country',
-                    multiple: true,
-                    field: 'name'
-                }
-            },
-            {
-                label: '通道',
-                prop: 'channel_id',
-                operator: 'IN',
-                comSearchRender: 'remoteSelect',
-                remote: {
-                    pk: 'id',
-                    remoteUrl: 'admin/xpark.Channel/index',
-                    field: 'channel_alias',
-                }
-            },
-            // {
-            //     label: 'TAG标签',
-            //     prop: 'domain.tag',
-            //     operator: 'LIKE'
-            // },
-            {
-                label: '事件类型',
-                prop: 'track.event_type',
-                render: 'tag',
-                operator: 'eq',
-                replaceValue: {click: 'click', show: 'show'},
-            },
-            {
-                label: 'ROI',
-                prop: 'ext.roi',
-                render: 'tag',
-                operator: 'eq',
-                replaceValue: {1: '回正', 0: '未回正'},
-            },
-            {
-                label: '主域名',
-                prop: 'domain.main_domain',
-                operator: 'LIKE'
-            },
-            {
-                label: '投放账户',
-                prop: 'spend.account_name',
-                operator: 'LIKE'
-            },
-        ],
-        dblClickNotEditColumn: [undefined],
-    },
-    {}, {
-        getIndex: () => {
-            // 默认查询昨天
-            if (!baTable.comSearch.form['a_date']) {
-                const date = new Date(new Date().setDate(new Date().getDate())).toISOString().split('T')[0];
-                baTable.comSearch.form['a_date'] = [date, date];
-                baTable.table.filter!.search?.push({
-                    field: 'a_date',
-                    val: `${date} 00:00:00,${date} 23:59:59`,
+const
+    baTable = new baTableClass(
+        new baTableApi('/admin/h5.Spend/'),
+        {
+            pk: 'id',
+            column: [
+                {
+                    label: '日期',
+                    prop: 'a_date',
+                    render: 'datetimeAndTotal',
+                    comSearchRender: 'date',
                     operator: 'RANGE',
-                    render: 'datetime',
-                });
-                dimensions.a_date = dimensions.domain_id = true;
-                dimensions.country_code = dimensions.event_type = dimensions.channel_id = false;
-                baTable.table.filter!.dimensions = dimensions
-            }
-            baTable.table.filter!.hideTimestamp = 0;
-            columns.value = [];
-            tableData.value = [];
-            footData.value = [];
-            isLoading.value = true;
-        }
-    }, {
-        getIndex: ({res}) => {
-            pagination.total = res.data.total;
-            isLoading.value = false;
-            // 动态修改表格列
-            columns.value = DeepClone(default_columns);
-            // 日期维度
-            if (dimensions.a_date) {
-                columns.value[0].children.unshift({...columns_date});
-            }
-            // 域名维度
-            if (dimensions.domain_id) {
-                const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                // columns.value[0].children.splice(index, 0, {...columns_tag});
-                columns.value[0].children.splice(index, 0, {...columns_domain_days});
-                columns.value[0].children.splice(index, 0, {...columns_domain});
-            }
-            // 地区
-            if (dimensions.country_code) {
-                const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                columns.value[0].children.splice(index, 0, {...columns_country_code});
-            }
-            // 事件类型
-            if (dimensions.event_type) {
-                columns.value[5].children.unshift({...columns_event_type});
-            }
-            // 主域名
-            if (dimensions.main_domain) {
-                // 有域名就放在域名前面 没有就放在上线时间前
-                let index = columns.value[0].children.findIndex((item: any) => item.colKey === 'sub_channel');
-                if (index == -1) {
-                    index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                }
-                columns.value[0].children.splice(index, 0, {...columns_main_domain});
-            }
-            // 投放账户
-            if (dimensions.account_name) {
-                const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                columns.value[0].children.splice(index, 0, {...columns_account_name});
-            }
-            // 通道
-            if (dimensions.channel_id) {
-                let index = columns.value[0].children.findIndex((item: any) => item.colKey === 'tag');
-                if (index == -1) {
-                    index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
-                }
-                columns.value[0].children.splice(index, 0, {...columns_channel});
-            }
-            // 更多ROI
-            if (
-                dimensions.a_date == true && dimensions.channel_id == false && dimensions.event_type == false
-                && dimensions.main_domain == false && dimensions.account_name == false
-            ) {
-                columns.value[0].children = columns.value[0].children.concat([...columns_more_roi]);
-                console.log(columns);
-            }
-            tableData.value = res.data.list;
-            footData.value = res.data.foot;
+                    timeFormat: 'yyyy-mm-dd',
+                },
+                {
+                    label: '域名',
+                    prop: 'domain_id',
+                    operator: 'IN',
+                    comSearchRender: 'remoteSelect',
+                    remote: {
+                        pk: 'id',
+                        remoteUrl: 'admin/xpark.Domain/index',
+                        field: 'domain',
+                        multiple: true
+                    }
+                },
+                {
+                    label: '地区',
+                    prop: 'country_code',
+                    operator: 'IN',
+                    comSearchRender: 'remoteSelect',
+                    remote: {
+                        pk: 'id',
+                        remoteUrl: 'admin/xpark.Data/country',
+                        multiple: true,
+                        field: 'name'
+                    }
+                },
+                {
+                    label: '通道',
+                    prop: 'channel_id',
+                    operator: 'IN',
+                    comSearchRender: 'remoteSelect',
+                    remote: {
+                        pk: 'id',
+                        remoteUrl: 'admin/xpark.Channel/index',
+                        field: 'channel_alias',
+                    }
+                },
+                // {
+                //     label: 'TAG标签',
+                //     prop: 'domain.tag',
+                //     operator: 'LIKE'
+                // },
+                {
+                    label: '事件类型',
+                    prop: 'track.event_type',
+                    render: 'tag',
+                    operator: 'eq',
+                    replaceValue: {click: 'click', show: 'show'},
+                },
+                {
+                    label: 'ROI',
+                    prop: 'ext.roi',
+                    render: 'tag',
+                    operator: 'eq',
+                    replaceValue: {1: '回正', 0: '未回正'},
+                },
+                {
+                    label: '主域名',
+                    prop: 'domain.main_domain',
+                    operator: 'LIKE'
+                },
+                {
+                    label: '投放账户',
+                    prop: 'spend.account_name',
+                    operator: 'LIKE'
+                },
+            ],
+            dblClickNotEditColumn: [undefined],
         },
-    }
-)
+        {}, {
+            getIndex: () => {
+                // 默认查询昨天
+                if (!baTable.comSearch.form['a_date']) {
+                    const date = new Date(new Date().setDate(new Date().getDate())).toISOString().split('T')[0];
+                    baTable.comSearch.form['a_date'] = [date, date];
+                    baTable.table.filter!.search?.push({
+                        field: 'a_date',
+                        val: `${date} 00:00:00,${date} 23:59:59`,
+                        operator: 'RANGE',
+                        render: 'datetime',
+                    });
+                    dimensions.a_date = dimensions.domain_id = true;
+                    dimensions.country_code = dimensions.event_type = dimensions.channel_id = false;
+                    baTable.table.filter!.dimensions = dimensions
+                }
+                baTable.table.filter!.hideTimestamp = 0;
+                columns.value = [];
+                tableData.value = [];
+                footData.value = [];
+                isLoading.value = true;
+            }
+        }, {
+            getIndex: ({res}) => {
+                pagination.total = res.data.total;
+                isLoading.value = false;
+                // 动态修改表格列
+                columns.value = DeepClone(default_columns);
+                // 日期维度
+                if (dimensions.a_date) {
+                    columns.value[0].children.unshift({...columns_date});
+                }
+                // 域名维度
+                if (dimensions.domain_id) {
+                    const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                    // columns.value[0].children.splice(index, 0, {...columns_tag});
+                    columns.value[0].children.splice(index, 0, {...columns_domain_days});
+                    columns.value[0].children.splice(index, 0, {...columns_domain.value});
+                }
+                // 地区
+                if (dimensions.country_code) {
+                    const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                    columns.value[0].children.splice(index, 0, {...columns_country_code});
+                }
+                // 事件类型
+                if (dimensions.event_type) {
+                    columns.value[5].children.unshift({...columns_event_type});
+                }
+                // 主域名
+                if (dimensions.main_domain) {
+                    // 有域名就放在域名前面 没有就放在上线时间前
+                    let index = columns.value[0].children.findIndex((item: any) => item.colKey === 'sub_channel');
+                    if (index == -1) {
+                        index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                    }
+                    columns.value[0].children.splice(index, 0, {...columns_main_domain});
+                }
+                // 投放账户
+                if (dimensions.account_name) {
+                    const index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                    columns.value[0].children.splice(index, 0, {...columns_account_name});
+                }
+                // 通道
+                if (dimensions.channel_id) {
+                    let index = columns.value[0].children.findIndex((item: any) => item.colKey === 'tag');
+                    if (index == -1) {
+                        index = columns.value[0].children.findIndex((item: any) => item.colKey === 'spend_total');
+                    }
+                    columns.value[0].children.splice(index, 0, {...columns_channel});
+                }
+                // 更多ROI
+                if (
+                    dimensions.a_date == true && dimensions.channel_id == false && dimensions.event_type == false
+                    && dimensions.main_domain == false && dimensions.account_name == false
+                ) {
+                    columns.value[0].children = columns.value[0].children.concat([...columns_more_roi]);
+                    console.log(columns);
+                }
+                tableData.value = res.data.list;
+                footData.value = res.data.foot;
+            },
+        }
+    )
 
 const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
     baTable.table.filter!.page = pageInfo.current;
@@ -289,7 +308,6 @@ const sortChange: TableProps['onSortChange'] = (val: TableProps['sort']) => {
 provide('baTable', baTable)
 baTable.table.filter!.dimensions = dimensions
 onMounted(() => {
-    baTable.table.ref = tableRef.value
     baTable.table.filter!.limit = 100;
     baTable.mount()
 
@@ -300,19 +318,17 @@ onMounted(() => {
     })
 
 })
-const DeepClone = <T>(obj: T): T => {
+
+function DeepClone<T>(obj: T): T {
     if (obj === null || typeof obj !== 'object') {
         return obj;
     }
-    // 如果是函数，则直接返回函数引用
     if (typeof obj === 'function') {
         return obj;
     }
-    // 如果是数组，遍历每个元素进行深拷贝
     if (Array.isArray(obj)) {
         return obj.map(item => DeepClone(item)) as unknown as T;
     }
-    // 处理普通对象
     const clone = {} as any;
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -361,6 +377,23 @@ const derive = () => {
         loadingInstance.close();
     });
 }
+
+const showManager = (row: anyObj) => {
+    console.log(row);
+    baTable.form.operate = 'Manage'
+    baTable.form.items = {id: row.id}
+    baTable.form.extend = row
+}
+
+onMounted(() => {
+    if (tableRef.value) {
+        tableRef.value.addEventListener('mousedown', (e: MouseEvent) => {
+            if (e.detail > 1) {
+                e.preventDefault() // 阻止双击选中
+            }
+        })
+    }
+})
 </script>
 
 
@@ -394,6 +427,22 @@ const derive = () => {
         border-right: 2px solid var(--td-component-border);
     }
 
+    td.sub_channel {
+        cursor: pointer;
+        color: #04e;
+    }
+
+}
+:deep(.el-dialog){
+    .el-dialog__header{
+        border-bottom: 0;
+    }
+    .table-header {
+        border:0!important;
+    }
+    .el-scrollbar{
+        margin:-10px -20px;
+    }
 }
 
 
