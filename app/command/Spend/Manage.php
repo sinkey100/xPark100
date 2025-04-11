@@ -232,7 +232,7 @@ class Manage extends Base
         $this->log('获取成功 Tiktok 域名关系');
     }
 
-    protected function getTiktokAccount(): array
+    public function getTiktokAccount(): array
     {
         // 飞书表格 - 获取广告账户列表
         $fs_token       = FeishuBot::getTenantAccessToken(Env::get('BOT.HB_APP_ID'), Env::get('BOT.HB_APP_SECRET'));

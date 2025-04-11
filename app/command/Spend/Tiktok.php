@@ -82,7 +82,7 @@ class Tiktok extends Base
         foreach ($spend_data as $item) {
             $domain_name = $bind[$item['metrics']['campaign_id']]['domain_name'] ?? null;
             if (!$domain_name) {
-                print_r($item['metrics']['campaign_id']);
+                print_r('找不到域名: ' . $item['metrics']['campaign_id']);
                 $output->writeln("\n\n");
                 continue;
             }
@@ -101,7 +101,11 @@ class Tiktok extends Base
             $cpc          = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm          = empty($impressions) ? 0 : $spend / $impressions * 1000;
 
-            if (empty($impressions) && (empty($country_code) || 'None' == $country_code)) continue;
+            if (empty($impressions) && (empty($country_code) || 'None' == $country_code)) {
+                print_r('过滤空数据: ' . $item['metrics']['campaign_id']);
+                $output->writeln("\n\n");
+                continue;
+            }
 
             $insert_list[] = [
                 'app_id'        => $app_id,

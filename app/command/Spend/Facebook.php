@@ -117,9 +117,9 @@ class Facebook extends Base
         foreach ($results as $item) {
             if (!isset($bind[$item['campaign_id']])) continue;
 
-            $clicks      = $item['inline_link_clicks'];
+            $clicks      = $item['inline_link_clicks'] ?? 0;
             $actions     = array_column($item['actions'], null, 'action_type');
-            $impressions = $item['impressions'];
+            $impressions = $item['impressions'] ?? 0;
             $spend       = $item['spend'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
