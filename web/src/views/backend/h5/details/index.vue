@@ -105,8 +105,8 @@ const baTable = new baTableClass(
                 width: 100,
                 replaceValue: app_type
             },
-            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false,width: 120},
-            {label: '通道', prop: 'channel_full', align: 'center', sortable: false, operator: false},
+            {label: '应用', prop: 'app_name', align: 'center', sortable: false, operator: false, width: 120},
+            {label: '通道', prop: 'channel_full', align: 'center', sortable: false, operator: false, width: 165,},
             {label: 'App新增', prop: 'app_new_users', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'App活跃', prop: 'app_active_users', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'CPI', prop: 'cpi', align: 'center', operator: false, sortable: false, width: 100},
@@ -117,7 +117,7 @@ const baTable = new baTableClass(
             {label: '预估利润', prop: 'profit', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'ROI', prop: 'roi', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'Native收入', prop: 'native_revenue', align: 'center', operator: false, width: 100},
-            {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false, width: 90},
+            {label: 'H5收入', prop: 'h5_revenue', align: 'center', operator: false, sortable: false, width: 100},
             {label: 'H5 ARPU', prop: 'h5_arpu', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'HB开启率', prop: 'hb_open_rate', align: 'center', operator: false, sortable: false, width: 115},
@@ -127,6 +127,15 @@ const baTable = new baTableClass(
     }, {}, {}, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
+                if (dimensions.channel_id && !dimensions.a_date && !dimensions.app_id) {
+                    item.show = ["channel_full", "total_revenue", "native_revenue", "h5_revenue", "native_rate"].includes(item.prop)
+                    item.width = 200
+                    if (item.prop == 'channel_full') item.width = 220
+                    return;
+                }
+
+                if (["total_revenue", "native_revenue", "h5_revenue"].includes(item.prop)) item.width = 100
+                if (item.prop == 'native_rate') item.width = 115
                 if (item.prop == 'app_id') return;
 
                 // 显示应用名称
@@ -137,6 +146,7 @@ const baTable = new baTableClass(
 
                 if (item.prop == 'channel_id') return;
                 if (item.prop == 'channel_full') {
+                    item.width = 165;
                     item.show = baTable.table.filter!.dimensions['channel_id'] == true;
                     return;
                 }

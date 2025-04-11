@@ -60,8 +60,6 @@ class Details extends Backend
             }
         }
         if (count($main_dimension) == 0) $this->error('维度为必选项');
-        if (count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') $this->error('通道维度不能单独选择');
-
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
         foreach ($where as $key => $item) {
@@ -88,6 +86,9 @@ class Details extends Backend
         }
 
         $where = array_values($where);
+        if (count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') {
+            $this->channel($where, $limit);
+        }
 
         $field = array_merge($main_dimension, [
             'utc.channel_full',
@@ -205,6 +206,60 @@ class Details extends Backend
             $v['app_name']       = isset($v['app_id']) && isset($this->apps[$v['app_id']]) ? $this->apps[$v['app_id']]['app_name'] : '-';
         }
         return $data;
+    }
+
+    protected function channel($where, $limit): void
+    {
+        $field = [
+            'utc.channel_id',
+            'utc.channel_full',
+            'SUM(utc.ad_revenue) AS total_revenue',
+            'SUM(CASE WHEN channel_type = 0 THEN ad_revenue ELSE 0 END) AS h5_revenue',
+            'SUM(CASE WHEN channel_type = 1 THEN ad_revenue ELSE 0 END) AS native_revenue',
+        ];
+
+        $res = $this->model->field($field)
+            ->alias('utc')
+            ->where('utc.status', 0)
+            ->join('xpark_apps apps', 'apps.id = utc.app_id', 'left')
+            ->where($where)
+            ->order('utc.a_date', 'desc')
+            ->order('a_date desc')
+            ->order('total_revenue desc')
+            ->group('channel_id');
+
+        $sql   = $res->fetchSql(true)->select();
+        $res   = $res->paginate($limit);
+        $total = [
+            'id'             => 10000,
+            'total_revenue'  => 0,
+            'native_revenue' => 0,
+            'h5_revenue'     => 0,
+        ];
+        foreach ($res->items() as $v) {
+            $total['total_revenue']  += $v['total_revenue'];
+            $total['native_revenue'] += $v['native_revenue'];
+            $total['h5_revenue']     += $v['h5_revenue'];
+        }
+        $data = array_merge($res->items(), [$total]);
+
+        foreach ($data as &$v) {
+            $v['native_rate']    = $v['total_revenue'] > 0
+                ? number_format((float)$v['native_revenue'] / $v['total_revenue'] * 100, 2, '.', '') . '%'
+                : '-';
+            $v['h5_revenue']     = number_format((float)$v['h5_revenue'], 2, '.', '');
+            $v['native_revenue'] = number_format((float)$v['native_revenue'], 2, '.', '');
+            $v['total_revenue']  = number_format((float)$v['total_revenue'], 2, '.', '');
+        }
+
+        $this->success('', [
+            '_'      => $this->auth->id == 1 ? $sql : '',
+            'list'   => $data,
+            'total'  => $res->total(),
+            'remark' => get_route_remark(),
+            'ts'     => QueryTimeStamp::end()
+        ]);
+
     }
 
 
