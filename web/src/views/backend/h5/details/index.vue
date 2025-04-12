@@ -46,6 +46,7 @@ const baTable = new baTableClass(
     {
         pk: 'id',
         column: [
+            { type: 'selection', align: 'center', operator: false },
             {
                 label: '日期',
                 prop: 'a_date',

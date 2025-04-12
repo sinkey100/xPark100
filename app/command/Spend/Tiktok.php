@@ -5,6 +5,7 @@ namespace app\command\Spend;
 use app\admin\model\cy\CYIosGame;
 use app\admin\model\spend\Bind;
 use app\admin\model\spend\Data as SpendData;
+use app\admin\model\xpark\Domain;
 use app\command\Base;
 use think\console\Input;
 use think\console\Output;
@@ -133,6 +134,14 @@ class Tiktok extends Base
             SpendData::where('channel_name', 'tiktok')->where('status', 0)->whereTime('date', '>=', date("Y-m-d", strtotime("-{$this->days} days")))->delete();
             SpendData::where('channel_name', 'tiktok')->where('status', 1)->update(['status' => 0]);
         }
+
+        // 更新域名投放时间
+        $spend_domains = Domain::where('app_id', 29)->whereNull('spend_date')->select();
+        foreach ($spend_domains as &$v){
+            $v->spend_date = SpendData::where('domain_id', $v->id)->order('date', 'asc')->value('date');
+            $v->save();
+        }
+
     }
 
 }

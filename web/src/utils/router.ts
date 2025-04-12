@@ -32,11 +32,12 @@ export const routePush = async (to: RouteLocationRaw) => {
             // })
         }
     } catch (error) {
-        ElNotification({
-            message: i18n.global.t('utils.Navigation failed, invalid route!'),
-            type: 'error',
-        })
-        console.error(error)
+        window.location.reload();
+        // ElNotification({
+        //     message: i18n.global.t('utils.Navigation failed, invalid route!'),
+        //     type: 'error',
+        // })
+        // console.error(error)
     }
 }
 

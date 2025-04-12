@@ -234,10 +234,13 @@ const shortcuts = [
     {
         text: '最近一周',
         value: () => {
-            const end = new Date()
-            const start = new Date()
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
-            return [start, end]
+            // 获取当天零点时刻
+            const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+            // 结束时间为昨天的最后一刻（今天零点前1毫秒）
+            const end = new Date(todayStart.getTime() - 1);
+            // 开始时间为7天前的同一时刻
+            const start = new Date(todayStart.getTime() - 24 * 3600 * 1000 * 7);
+            return [start, end];
         },
     },
     {
@@ -250,12 +253,50 @@ const shortcuts = [
         },
     },
     {
+        text: '本月',
+        value: () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const start = new Date(year, month, 1);
+            const end = new Date(new Date(year, month + 1, 1).getTime() - 1);
+            return [start, end];
+        },
+    },
+    {
+        text: '上月',
+        value: () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            let lastMonth = month - 1;
+            let lastMonthYear = year;
+            if (lastMonth < 0) {
+                lastMonth = 11;
+                lastMonthYear = year - 1;
+            }
+            const start = new Date(lastMonthYear, lastMonth, 1);
+            // 计算上月结束时间：下个月第一天的前1毫秒
+            const end = new Date(new Date(lastMonthYear, lastMonth + 1, 1).getTime() - 1);
+            return [start, end];
+        },
+    },
+    {
         text: '最近三个月',
         value: () => {
             const end = new Date()
             const start = new Date()
             start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
             return [start, end]
+        },
+    },
+    {
+        text: '最近半年',
+        value: () => {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 180);
+            return [start, end];
         },
     },
 ];

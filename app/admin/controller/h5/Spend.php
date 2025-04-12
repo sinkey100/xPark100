@@ -108,7 +108,7 @@ class Spend extends Backend
             'IFNULL(track.banner_count, 0) AS banner_count',
             'IFNULL(track.fullscreen_count, 0) AS fullscreen_count',
         ]);
-        if (in_array('utc.domain_id', $main_dimension)) $field = array_merge($field, ['domain.tag', 'domain.create_time as domain_date']);
+        if (in_array('utc.domain_id', $main_dimension)) $field = array_merge($field, ['domain.tag', 'domain.spend_date as domain_date']);
         if (in_array('utc.channel_id', $main_dimension)) $field[] = 'channel.channel_alias';
 
         $active_sql = SLSActive::field(array_merge($join_dimensions, [
