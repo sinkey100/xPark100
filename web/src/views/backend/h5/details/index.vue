@@ -46,7 +46,7 @@ const baTable = new baTableClass(
     {
         pk: 'id',
         column: [
-            { type: 'selection', align: 'center', operator: false },
+            {type: 'selection', align: 'center', operator: false},
             {
                 label: '日期',
                 prop: 'a_date',
@@ -125,12 +125,17 @@ const baTable = new baTableClass(
             {label: 'Native收入比', prop: 'native_rate', align: 'center', operator: false, sortable: false, width: 115},
         ],
         dblClickNotEditColumn: [undefined],
-    }, {}, {}, {
+    }, {}, {
+        getIndex: () => {
+            baTable.table.column.forEach((item: any) => {
+                item.show = !(["app_id", "channel_id", "apps.app_type"].includes(item.prop))
+            })
+        }
+    }, {
         getIndex: ({res}) => {
             baTable.table.column.forEach((item: any) => {
                 if (dimensions.channel_id && !dimensions.a_date && !dimensions.app_id) {
                     item.show = ["channel_full", "total_revenue", "native_revenue", "h5_revenue", "native_rate"].includes(item.prop)
-                    item.width = 200
                     if (item.prop == 'channel_full') item.width = 220
                     return;
                 }

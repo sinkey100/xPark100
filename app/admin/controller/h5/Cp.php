@@ -21,8 +21,8 @@ class Cp extends Backend
 
     protected float $share_rate = 0.15;
     protected float $fake_rate  = 0.3;
-
-    protected array $dis_rate_cp_ids = [1828995091155552256];
+    // 不操作数据的用户
+    protected array $dis_rate_cp_ids = [1828995091155552256, 1847004509269457920];
 
     public function initialize(): void
     {
