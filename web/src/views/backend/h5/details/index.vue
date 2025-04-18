@@ -24,7 +24,9 @@ import {baTableApi} from '/@/api/common'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
-import app_type from "/@/views/backend/xpark/apps/app_type";
+import app_type from "/@/views/backend/xpark/apps/app_type"
+import {useAdminInfo} from '/@/stores/adminInfo'
+
 
 defineOptions({
     name: 'h5/details',
@@ -32,6 +34,7 @@ defineOptions({
 
 const {t} = useI18n()
 const tableRef = ref()
+const adminInfo = useAdminInfo();
 const dimensions = reactive({
     a_date: true,
     app_id: true,
@@ -78,10 +81,11 @@ const baTable = new baTableClass(
             {
                 label: '通道',
                 prop: 'channel_id',
-                operator: 'eq',
+                operator: 'IN',
                 show: false,
                 comSearchRender: 'remoteSelect',
                 remote: {
+                    multiple: true,
                     pk: 'id',
                     remoteUrl: 'admin/xpark.Channel/index',
                     field: 'channel_alias',
@@ -123,12 +127,25 @@ const baTable = new baTableClass(
             {label: 'ARPU', prop: 'app_arpu', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'HB开启率', prop: 'hb_open_rate', align: 'center', operator: false, sortable: false, width: 115},
             {label: 'Native收入比', prop: 'native_rate', align: 'center', operator: false, sortable: false, width: 115},
+            {
+                label: '内部', prop: 'private_switch', show: false, render: 'tag',
+                operator: 'eq',
+                sortable: false,
+                replaceValue: {
+                    0: '对外',
+                    1: '内部',
+                },
+            },
         ],
         dblClickNotEditColumn: [undefined],
     }, {}, {
         getIndex: () => {
             baTable.table.column.forEach((item: any) => {
                 item.show = !(["app_id", "channel_id", "apps.app_type"].includes(item.prop))
+                if (adminInfo.id != 1 && item.prop == 'private_switch') {
+                    item.render = false;
+                }
+
             })
         }
     }, {

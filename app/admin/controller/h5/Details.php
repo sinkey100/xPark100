@@ -3,6 +3,7 @@
 namespace app\admin\controller\h5;
 
 use app\admin\model\spend\Data as SpendData;
+use app\admin\model\xpark\Channel;
 use app\admin\model\xpark\Domain;
 use sdk\QueryTimeStamp;
 use think\facade\Db;
@@ -62,6 +63,14 @@ class Details extends Backend
         if (count($main_dimension) == 0) $this->error('维度为必选项');
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+
+        $private_channel_ids = [];
+        foreach ($where as $key => $item) {
+            if (str_ends_with($item[0], 'private_switch')) {
+                $private_channel_ids = array_column(Channel::field('id')->where('private_switch', $item[2])->select()->toArray(), 'id');
+                unset($where[$key]);
+            }
+        }
         foreach ($where as $key => $item) {
             if (str_ends_with($item[0], 'date')) {
                 $h5_active_where[]  = ['date', $item[1], $item[2]];
@@ -74,8 +83,15 @@ class Details extends Backend
                 $spend_where[]      = ['app_id', $item[1], $item[2]];
             }
             if (str_ends_with($item[0], 'channel_id')) {
-                $h5_active_where[] = ['channel_id', $item[1], $item[2]];
-                $spend_where[]     = ['channel_id', $item[1], $item[2]];
+                $_channel_ids = $item[2];
+                if (count($private_channel_ids) > 0) {
+                    $_channel_ids = array_values(array_intersect($private_channel_ids, $_channel_ids));
+                    $_channel_ids        = array_values($_channel_ids);
+                    $private_channel_ids = [];
+                }
+                $where[$key][2]    = $_channel_ids;
+                $h5_active_where[] = ['channel_id', $item[1], $_channel_ids];
+//                $spend_where[]     = ['channel_id', $item[1], $_channel_ids];
             }
             if (str_ends_with($item[0], 'app_type') && !in_array('utc.app_id', $main_dimension)) {
                 $app_filter         = array_column(Apps::field('id')->where('app_type', $item[2])->select()->toArray(), 'id');
@@ -86,6 +102,13 @@ class Details extends Backend
         }
 
         $where = array_values($where);
+        if (count($private_channel_ids) > 0) {
+            $where[]           = ['channel_id', 'in', $private_channel_ids];
+            $h5_active_where[] = ['channel_id', 'in', $private_channel_ids];
+//            $spend_where[]     = ['channel_id', 'in', $private_channel_ids];
+        }
+
+
         if (count($main_dimension) == 1 && $main_dimension[0] == 'utc.channel_id') {
             $this->channel($where, $limit);
         }

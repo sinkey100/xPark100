@@ -35,7 +35,7 @@ class Google
         $client->setAuthConfig(json_decode($account->json_text, true));
         $client->setRedirectUri(Env::get('APP.APP_URL') . 'callback.php?s=google');
         $client->addScope(AdSense::ADSENSE_READONLY); // AdSense 数据权限
-        if($account->id < 14){
+        if($account->id < 14 && $account->id != 11){
             $client->addScope(AnalyticsData::ANALYTICS_READONLY);
             $client->addScope(GoogleAnalyticsAdmin::ANALYTICS_EDIT);
             $client->addScope(Oauth2::USERINFO_EMAIL); // 获取 Gmail
