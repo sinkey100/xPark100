@@ -118,7 +118,7 @@ class Facebook extends Base
             if (!isset($bind[$item['campaign_id']])) continue;
 
             $clicks      = $item['inline_link_clicks'] ?? 0;
-            $actions     = array_column($item['actions'], null, 'action_type');
+            $actions     = array_column($item['actions'] ?? [], null, 'action_type');
             $impressions = $item['impressions'] ?? 0;
             $spend       = $item['spend'];
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
