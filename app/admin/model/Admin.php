@@ -2,20 +2,21 @@
 
 namespace app\admin\model;
 
+use app\admin\model\bi\Channel;
 use ba\Random;
 use think\Model;
 use think\facade\Db;
 
 /**
  * Admin模型
- * @property int    $id              管理员ID
+ * @property int $id              管理员ID
  * @property string $username        管理员用户名
  * @property string $nickname        管理员昵称
  * @property string $email           管理员邮箱
  * @property string $mobile          管理员手机号
  * @property string $last_login_ip   上次登录IP
  * @property string $last_login_time 上次登录时间
- * @property int    $login_failure   登录失败次数
+ * @property int $login_failure   登录失败次数
  */
 class Admin extends Model
 {
@@ -64,8 +65,8 @@ class Admin extends Model
 
     /**
      * 重置用户密码
-     * @param int|string $uid         管理员ID
-     * @param string     $newPassword 新密码
+     * @param int|string $uid 管理员ID
+     * @param string $newPassword 新密码
      * @return int|Admin
      */
     public function resetPassword(int|string $uid, string $newPassword): int|Admin
@@ -75,5 +76,15 @@ class Admin extends Model
         return $this->where(['id' => $uid])->update(['password' => $passwd, 'salt' => $salt]);
     }
 
+    public static function onBeforeWrite($model): void
+    {
+        CpRate::where('date', date("Y-m-d"))->where('admin_id', $model->id)->delete();
+        CpRate::create([
+            'date'       => date("Y-m-d"),
+            'admin_id'   => $model->id,
+            'share_rate' => $model->share_rate,
+            'show_rate'  => $model->show_rate,
+        ]);
+    }
 
 }

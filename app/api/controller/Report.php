@@ -62,6 +62,8 @@ class Report extends Frontend
         if (count($apps) == 0) $this->error('Apps not found');
         $apps    = array_column($apps, null, 'id');
         $app_ids = array_keys($apps);
+        // 过滤私有通道
+        $private_channel_ids = array_column(Channel::field('id')->where('private_switch', 0)->select()->toArray(), 'id');
 
         $dimension = ['a_date', 'sub_channel', 'app_id', 'country_code', 'ad_placement_id'];
 
@@ -76,6 +78,7 @@ class Report extends Frontend
         $res = Data::field($field)
             ->where('app_id', 'in', $app_ids)
             ->where('status', 0)
+            ->where('channel_id', 'in', $private_channel_ids)
             ->whereBetweenTime('a_date', $from_date, $to_date)
             ->order('a_date', 'desc')
             ->group(implode(',', $dimension))

@@ -15,6 +15,7 @@ use think\facade\Env;
 class Facebook extends Base
 {
 
+    protected string $token = '';
 
     protected function configure(): void
     {
@@ -25,6 +26,8 @@ class Facebook extends Base
     {
         $this->days = 2;
         [$spend_table, $advertiser_ids] = $this->getSpendTable('facebook');
+        $this->token = $spend_table[0]['account_key'] ?? '';
+
         SpendData::where('channel_name', 'facebook')->where('status', 1)->delete();
 
         $bind = Bind::field(['campaign_id', 'domain_name'])->where('platform', 'facebook')->order('date', 'desc')->group('campaign_id')->select();
@@ -34,7 +37,7 @@ class Facebook extends Base
         $start_date = date("Y-m-d", strtotime("-{$this->days} days"));
         $end_date   = date("Y-m-d");
         $query      = [
-            'access_token'   => Env::get('SPEND.FACEBOOK_TOKEN'),
+            'access_token'   => $this->token,
             'fields'         => 'campaign_id,campaign_name,spend,impressions,inline_link_clicks,actions',
             'time_range'     => '{"since":"' . $start_date . '","until":"' . $end_date . '"}',
             'level'          => 'campaign',
@@ -64,7 +67,7 @@ class Facebook extends Base
             $url    = "https://graph.facebook.com/v21.0/$campaign_id/ads";
             $result = $this->http('GET', $url, [
                 'query' => [
-                    'access_token' => Env::get('SPEND.FACEBOOK_TOKEN'),
+                    'access_token' => $this->token,
                     'fields'       => 'id,name,creative'
                 ],
             ]);
@@ -74,7 +77,7 @@ class Facebook extends Base
                 $url    = "https://graph.facebook.com/v21.0/{$v['creative']['id']}/";
                 $result = $this->http('GET', $url, [
                     'query' => [
-                        'access_token' => Env::get('SPEND.FACEBOOK_TOKEN'),
+                        'access_token' => $this->token,
                         'fields'       => 'object_story_spec'
                     ],
                 ]);
@@ -124,7 +127,7 @@ class Facebook extends Base
             $cpc         = empty($impressions) ? 0 : $clicks / $impressions;
             $cpm         = empty($impressions) ? 0 : $spend / $impressions * 1000;
 
-            if (empty($impressions) && (empty($country_code))) continue;
+            if (empty($impressions) && (empty($item['country']))) continue;
 
             $domain_info = $this->domains[$bind[$item['campaign_id']]['domain_name']] ?? false;
             if (!$domain_info) continue;

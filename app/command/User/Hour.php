@@ -96,6 +96,8 @@ class Hour extends Base
         foreach ($this->domains as $domain) {
             for ($i = $this->days - 1; $i >= 0; $i--) {
 
+                if (!in_array($domain['channel_id'], [4, 5, 9])) continue;
+
                 $this->log('获取小时数据开始：' . $domain['domain']);
                 // 获取当前域名一天的流量分配
                 $hour_detail = SLSHour::where('domain_id', $domain['id'])
@@ -177,7 +179,7 @@ class Hour extends Base
 
             $list = DataHour::whereDay('time_utc_0', $date)
                 ->field([
-                    'DATE(time_utc_0) as a_date', 'app_id', 'domain_id', 'country_code', 'ad_placement_id', 'ad_unit_type','channel',
+                    'DATE(time_utc_0) as a_date', 'app_id', 'domain_id', 'country_code', 'ad_placement_id', 'ad_unit_type', 'channel',
                     'channel_id', 'channel_full', 'country_level', 'country_name', 'sub_channel', 'channel_type',
                     'SUM(requests)as requests', 'SUM(fills) as fills', 'SUM(impressions) as impressions',
                     'SUM(clicks) as clicks', 'SUM(ad_revenue) as ad_revenue', 'SUM(gross_revenue) as gross_revenue',

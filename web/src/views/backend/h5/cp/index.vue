@@ -30,6 +30,7 @@ import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
 import {ElLoading} from "element-plus";
 import {exportToExcel} from "/@/utils/excel";
+import {useAdminInfo} from "/@/stores/adminInfo";
 
 defineOptions({
     name: 'h5/cp',
@@ -37,6 +38,7 @@ defineOptions({
 
 const {t} = useI18n()
 const tableRef = ref()
+const adminInfo = useAdminInfo();
 
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
@@ -70,6 +72,20 @@ const baTable = new baTableClass(
                     pk: 'id',
                     remoteUrl: 'admin/xpark.Apps/select',
                     field: 'app_name',
+                }
+            },
+            {
+                label: 'CP',
+                prop: 'admin_id',
+                align: 'center',
+                sortable: false,
+                show: false,
+                operator: adminInfo.id == 1 ? 'eq' : false,
+                comSearchRender: 'remoteSelect',
+                remote: {
+                    pk: 'id',
+                    remoteUrl: 'admin/auth.Admin/index',
+                    field: 'nickname',
                 }
             },
             {

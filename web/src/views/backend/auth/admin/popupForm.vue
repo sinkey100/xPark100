@@ -101,6 +101,22 @@
                             content: { '0': t('Disable'), '1': t('Enable') },
                         }"
                     />
+
+                    <FormItem
+                        label="分成比例"
+                        v-model="baTable.form.items!.share_rate"
+                        type="string"
+                        prop="share_rate"
+                    />
+
+                    <FormItem
+                        label="显示比例"
+                        v-model="baTable.form.items!.show_rate"
+                        type="string"
+                        prop="show_rate"
+                    />
+
+
                 </el-form>
             </div>
         </el-scrollbar>

@@ -48,10 +48,9 @@ const baTable = new baTableClass(
             { label: t('Id'), prop: 'id', align: 'center', operator: '=', operatorPlaceholder: t('Id'), width: 70 },
             { label: t('auth.admin.username'), prop: 'username', align: 'center', operator: 'LIKE', operatorPlaceholder: t('Fuzzy query') },
             { label: t('auth.admin.nickname'), prop: 'nickname', align: 'center', operator: 'LIKE', operatorPlaceholder: t('Fuzzy query') },
+            { label: '分成比例', prop: 'share_rate', align: 'center', operator: 'LIKE',width:100},
+            { label: '显示比例', prop: 'show_rate', align: 'center', operator: 'LIKE',width:100 },
             { label: t('auth.admin.grouping'), prop: 'group_name_arr', align: 'center', operator: false, render: 'tags' },
-            { label: t('auth.admin.head portrait'), prop: 'avatar', align: 'center', render: 'image', operator: false },
-            { label: t('auth.admin.mailbox'), prop: 'email', align: 'center', operator: 'LIKE', operatorPlaceholder: t('Fuzzy query') },
-            { label: t('auth.admin.mobile'), prop: 'mobile', align: 'center', operator: 'LIKE', operatorPlaceholder: t('Fuzzy query') },
             {
                 label: t('auth.admin.Last login'),
                 prop: 'last_login_time',
